@@ -18,19 +18,17 @@
           .o-switch input { opacity: 0; width: 0; height: 0; }
           .o-slider {
             position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--bg); border: 1.5px solid var(--line);
+            background-color: var(--accent); border: 1.5px solid var(--accent);
             transition: .3s; border-radius: 28px;
           }
           .o-slider:before {
             position: absolute; content: ""; height: 20px; width: 20px;
-            left: 3px; bottom: 2px; background-color: var(--muted);
+            left: 2px; bottom: 2px; background-color: #ffffff;
             transition: .3s; border-radius: 50%;
-          }
-          .o-switch input:checked + .o-slider {
-            background-color: var(--accent); border-color: var(--accent);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
           }
           .o-switch input:checked + .o-slider:before {
-            transform: translateX(24px); background-color: var(--accent-ink);
+            transform: translateX(24px);
           }
         </style>
 
