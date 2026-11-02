@@ -66,6 +66,12 @@ body {
 #view-module.active { display: block; }
 #view-home.hidden { display: none; }
 
+/* Pusty stan (gdy nie ma modułów) */
+.empty-state {
+  border: 2px dashed var(--line); border-radius: 20px; padding: 40px 20px;
+  text-align: center; color: var(--muted); grid-column: 1 / -1; margin-top: 20px;
+}
+
 /* Pasek błędu (do debugowania) */
 #error-bar {
   position: fixed; bottom: 0; left: 0; width: 100%; background: #ff8a80;
@@ -205,13 +211,17 @@ window.Hub = (() => {
 
     if (push) history.pushState({ view: "module", id }, "", `#${id}`);
     
-    // Wywołanie modułu (przekazujemy kontener i sygnał do przerywania)
     mod.mount(elModule, activeAbort.signal);
     window.scrollTo(0, 0);
   }
 
   function register(mod) {
     modules.set(mod.id, mod);
+    
+    // Usuwanie stanu pustego, jeśli istnieje
+    const empty = elGrid.querySelector('.empty-state');
+    if (empty) empty.remove();
+
     const tile = document.createElement("div");
     tile.className = "tile";
     tile.innerHTML = `
@@ -223,18 +233,15 @@ window.Hub = (() => {
     elGrid.appendChild(tile);
   }
 
-  // Obsługa przycisku wstecz (Android)
   window.addEventListener("popstate", () => {
     const hash = location.hash.replace(/^#/, "");
     if (hash && modules.has(hash)) openModule(hash, false);
     else showHome(false);
   });
 
-  // Start
   window.addEventListener("DOMContentLoaded", () => {
-    // Obsługa przycisku ustawień i plusa (na razie tylko powiadomienie)
     document.getElementById("btn-settings").addEventListener("click", () => alert("Tu będzie kopia zapasowa i biblioteki."));
-    document.getElementById("fab-add").addEventListener("click", () => alert("Wkrótce dodawanie własnych modułów!"));
+    document.getElementById("fab-add").addEventListener("click", () => alert("Aby dodać moduł, wgraj plik do folderu 'modules' i dopisz go do 'modules.json'."));
     
     const initHash = location.hash.replace(/^#/, "");
     if (initHash && modules.has(initHash)) openModule(initHash, false);
@@ -244,7 +251,40 @@ window.Hub = (() => {
 })();
 
 // ==========================================
-// 2. REJESTRACJA SERVICE WORKERA
+// 2. AUTOMATYCZNE ŁADOWANIE MODUŁÓW Z PLIKU JSON
+// ==========================================
+async function loadModulesFromManifest() {
+  try {
+    // Pobieramy spis treści modułów
+    const response = await fetch('./modules.json?t=' + Date.now()); // Date.now zapobiega cache'owaniu pliku JSON
+    if (!response.ok) throw new Error("Nie znaleziono pliku modules.json");
+    
+    const modulesList = await response.json();
+    
+    if (!modulesList || modulesList.length === 0) {
+      document.getElementById("modules-grid").innerHTML = `<div class="empty-state">Warsztat jest pusty.<br>Dodaj moduł do pliku modules.json.</div>`;
+      return;
+    }
+
+    // Ładujemy każdy moduł po kolei
+    modulesList.forEach(mod => {
+      const script = document.createElement("script");
+      script.src = mod.file;
+      script.onerror = () => console.error(`Nie udało się załadować modułu: ${mod.file}`);
+      document.body.appendChild(script);
+    });
+
+  } catch (err) {
+    console.warn("Błąd wczytywania modułów:", err);
+    document.getElementById("modules-grid").innerHTML = `<div class="empty-state">Brak pliku modules.json.<br>Utwórz go, aby dodać moduły.</div>`;
+  }
+}
+
+// Uruchamiamy ładowanie modułów
+window.addEventListener("DOMContentLoaded", loadModulesFromManifest);
+
+// ==========================================
+// 3. REJESTRACJA SERVICE WORKERA
 // ==========================================
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -266,7 +306,7 @@ if ("serviceWorker" in navigator) {
 }
 
 // ==========================================
-// 3. PAASEK BŁĘDÓW (DEBUGOWANIE)
+// 4. PASEK BŁĘDÓW (DEBUGOWANIE)
 // ==========================================
 window.addEventListener('error', function(e) {
   const bar = document.getElementById('error-bar');
@@ -274,11 +314,6 @@ window.addEventListener('error', function(e) {
   bar.textContent = 'BŁĄD: ' + e.message;
 });
 </script>
-
-<!-- Tutaj bedą ladowane moduly (na razie zakomentowane, dodamy za chwile) -->
-<!-- <script src="./modules/konwerter.js"></script> -->
-<!-- <script src="./modules/qr.js"></script> -->
-<!-- <script src="./modules/exif.js"></script> -->
 
 </body>
 </html>
