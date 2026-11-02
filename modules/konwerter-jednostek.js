@@ -31,10 +31,8 @@
       let currentCat = 'length';
 
       container.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-          <button id="u-back" style="width:auto; padding:10px 16px; border-radius:14px;">Wróć</button>
-          <h2 style="margin:0; font-size:18px;">Konwerter Jednostek</h2>
-          <div style="width:68px;"></div>
+        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
+          <button id="u-back" style="width:auto; padding:10px 16px; border-radius:14px; margin:0;">Wróć</button>
         </div>
 
         <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:16px; -webkit-overflow-scrolling:touch;">
@@ -45,9 +43,9 @@
         </div>
 
         <div class="card" style="padding-bottom:20px;">
-          <div style="display:flex; gap:8px;">
-            <input type="number" id="u-input" placeholder="Wpisz wartość..." style="flex:1; padding:12px 14px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; font-size:16px; outline:none;">
-            <select id="u-from" style="flex:1; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit;"></select>
+          <div style="display:flex; gap:8px; align-items:stretch;">
+            <input type="number" id="u-input" placeholder="Wpisz wartość..." style="flex:1; min-width:0; padding:12px 14px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; font-size:16px; outline:none;">
+            <select id="u-from" style="flex:0 0 45%; max-width:45%; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; outline:none;"></select>
           </div>
         </div>
 
