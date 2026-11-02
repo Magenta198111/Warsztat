@@ -45,24 +45,13 @@
         </div>
 
         <div class="card" style="padding-bottom:20px;">
-          <label style="margin-top:0;">Z</label>
           <div style="display:flex; gap:8px;">
-            <input type="number" id="u-input" placeholder="Wpisz wartość..." style="flex:1;">
-            <select id="u-from" style="flex:1; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink);"></select>
-          </div>
-
-          <div style="display:flex; justify-content:center; margin:12px 0;">
-            <button id="u-swap" style="width:44px; height:44px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center; font-size:20px; background:var(--surface); border:1.5px solid var(--line);">⇅</button>
-          </div>
-
-          <label>Na</label>
-          <div style="display:flex; gap:8px;">
-            <input type="text" id="u-output" readonly placeholder="Wynik..." style="flex:1; color:var(--accent); font-weight:bold;">
-            <select id="u-to" style="flex:1; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink);"></select>
+            <input type="number" id="u-input" placeholder="Wpisz wartość..." style="flex:1; padding:12px 14px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; font-size:16px; outline:none;">
+            <select id="u-from" style="flex:1; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit;"></select>
           </div>
         </div>
 
-        <div class="card hidden" id="u-all-card">
+        <div class="card hidden" id="u-all-card" style="padding-bottom:8px;">
           <h3 style="margin:0 0 12px; font-size:16px; color:var(--muted);">Wszystkie jednostki</h3>
           <div id="u-all-list" style="display:flex; flex-direction:column; gap:8px;"></div>
         </div>
@@ -70,9 +59,7 @@
 
       const $ = id => container.querySelector("#" + id);
       const inputEl = $("u-input");
-      const outputEl = $("u-output");
       const fromSel = $("u-from");
-      const toSel = $("u-to");
       const allCard = $("u-all-card");
       const allList = $("u-all-list");
       const pills = container.querySelectorAll(".pill");
@@ -97,23 +84,11 @@
       function calculate() {
         const val = parseFloat(inputEl.value);
         const from = fromSel.value;
-        const to = toSel.value;
-        let result = 0;
 
         if (isNaN(val)) {
-          outputEl.value = "";
           allCard.classList.add("hidden");
           return;
         }
-
-        if (currentCat === 'temp') {
-          result = convertTemp(val, from, to);
-        } else {
-          const catData = data[currentCat];
-          result = val * catData.units[from] / catData.units[to];
-        }
-
-        outputEl.value = formatNumber(result);
 
         allCard.classList.remove("hidden");
         allList.innerHTML = "";
@@ -123,6 +98,7 @@
 
         keys.forEach(k => {
           if (k === from) return;
+          
           let res = 0;
           if (currentCat === 'temp') {
             res = convertTemp(val, from, k);
@@ -131,7 +107,7 @@
           }
 
           allList.innerHTML += `
-            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:8px; padding-top:4px;">
               <span style="color:var(--muted);">${catData.names[k]}</span>
               <span style="font-weight:bold;">${formatNumber(res)}</span>
             </div>
@@ -141,20 +117,14 @@
 
       function updateSelects() {
         fromSel.innerHTML = "";
-        toSel.innerHTML = "";
         
         const catData = data[currentCat];
         const keys = currentCat === 'temp' ? catData.units : Object.keys(catData.units);
 
         keys.forEach(k => {
           fromSel.innerHTML += `<option value="${k}">${catData.names[k]}</option>`;
-          toSel.innerHTML += `<option value="${k}">${catData.names[k]}</option>`;
         });
 
-        if (keys.length > 1) {
-          fromSel.selectedIndex = 0;
-          toSel.selectedIndex = 1;
-        }
         calculate();
       }
 
@@ -172,14 +142,6 @@
 
       inputEl.addEventListener("input", calculate, { signal });
       fromSel.addEventListener("change", calculate, { signal });
-      toSel.addEventListener("change", calculate, { signal });
-
-      $("u-swap").addEventListener("click", () => {
-        const temp = fromSel.value;
-        fromSel.value = toSel.value;
-        toSel.value = temp;
-        calculate();
-      }, { signal });
 
       updateSelects();
     },
