@@ -10,6 +10,7 @@
       let originalCanvas = document.createElement("canvas");
       let displayCanvas = document.createElement("canvas");
       let isLoaded = false;
+      let isColor = true;
 
       container.innerHTML = `
         <style>
@@ -20,6 +21,7 @@
             z-index: 10;
             pointer-events: none;
             touch-action: none;
+            opacity: 0.5;
           }
           .sk-handle::before, .sk-handle::after {
             content: '';
@@ -42,7 +44,7 @@
         </div>
 
         <div class="card" id="sk-start-card">
-          <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">Wybierz zdjęcie z galerii lub zrób nowe. Następnie przeciągnij czerwone krzyżyki na rogi dokumentu, aby go wyprostować.</p>
+          <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">Wybierz zdjęcie z galerii lub zrób nowe. Następnie przeciągnij czerwone krzyżyki na rogi dokumentu.</p>
           <input type="file" id="sk-file" accept="image/*" style="display:none;">
           <button id="sk-pick-btn" class="p" style="margin:0; display:flex; justify-content:center; align-items:center; gap:8px;">
             📁 Wybierz zdjęcie
@@ -63,10 +65,12 @@
           <div class="card" style="margin-top:16px;">
             <label>Popraw kontrast (Skan)</label>
             <input type="range" id="sk-contrast" min="0" max="200" value="100">
+            
             <div style="display:flex; gap:10px; margin-top:14px;">
-              <button id="sk-rotate-btn" style="flex:1; margin:0; padding:14px; background:var(--bg);">🔄 Obróć 90°</button>
-              <button class="p" id="sk-pdf-btn" style="flex:2; margin:0; padding:14px;">Zapisz PDF</button>
+              <button id="sk-rotate-btn" style="flex:1; margin:0; padding:14px; background:var(--bg);">🔄 Obróć</button>
+              <button id="sk-color-btn" style="flex:1; margin:0; padding:14px; background:var(--bg);">🎨 Kolor: TAK</button>
             </div>
+            <button class="p" id="sk-pdf-btn" style="width:100%; margin-top:10px; padding:14px;">Zapisz PDF</button>
           </div>
         </div>
       `;
@@ -82,14 +86,22 @@
       const contrastSlider = $("sk-contrast");
       const pdfBtn = $("sk-pdf-btn");
       const rotateBtn = $("sk-rotate-btn");
+      const colorBtn = $("sk-color-btn");
 
       $("sk-back").addEventListener("click", () => history.back(), { signal });
-      
       pickBtn.addEventListener("click", () => fileInput.click(), { signal });
 
       let activeHandle = null;
-      let dragOffsetX = 0, dragOffsetY = 0;
+      let dragStartHandleX = 0, dragStartHandleY = 0;
+      let dragStartTouchX = 0, dragStartTouchY = 0;
       let scaleX = 1, scaleY = 1;
+
+      function applyLiveFilter() {
+        const contrast = contrastSlider.value;
+        let filter = `contrast(${contrast}%)`;
+        if (!isColor) filter += ` grayscale(100%)`;
+        displayCanvasEl.style.filter = filter;
+      }
 
       function resetHandles() {
         const pos = [
@@ -106,15 +118,16 @@
 
       function updateDisplay() {
         const maxW = 800;
-        const displayW = img.width > maxW ? maxW : img.width;
-        const displayH = (img.height / img.width) * displayW;
+        const displayW = originalCanvas.width > maxW ? maxW : originalCanvas.width;
+        const displayH = (originalCanvas.height / originalCanvas.width) * displayW;
 
         displayCanvasEl.width = displayW;
         displayCanvasEl.height = displayH;
-        displayCanvasEl.getContext("2d").drawImage(img, 0, 0, displayW, displayH);
+        displayCanvasEl.getContext("2d").drawImage(originalCanvas, 0, 0, displayW, displayH);
 
-        scaleX = img.width / displayW;
-        scaleY = img.height / displayH;
+        scaleX = originalCanvas.width / displayW;
+        scaleY = originalCanvas.height / displayH;
+        applyLiveFilter();
       }
 
       fileInput.addEventListener("change", (e) => {
@@ -140,8 +153,12 @@
         reader.readAsDataURL(file);
       }, { signal });
 
-      contrastSlider.addEventListener("input", (e) => {
-        displayCanvasEl.style.filter = `contrast(${e.target.value}%)`;
+      contrastSlider.addEventListener("input", applyLiveFilter, { signal });
+
+      colorBtn.addEventListener("click", () => {
+        isColor = !isColor;
+        colorBtn.textContent = isColor ? "🎨 Kolor: TAK" : "🎨 Kolor: NIE";
+        applyLiveFilter();
       }, { signal });
 
       rotateBtn.addEventListener("click", () => {
@@ -160,11 +177,8 @@
         originalCanvas.height = tempCanvas.height;
         originalCanvas.getContext("2d").drawImage(tempCanvas, 0, 0);
         
-        img.src = originalCanvas.toDataURL();
-        img.onload = () => {
-          updateDisplay();
-          resetHandles();
-        };
+        updateDisplay();
+        resetHandles();
       }, { signal });
 
       wrapperDiv.addEventListener("pointerdown", (e) => {
@@ -187,11 +201,12 @@
 
         if (closestHandle && minDist < 120) {
           activeHandle = closestHandle;
-          const hX = parseFloat(activeHandle.style.left) / 100 * rect.width;
-          const hY = parseFloat(activeHandle.style.top) / 100 * rect.height;
           
-          dragOffsetX = touchX - hX;
-          dragOffsetY = touchY - hY;
+          dragStartHandleX = parseFloat(activeHandle.style.left) / 100 * rect.width;
+          dragStartHandleY = parseFloat(activeHandle.style.top) / 100 * rect.height;
+          
+          dragStartTouchX = touchX;
+          dragStartTouchY = touchY;
           
           wrapperDiv.setPointerCapture(e.pointerId);
         }
@@ -200,9 +215,14 @@
       wrapperDiv.addEventListener("pointermove", (e) => {
         if (!activeHandle) return;
         const rect = displayCanvasEl.getBoundingClientRect();
-        
-        let x = e.clientX - rect.left - dragOffsetX;
-        let y = e.clientY - rect.top - dragOffsetY;
+        const touchX = e.clientX - rect.left;
+        const touchY = e.clientY - rect.top;
+
+        const deltaX = (touchX - dragStartTouchX) / 3;
+        const deltaY = (touchY - dragStartTouchY) / 3;
+
+        let x = dragStartHandleX + deltaX;
+        let y = dragStartHandleY + deltaY;
 
         x = Math.max(0, Math.min(x, rect.width));
         y = Math.max(0, Math.min(y, rect.height));
@@ -251,6 +271,7 @@
 
             const contrast = parseFloat(contrastSlider.value) / 100;
             const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+            const isColorMode = isColor;
 
             for (let y = 0; y < outH; y++) {
               for (let x = 0; x < outW; x++) {
@@ -266,13 +287,21 @@
                   let g = srcData[srcIdx+1];
                   let b = srcData[srcIdx+2];
 
-                  let gray = 0.299*r + 0.587*g + 0.114*b;
-                  gray = factor * (gray - 128) + 128;
-                  gray = Math.max(0, Math.min(255, gray));
-
-                  outData[dstIdx] = gray;
-                  outData[dstIdx+1] = gray;
-                  outData[dstIdx+2] = gray;
+                  if (!isColorMode) {
+                    let gray = 0.299*r + 0.587*g + 0.114*b;
+                    gray = factor * (gray - 128) + 128;
+                    gray = Math.max(0, Math.min(255, gray));
+                    outData[dstIdx] = gray;
+                    outData[dstIdx+1] = gray;
+                    outData[dstIdx+2] = gray;
+                  } else {
+                    r = factor * (r - 128) + 128;
+                    g = factor * (g - 128) + 128;
+                    b = factor * (b - 128) + 128;
+                    outData[dstIdx] = Math.max(0, Math.min(255, r));
+                    outData[dstIdx+1] = Math.max(0, Math.min(255, g));
+                    outData[dstIdx+2] = Math.max(0, Math.min(255, b));
+                  }
                   outData[dstIdx+3] = 255;
                 }
               }
