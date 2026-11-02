@@ -1,0 +1,11 @@
+[
+  {
+    "file": "./modules/konwerter.js"
+  },
+  {
+    "file": "./modules/qr.js"
+  },
+  {
+    "file": "./modules/exif.js"
+  }
+]
