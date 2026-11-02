@@ -37,7 +37,15 @@
     function encode(text) {
       const bytes = new TextEncoder().encode(text);
       let ver = 1;
-      while (ver <= 10 && bytes.length > DATA_CAP[ver]) ver++;
+      
+      while (ver <= 10) {
+        const lenBits = ver < 10 ? 8 : 16;
+        const requiredBits = 4 + lenBits + bytes.length * 8;
+        const requiredBytes = Math.ceil(requiredBits / 8);
+        if (requiredBytes <= DATA_CAP[ver]) break;
+        ver++;
+      }
+      
       if (ver > 10) throw new Error("Tekst jest za długi (maks. ok. 270 znaków).");
 
       const totalData = DATA_CAP[ver];
@@ -52,6 +60,7 @@
       push(0b0100, 4);
       push(bytes.length, ver < 10 ? 8 : 16);
       for (const b of bytes) push(b, 8);
+      
       for (let i = 0; i < 4 && bits.length < totalData * 8; i++) bits.push(0);
       while (bits.length % 8 !== 0) bits.push(0);
 
@@ -70,6 +79,7 @@
       const dBlocks = [];
       const eBlocks = [];
       let offset = 0;
+      
       for (let b = 0; b < numBlocks; b++) {
         const size = bLen + (b >= numBlocks - extra ? 1 : 0);
         const blk = dataCW.slice(offset, offset + size);
@@ -80,11 +90,13 @@
 
       const finalCW = [];
       const maxDataLen = Math.max(...dBlocks.map(b => b.length));
+      
       for (let i = 0; i < maxDataLen; i++) {
         for (let b = 0; b < numBlocks; b++) {
           if (i < dBlocks[b].length) finalCW.push(dBlocks[b][i]);
         }
       }
+      
       for (let i = 0; i < ecLen; i++) {
         for (let b = 0; b < numBlocks; b++) finalCW.push(eBlocks[b][i]);
       }
@@ -92,6 +104,7 @@
       const size = ver * 4 + 17;
       const mat = Array.from({ length: size }, () => new Uint8Array(size));
       const func = Array.from({ length: size }, () => new Uint8Array(size));
+      
       const set = (r, c, v) => { mat[r][c] = v ? 1 : 0; func[r][c] = 1; };
       
       const finder = (R, C) => {
@@ -108,14 +121,19 @@
       
       finder(0, 0); finder(0, size - 7); finder(size - 7, 0);
 
-      for (let i = 8; i < size - 8; i++) { set(6, i, i % 2 === 0); set(i, 6, i % 2 === 0); }
+      for (let i = 8; i < size - 8; i++) { 
+        set(6, i, i % 2 === 0); 
+        set(i, 6, i % 2 === 0); 
+      }
 
       const al = ALIGN[ver];
       for (let i = 0; i < al.length; i++) {
         for (let j = 0; j < al.length; j++) {
           if ((i === 0 && j === 0) || (i === 0 && j === al.length - 1) || (i === al.length - 1 && j === 0)) continue;
           const R = al[i], C = al[j];
-          for (let r = -2; r <= 2; r++) for (let c = -2; c <= 2; c++) set(R + r, C + c, Math.max(Math.abs(r), Math.abs(c)) !== 1);
+          for (let r = -2; r <= 2; r++) 
+            for (let c = -2; c <= 2; c++) 
+              set(R + r, C + c, Math.max(Math.abs(r), Math.abs(c)) !== 1);
         }
       }
 
