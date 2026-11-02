@@ -24,11 +24,9 @@ body {
   margin: 0; background: var(--bg); color: var(--ink); min-height: 100vh;
   padding-bottom: 80px;
 }
-.topbar { padding: 24px 16px 12px; text-align: center; }
-.topbar-title { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 8px 0; }
-.status { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13.5px; color: var(--muted); }
-.status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); }
-.container { max-width: 600px; margin: 0 auto; padding: 16px; }
+.topbar { padding: 24px 16px 16px; text-align: center; }
+.topbar-title { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin: 0; }
+.container { max-width: 600px; margin: 0 auto; padding: 0 16px 16px; }
 .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .tile {
   background: var(--surface); border: 1.5px solid var(--line); border-radius: 20px;
@@ -75,10 +73,6 @@ button.p { background: var(--accent); color: var(--accent-ink); border-color: va
 
 <div class="topbar">
   <h1 class="topbar-title" id="app-title">Warsztat</h1>
-  <div class="status">
-    <div class="status-dot"></div>
-    <span id="status-text">Online (zapisano do pracy offline)</span>
-  </div>
 </div>
 
 <main class="container" id="view-home">
