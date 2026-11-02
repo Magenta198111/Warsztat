@@ -10,5 +10,8 @@
   },
   {
     "file": "./modules/skaner-pdf.js"
+  },
+  {
+    "file": "./modules/oczyszczacz.js"
   }
 ]
