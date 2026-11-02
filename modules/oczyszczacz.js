@@ -1,4 +1,3 @@
-
 (() => {
   Hub.register({
     id: "oczyszczacz",
@@ -50,14 +49,11 @@
             <span>Zostaw jeden</span>
           </div>
 
-          <div style="display:flex; flex-direction:column; gap:10px;">
-            <button id="o-clean" class="p" style="margin:0;">Wyczyść formatowanie</button>
-            <button id="o-sentence" style="margin:0; padding:12px;">Duże litery na początku zdań</button>
-          </div>
+          <button id="o-sentence" style="width:100%; margin:0; padding:14px; background:var(--bg); transition: 0.2s;">Duże litery na początku zdań</button>
         </div>
 
         <div class="card">
-          <label>Wynik</label>
+          <label>Wynik (aktualizuje się na żywo)</label>
           <textarea id="o-output" rows="5" readonly style="width:100%; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--accent); font:inherit; resize:vertical; outline:none;" placeholder="Tutaj pojawi się czysty tekst..."></textarea>
           
           <div style="display:flex; gap:10px; margin-top:14px;">
@@ -71,12 +67,19 @@
       const inputEl = $("o-input");
       const outputEl = $("o-output");
       const dashToggle = $("o-dash-toggle");
+      const sentenceBtn = $("o-sentence");
+
+      let isSentenceCase = false;
 
       $("o-back").addEventListener("click", () => history.back(), { signal });
 
-      $("o-clean").addEventListener("click", () => {
+      function processText() {
         let text = inputEl.value;
-        
+        if (!text) {
+          outputEl.value = "";
+          return;
+        }
+
         text = text.replace(/\r?\n|\r/g, " ");
         text = text.replace(/\s+/g, " ");
         text = text.replace(/\*/g, "");
@@ -87,19 +90,28 @@
           text = text.replace(/-{2,}/g, "");
         }
 
-        text = text.trim();
-        outputEl.value = text;
-      }, { signal });
+        if (isSentenceCase) {
+          text = text.replace(/(^\s*|[.!?]\s+)([a-ząćęłńóśźż])/g, (match, prefix, letter) => {
+            return prefix + letter.toUpperCase();
+          });
+        }
 
-      $("o-sentence").addEventListener("click", () => {
-        const source = outputEl.value || inputEl.value;
-        if (!source) return;
+        outputEl.value = text.trim();
+      }
 
-        let text = source.replace(/(^\s*|[.!?]\s+)([a-ząćęłńóśźż])/g, (match, prefix, letter) => {
-          return prefix + letter.toUpperCase();
-        });
+      inputEl.addEventListener("input", processText, { signal });
+      dashToggle.addEventListener("change", processText, { signal });
 
-        outputEl.value = text;
+      sentenceBtn.addEventListener("click", () => {
+        isSentenceCase = !isSentenceCase;
+        if (isSentenceCase) {
+          sentenceBtn.classList.add("p");
+          sentenceBtn.textContent = "Duże litery: WŁĄCZONE";
+        } else {
+          sentenceBtn.classList.remove("p");
+          sentenceBtn.textContent = "Duże litery: WYŁĄCZONE";
+        }
+        processText();
       }, { signal });
 
       $("o-copy").addEventListener("click", async () => {
@@ -118,6 +130,9 @@
       $("o-clear").addEventListener("click", () => {
         inputEl.value = "";
         outputEl.value = "";
+        isSentenceCase = false;
+        sentenceBtn.classList.remove("p");
+        sentenceBtn.textContent = "Duże litery na początku zdań";
       }, { signal });
     },
 
