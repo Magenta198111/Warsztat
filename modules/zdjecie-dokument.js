@@ -14,31 +14,26 @@
       let startX = 0;
       let startY = 0;
       let isLoaded = false;
-      
-      let targetW = 3.5;
-      let targetH = 4.5;
-      let unit = 'cm';
-      let maxKb = 100;
 
       container.innerHTML = `
         <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
           <button id="zd-back" style="width:auto; padding:10px 16px; border-radius:14px; margin:0;">Wróć</button>
         </div>
 
-        <div class="card" id="zd-setup-card">
+        <div class="card" id="zd-setup-card" style="width:100%; box-sizing:border-box; overflow:hidden;">
           <label>Wymiary zdjęcia</label>
-          <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
-            <input type="number" id="zd-w" value="3.5" step="0.1" style="flex:1; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit;">
-            <span style="color:var(--muted);">×</span>
-            <input type="number" id="zd-h" value="4.5" step="0.1" style="flex:1; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit;">
-            <select id="zd-unit" style="flex:1; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit;">
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px; width:100%;">
+            <input type="number" id="zd-w" value="3.5" step="0.1" style="flex:1 1 0; min-width:0; padding:12px 4px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; text-align:center;">
+            <span style="color:var(--muted); flex:0 0 auto;">×</span>
+            <input type="number" id="zd-h" value="4.5" step="0.1" style="flex:1 1 0; min-width:0; padding:12px 4px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; text-align:center;">
+            <select id="zd-unit" style="flex:0 0 75px; max-width:75px; padding:12px 4px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; text-align:center;">
               <option value="cm">cm</option>
               <option value="px">px</option>
             </select>
           </div>
 
           <label>Maksymalny rozmiar pliku (KB)</label>
-          <input type="number" id="zd-size" value="100" min="10" step="10" style="width:100%; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; margin-bottom:16px;">
+          <input type="number" id="zd-size" value="100" min="10" step="10" style="width:100%; box-sizing:border-box; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; margin-bottom:16px;">
 
           <input type="file" id="zd-file" accept="image/*" style="display:none;">
           <button id="zd-pick-btn" class="p" style="margin:0; display:flex; justify-content:center; align-items:center; gap:8px;">
@@ -222,9 +217,6 @@
             const containerW = cropContainer.clientWidth;
             const containerH = cropContainer.clientHeight;
             const ratio = targetW / containerW;
-            
-            const scaledW = previewImg.naturalWidth * (containerW / previewImg.clientWidth) * ratio * scale;
-            const scaledH = previewImg.naturalHeight * (containerH / previewImg.clientHeight) * ratio * scale;
             
             const offsetX = -translateX * (targetW / containerW);
             const offsetY = -translateY * (targetH / containerH);
