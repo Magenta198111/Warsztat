@@ -12,12 +12,37 @@
       let isLoaded = false;
 
       container.innerHTML = `
+        <style>
+          .sk-handle {
+            position: absolute;
+            width: 26px; height: 26px;
+            margin: -13px 0 0 -13px;
+            z-index: 10;
+            pointer-events: none;
+            touch-action: none;
+          }
+          .sk-handle::before, .sk-handle::after {
+            content: '';
+            position: absolute;
+            background-color: #ff3b30;
+            box-shadow: 0 0 3px rgba(0,0,0,0.8);
+          }
+          .sk-handle::before {
+            top: 50%; left: 0; width: 100%; height: 2px;
+            transform: translateY(-50%);
+          }
+          .sk-handle::after {
+            left: 50%; top: 0; width: 2px; height: 100%;
+            transform: translateX(-50%);
+          }
+        </style>
+
         <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
           <button id="sk-back" style="width:auto; padding:10px 16px; border-radius:14px; margin:0;">Wróć</button>
         </div>
 
         <div class="card" id="sk-start-card">
-          <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">Wybierz zdjęcie z galerii lub zrób nowe. Następnie przeciągnij fioletowe punkty na rogi dokumentu, aby go wyprostować.</p>
+          <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">Wybierz zdjęcie z galerii lub zrób nowe. Następnie przeciągnij czerwone krzyżyki na rogi dokumentu, aby go wyprostować.</p>
           <input type="file" id="sk-file" accept="image/*" style="display:none;">
           <button id="sk-pick-btn" class="p" style="margin:0; display:flex; justify-content:center; align-items:center; gap:8px;">
             📁 Wybierz zdjęcie
@@ -27,12 +52,12 @@
         <div id="sk-editor" class="hidden">
           <div id="sk-wrapper" style="position:relative; margin:16px 0; touch-action:none;">
             <div style="overflow:hidden; border-radius:14px; border:1.5px solid var(--line); background:#000;">
-              <canvas id="sk-display" style="display:block; width:100%; height:auto;"></canvas>
+              <canvas id="sk-display" style="display:block; width:100%; height:auto; transition: filter 0.1s;"></canvas>
             </div>
-            <div class="sk-handle" style="position:absolute; width:22px; height:22px; margin:-11px 0 0 -11px; background:rgba(123,144,255,0.9); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events:none;"></div>
-            <div class="sk-handle" style="position:absolute; width:22px; height:22px; margin:-11px 0 0 -11px; background:rgba(123,144,255,0.9); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events:none;"></div>
-            <div class="sk-handle" style="position:absolute; width:22px; height:22px; margin:-11px 0 0 -11px; background:rgba(123,144,255,0.9); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events:none;"></div>
-            <div class="sk-handle" style="position:absolute; width:22px; height:22px; margin:-11px 0 0 -11px; background:rgba(123,144,255,0.9); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events:none;"></div>
+            <div class="sk-handle"></div>
+            <div class="sk-handle"></div>
+            <div class="sk-handle"></div>
+            <div class="sk-handle"></div>
           </div>
           
           <div class="card" style="margin-top:16px;">
@@ -115,6 +140,10 @@
         reader.readAsDataURL(file);
       }, { signal });
 
+      contrastSlider.addEventListener("input", (e) => {
+        displayCanvasEl.style.filter = `contrast(${e.target.value}%)`;
+      }, { signal });
+
       rotateBtn.addEventListener("click", () => {
         if (!isLoaded) return;
         
@@ -156,7 +185,7 @@
           }
         });
 
-        if (closestHandle && minDist < 60) {
+        if (closestHandle && minDist < 120) {
           activeHandle = closestHandle;
           const hX = parseFloat(activeHandle.style.left) / 100 * rect.width;
           const hY = parseFloat(activeHandle.style.top) / 100 * rect.height;
