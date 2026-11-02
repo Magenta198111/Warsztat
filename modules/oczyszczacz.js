@@ -1,3 +1,4 @@
+
 (() => {
   Hub.register({
     id: "oczyszczacz",
