@@ -13,5 +13,8 @@
   },
   {
     "file": "./modules/oczyszczacz.js"
+  },
+  {
+    "file": "./modules/zdjecie-dokument.js"
   }
 ]
