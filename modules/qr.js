@@ -193,7 +193,7 @@
           
           <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; margin-top:16px; width:100%;">
             <canvas id="q-canvas" style="display:none; max-width:100%; border-radius:14px;"></canvas>
-            <a class="btn-dl hidden" id="q-dl" style="width:100%; display:block; text-align:center; margin-top:14px; text-decoration:none; background:var(--accent); border:1.5px solid var(--accent); padding:14px; border-radius:14px; color:var(--accent-ink); font-weight:600;">⬇️ Pobierz kod QR</a>
+            <button class="p hidden" id="q-dl" style="width:100%; margin-top:14px;">⬇️ Pobierz kod QR</button>
           </div>
         </div>
 
@@ -213,6 +213,8 @@
       const $ = id => container.querySelector("#" + id);
       const tabGen = $("q-tab-gen"), tabScan = $("q-tab-scan");
       const viewGen = $("q-view-gen"), viewScan = $("q-view-scan");
+      const dlBtn = $("q-dl");
+      const canvas = $("q-canvas");
       
       $("q-back").addEventListener("click", () => history.back(), { signal });
 
@@ -231,14 +233,12 @@
         const text = $("q-text").value.trim();
         if (!text) return alert("Wpisz tekst do wygenerowania!");
         
-        const dlBtn = $("q-dl");
         dlBtn.classList.add("hidden");
 
         try {
           const mat = QR.encode(text);
           const size = mat.length;
           const scale = 10;
-          const canvas = $("q-canvas");
           canvas.width = size * scale;
           canvas.height = size * scale;
           const ctx = canvas.getContext("2d");
@@ -250,14 +250,18 @@
             }
           }
           canvas.style.display = "block";
-          
-          dlBtn.href = canvas.toDataURL("image/png");
-          dlBtn.download = "kod-qr.png";
           dlBtn.classList.remove("hidden");
 
         } catch (e) {
           alert(e.message);
         }
+      }, { signal });
+
+      dlBtn.addEventListener("click", () => {
+        const link = document.createElement('a');
+        link.download = 'kod-qr.png';
+        link.href = canvas.toDataURL("image/png");
+        link.click();
       }, { signal });
 
       videoEl = $("q-video");
