@@ -192,7 +192,7 @@
           <button class="p" id="q-gen-btn">Wygeneruj kod QR</button>
           
           <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; margin-top:16px; width:100%;">
-            <canvas id="q-canvas" style="display:none; max-width:100%; border-radius:14px;"></canvas>
+            <canvas id="q-canvas" style="display:none; max-width:100%; border-radius:14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"></canvas>
             <button class="p hidden" id="q-dl" style="width:100%; margin-top:14px;">⬇️ Pobierz kod QR</button>
           </div>
         </div>
@@ -239,16 +239,29 @@
           const mat = QR.encode(text);
           const size = mat.length;
           const scale = 10;
-          canvas.width = size * scale;
-          canvas.height = size * scale;
+          
+          // DODANY MARGINES (Cicha strefa - 4 kratki z każdej strony)
+          const margin = 4 * scale; 
+          
+          canvas.width = (size * scale) + (margin * 2);
+          canvas.height = (size * scale) + (margin * 2);
+          
           const ctx = canvas.getContext("2d");
-          ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Rysowanie białego tła na całym obrazku (łącznie z marginesem)
+          ctx.fillStyle = "#fff"; 
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Rysowanie czarnych kwadratów z uwzględnieniem przesunięcia (marginesu)
           ctx.fillStyle = "#000";
           for (let r = 0; r < size; r++) {
             for (let c = 0; c < size; c++) {
-              if (mat[r][c]) ctx.fillRect(c * scale, r * scale, scale, scale);
+              if (mat[r][c]) {
+                ctx.fillRect(margin + (c * scale), margin + (r * scale), scale, scale);
+              }
             }
           }
+          
           canvas.style.display = "block";
           dlBtn.classList.remove("hidden");
 
