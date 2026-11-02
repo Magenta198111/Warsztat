@@ -17,19 +17,20 @@
         </div>
 
         <div class="card" id="sk-start-card">
-          <h2>Skaner Dokumentów</h2>
           <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">Wybierz zdjęcie z galerii lub zrób nowe. Następnie przeciągnij fioletowe punkty na rogi dokumentu, aby go wyprostować.</p>
           <label>Zdjęcie dokumentu</label>
           <input type="file" id="sk-file" accept="image/*">
         </div>
 
         <div id="sk-editor" class="hidden">
-          <div style="position:relative; width:100%; overflow:hidden; border-radius:14px; border:1.5px solid var(--line); background:#000; touch-action:none;" id="sk-container">
-            <canvas id="sk-display" style="display:block; width:100%; height:auto;"></canvas>
-            <div class="sk-handle" data-id="0" style="position:absolute; width:32px; height:32px; margin:-16px 0 0 -16px; background:rgba(123,144,255,0.6); border:2px solid #fff; border-radius:50%; touch-action:none; z-index:10;"></div>
-            <div class="sk-handle" data-id="1" style="position:absolute; width:32px; height:32px; margin:-16px 0 0 -16px; background:rgba(123,144,255,0.6); border:2px solid #fff; border-radius:50%; touch-action:none; z-index:10;"></div>
-            <div class="sk-handle" data-id="2" style="position:absolute; width:32px; height:32px; margin:-16px 0 0 -16px; background:rgba(123,144,255,0.6); border:2px solid #fff; border-radius:50%; touch-action:none; z-index:10;"></div>
-            <div class="sk-handle" data-id="3" style="position:absolute; width:32px; height:32px; margin:-16px 0 0 -16px; background:rgba(123,144,255,0.6); border:2px solid #fff; border-radius:50%; touch-action:none; z-index:10;"></div>
+          <div id="sk-wrapper" style="position:relative; margin:16px 0; touch-action:none;">
+            <div style="overflow:hidden; border-radius:14px; border:1.5px solid var(--line); background:#000;">
+              <canvas id="sk-display" style="display:block; width:100%; height:auto;"></canvas>
+            </div>
+            <div class="sk-handle" style="position:absolute; width:36px; height:36px; margin:-18px 0 0 -18px; background:rgba(123,144,255,0.8); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>
+            <div class="sk-handle" style="position:absolute; width:36px; height:36px; margin:-18px 0 0 -18px; background:rgba(123,144,255,0.8); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>
+            <div class="sk-handle" style="position:absolute; width:36px; height:36px; margin:-18px 0 0 -18px; background:rgba(123,144,255,0.8); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>
+            <div class="sk-handle" style="position:absolute; width:36px; height:36px; margin:-18px 0 0 -18px; background:rgba(123,144,255,0.8); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>
           </div>
           
           <div class="card" style="margin-top:16px;">
@@ -44,9 +45,9 @@
       const fileInput = $("sk-file");
       const editorDiv = $("sk-editor");
       const startCard = $("sk-start-card");
-      const containerDiv = $("sk-container");
+      const wrapperDiv = $("sk-wrapper");
       const displayCanvasEl = $("sk-display");
-      const handles = container.querySelectorAll(".sk-handle");
+      const handles = wrapperDiv.querySelectorAll(".sk-handle");
       const contrastSlider = $("sk-contrast");
       const pdfBtn = $("sk-pdf-btn");
 
@@ -54,7 +55,6 @@
 
       let activeHandle = null;
       let scaleX = 1, scaleY = 1;
-      let displayW = 0, displayH = 0;
 
       fileInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
@@ -68,8 +68,8 @@
             originalCanvas.getContext("2d").drawImage(img, 0, 0);
 
             const maxW = 800;
-            displayW = img.width > maxW ? maxW : img.width;
-            displayH = (img.height / img.width) * displayW;
+            const displayW = img.width > maxW ? maxW : img.width;
+            const displayH = (img.height / img.width) * displayW;
 
             displayCanvasEl.width = displayW;
             displayCanvasEl.height = displayH;
@@ -78,10 +78,16 @@
             scaleX = img.width / displayW;
             scaleY = img.height / displayH;
 
-            const pos = [[0,0], [displayW,0], [displayW,displayH], [0,displayH]];
+            const pos = [
+              { left: '0%', top: '0%' },
+              { left: '100%', top: '0%' },
+              { left: '100%', top: '100%' },
+              { left: '0%', top: '100%' }
+            ];
+            
             handles.forEach((h, i) => {
-              h.style.left = pos[i][0] + "px";
-              h.style.top = pos[i][1] + "px";
+              h.style.left = pos[i].left;
+              h.style.top = pos[i].top;
             });
 
             startCard.classList.add("hidden");
@@ -93,28 +99,32 @@
         reader.readAsDataURL(file);
       }, { signal });
 
-      containerDiv.addEventListener("pointerdown", (e) => {
+      wrapperDiv.addEventListener("pointerdown", (e) => {
         if (e.target.classList.contains("sk-handle")) {
           activeHandle = e.target;
           activeHandle.setPointerCapture(e.pointerId);
         }
       }, { signal });
 
-      containerDiv.addEventListener("pointermove", (e) => {
+      wrapperDiv.addEventListener("pointermove", (e) => {
         if (!activeHandle) return;
         const rect = displayCanvasEl.getBoundingClientRect();
+        
         let x = e.clientX - rect.left;
         let y = e.clientY - rect.top;
 
         x = Math.max(0, Math.min(x, rect.width));
         y = Math.max(0, Math.min(y, rect.height));
 
-        activeHandle.style.left = x + "px";
-        activeHandle.style.top = y + "px";
+        activeHandle.style.left = (x / rect.width * 100) + "%";
+        activeHandle.style.top = (y / rect.height * 100) + "%";
       }, { signal });
 
-      containerDiv.addEventListener("pointerup", () => {
-        activeHandle = null;
+      wrapperDiv.addEventListener("pointerup", (e) => {
+        if (activeHandle) {
+          activeHandle.releasePointerCapture(e.pointerId);
+          activeHandle = null;
+        }
       }, { signal });
 
       pdfBtn.addEventListener("click", () => {
@@ -122,9 +132,9 @@
         
         const points = [];
         handles.forEach(h => {
-          const hx = parseFloat(h.style.left) || 0;
-          const hy = parseFloat(h.style.top) || 0;
-          points.push([hx * scaleX, hy * scaleY]);
+          const hx = parseFloat(h.style.left) / 100;
+          const hy = parseFloat(h.style.top) / 100;
+          points.push([hx * originalCanvas.width, hy * originalCanvas.height]);
         });
 
         pdfBtn.disabled = true;
