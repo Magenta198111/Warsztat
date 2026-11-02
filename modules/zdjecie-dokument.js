@@ -215,17 +215,16 @@
             const ctx = canvas.getContext("2d");
             
             const containerW = cropContainer.clientWidth;
-            const containerH = cropContainer.clientHeight;
             const ratio = targetW / containerW;
             
-            const offsetX = -translateX * (targetW / containerW);
-            const offsetY = -translateY * (targetH / containerH);
+            const drawW = targetW * scale;
+            const drawH = (img.naturalHeight / img.naturalWidth) * drawW;
+            
+            const offsetX = translateX * ratio;
+            const offsetY = translateY * ratio;
             
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, targetW, targetH);
-            
-            const drawW = previewImg.naturalWidth * ratio * scale;
-            const drawH = previewImg.naturalHeight * ratio * scale;
             
             ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
             
