@@ -38,7 +38,7 @@
       const bytes = new TextEncoder().encode(text);
       let ver = 1;
       while (ver <= 10 && bytes.length > DATA_CAP[ver]) ver++;
-      if (ver > 10) throw new Error("Tekst jest za długi.");
+      if (ver > 10) throw new Error("Tekst jest za długi (maks. ok. 270 znaków).");
 
       const totalData = DATA_CAP[ver];
       const ecLen = EC_CAP[ver];
@@ -66,19 +66,28 @@
       for (let i = bits.length / 8, p = 0; i < totalData; i++, p ^= 1) dataCW[i] = pads[p];
 
       const bLen = Math.floor(totalData / numBlocks);
+      const extra = totalData % numBlocks;
       const dBlocks = [];
       const eBlocks = [];
       let offset = 0;
       for (let b = 0; b < numBlocks; b++) {
-        const blk = dataCW.slice(offset, offset + bLen);
-        offset += bLen;
+        const size = bLen + (b >= numBlocks - extra ? 1 : 0);
+        const blk = dataCW.slice(offset, offset + size);
+        offset += size;
         dBlocks.push(blk);
         eBlocks.push(rsEncode(blk, ecLen));
       }
 
       const finalCW = [];
-      for (let i = 0; i < bLen; i++) for (let b = 0; b < numBlocks; b++) finalCW.push(dBlocks[b][i]);
-      for (let i = 0; i < ecLen; i++) for (let b = 0; b < numBlocks; b++) finalCW.push(eBlocks[b][i]);
+      const maxDataLen = Math.max(...dBlocks.map(b => b.length));
+      for (let i = 0; i < maxDataLen; i++) {
+        for (let b = 0; b < numBlocks; b++) {
+          if (i < dBlocks[b].length) finalCW.push(dBlocks[b][i]);
+        }
+      }
+      for (let i = 0; i < ecLen; i++) {
+        for (let b = 0; b < numBlocks; b++) finalCW.push(eBlocks[b][i]);
+      }
 
       const size = ver * 4 + 17;
       const mat = Array.from({ length: size }, () => new Uint8Array(size));
@@ -118,13 +127,14 @@
 
       let bitIdx = 0;
       const totalBits = finalCW.length * 8;
+      let upward = true;
+
       for (let right = size - 1; right >= 1; right -= 2) {
         if (right === 6) right = 5;
         for (let vert = 0; vert < size; vert++) {
           for (let j = 0; j < 2; j++) {
             const c = right - j;
-            const up = ((right + 1) & 2) === 0;
-            const r = up ? size - 1 - vert : vert;
+            const r = upward ? size - 1 - vert : vert;
             if (!func[r][c]) {
               let bit = 0;
               if (bitIdx < totalBits) {
@@ -136,6 +146,7 @@
             }
           }
         }
+        upward = !upward;
       }
 
       const fmt = 0x77c4;
@@ -204,9 +215,14 @@
           </div>
           <div class="i" id="q-scan-status" style="text-align:center; margin-bottom:14px;">Skieruj kamerę na kod QR</div>
           <button id="q-scan-toggle" class="p">Uruchom kamerę</button>
+          
           <div style="text-align:center; margin-top:14px; color:var(--muted); font-size:14px;">lub</div>
-          <label>Wgraj zdjęcie z kodem QR</label>
-          <input type="file" id="q-scan-file" accept="image/*">
+          
+          <input type="file" id="q-scan-file" accept="image/*" style="display:none;">
+          <button id="q-scan-file-btn" style="width:100%; margin-top:8px; padding:14px; background:var(--bg); border:1.5px dashed var(--line); border-radius:14px; color:var(--ink); font-weight:600; display:flex; justify-content:center; align-items:center; gap:8px;">
+            📁 Wybierz zdjęcie z kodem QR
+          </button>
+          <div id="q-scan-file-name" style="font-size:13px; color:var(--muted); margin-top:8px; text-align:center; word-break:break-all;"></div>
         </div>
       `;
 
@@ -215,6 +231,9 @@
       const viewGen = $("q-view-gen"), viewScan = $("q-view-scan");
       const dlBtn = $("q-dl");
       const canvas = $("q-canvas");
+      const scanFileBtn = $("q-scan-file-btn");
+      const scanFileInput = $("q-scan-file");
+      const scanFileName = $("q-scan-file-name");
       
       $("q-back").addEventListener("click", () => history.back(), { signal });
 
@@ -240,7 +259,6 @@
           const size = mat.length;
           const scale = 10;
           
-          // DODANY MARGINES (Cicha strefa - 4 kratki z każdej strony)
           const margin = 4 * scale; 
           
           canvas.width = (size * scale) + (margin * 2);
@@ -248,11 +266,9 @@
           
           const ctx = canvas.getContext("2d");
           
-          // Rysowanie białego tła na całym obrazku (łącznie z marginesem)
           ctx.fillStyle = "#fff"; 
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           
-          // Rysowanie czarnych kwadratów z uwzględnieniem przesunięcia (marginesu)
           ctx.fillStyle = "#000";
           for (let r = 0; r < size; r++) {
             for (let c = 0; c < size; c++) {
@@ -319,10 +335,14 @@
         }
       }, { signal });
 
-      $("q-scan-file").addEventListener("change", async (e) => {
+      scanFileBtn.addEventListener("click", () => scanFileInput.click(), { signal });
+
+      scanFileInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
         
+        scanFileName.textContent = file.name;
+
         if (!('BarcodeDetector' in window)) {
           return alert("Twoja przeglądarka nie obsługuje odczytu kodów ze zdjęć.");
         }
