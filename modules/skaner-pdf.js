@@ -18,8 +18,10 @@
 
         <div class="card" id="sk-start-card">
           <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">Wybierz zdjęcie z galerii lub zrób nowe. Następnie przeciągnij fioletowe punkty na rogi dokumentu, aby go wyprostować.</p>
-          <label>Zdjęcie dokumentu</label>
-          <input type="file" id="sk-file" accept="image/*">
+          <input type="file" id="sk-file" accept="image/*" style="display:none;">
+          <button id="sk-pick-btn" class="p" style="margin:0; display:flex; justify-content:center; align-items:center; gap:8px;">
+            📁 Wybierz zdjęcie
+          </button>
         </div>
 
         <div id="sk-editor" class="hidden">
@@ -27,22 +29,26 @@
             <div style="overflow:hidden; border-radius:14px; border:1.5px solid var(--line); background:#000;">
               <canvas id="sk-display" style="display:block; width:100%; height:auto;"></canvas>
             </div>
-            <div class="sk-handle" style="position:absolute; width:36px; height:36px; margin:-18px 0 0 -18px; background:rgba(123,144,255,0.8); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>
-            <div class="sk-handle" style="position:absolute; width:36px; height:36px; margin:-18px 0 0 -18px; background:rgba(123,144,255,0.8); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>
-            <div class="sk-handle" style="position:absolute; width:36px; height:36px; margin:-18px 0 0 -18px; background:rgba(123,144,255,0.8); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>
-            <div class="sk-handle" style="position:absolute; width:36px; height:36px; margin:-18px 0 0 -18px; background:rgba(123,144,255,0.8); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>
+            <div class="sk-handle" style="position:absolute; width:22px; height:22px; margin:-11px 0 0 -11px; background:rgba(123,144,255,0.9); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events:none;"></div>
+            <div class="sk-handle" style="position:absolute; width:22px; height:22px; margin:-11px 0 0 -11px; background:rgba(123,144,255,0.9); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events:none;"></div>
+            <div class="sk-handle" style="position:absolute; width:22px; height:22px; margin:-11px 0 0 -11px; background:rgba(123,144,255,0.9); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events:none;"></div>
+            <div class="sk-handle" style="position:absolute; width:22px; height:22px; margin:-11px 0 0 -11px; background:rgba(123,144,255,0.9); border:2px solid #fff; border-radius:50%; z-index:10; touch-action:none; box-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events:none;"></div>
           </div>
           
           <div class="card" style="margin-top:16px;">
             <label>Popraw kontrast (Skan)</label>
             <input type="range" id="sk-contrast" min="0" max="200" value="100">
-            <button class="p" id="sk-pdf-btn">Zapisz jako PDF</button>
+            <div style="display:flex; gap:10px; margin-top:14px;">
+              <button id="sk-rotate-btn" style="flex:1; margin:0; padding:14px; background:var(--bg);">🔄 Obróć 90°</button>
+              <button class="p" id="sk-pdf-btn" style="flex:2; margin:0; padding:14px;">Zapisz PDF</button>
+            </div>
           </div>
         </div>
       `;
 
       const $ = id => container.querySelector("#" + id);
       const fileInput = $("sk-file");
+      const pickBtn = $("sk-pick-btn");
       const editorDiv = $("sk-editor");
       const startCard = $("sk-start-card");
       const wrapperDiv = $("sk-wrapper");
@@ -50,11 +56,41 @@
       const handles = wrapperDiv.querySelectorAll(".sk-handle");
       const contrastSlider = $("sk-contrast");
       const pdfBtn = $("sk-pdf-btn");
+      const rotateBtn = $("sk-rotate-btn");
 
       $("sk-back").addEventListener("click", () => history.back(), { signal });
+      
+      pickBtn.addEventListener("click", () => fileInput.click(), { signal });
 
       let activeHandle = null;
+      let dragOffsetX = 0, dragOffsetY = 0;
       let scaleX = 1, scaleY = 1;
+
+      function resetHandles() {
+        const pos = [
+          { left: '0%', top: '0%' },
+          { left: '100%', top: '0%' },
+          { left: '100%', top: '100%' },
+          { left: '0%', top: '100%' }
+        ];
+        handles.forEach((h, i) => {
+          h.style.left = pos[i].left;
+          h.style.top = pos[i].top;
+        });
+      }
+
+      function updateDisplay() {
+        const maxW = 800;
+        const displayW = img.width > maxW ? maxW : img.width;
+        const displayH = (img.height / img.width) * displayW;
+
+        displayCanvasEl.width = displayW;
+        displayCanvasEl.height = displayH;
+        displayCanvasEl.getContext("2d").drawImage(img, 0, 0, displayW, displayH);
+
+        scaleX = img.width / displayW;
+        scaleY = img.height / displayH;
+      }
 
       fileInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
@@ -67,28 +103,8 @@
             originalCanvas.height = img.height;
             originalCanvas.getContext("2d").drawImage(img, 0, 0);
 
-            const maxW = 800;
-            const displayW = img.width > maxW ? maxW : img.width;
-            const displayH = (img.height / img.width) * displayW;
-
-            displayCanvasEl.width = displayW;
-            displayCanvasEl.height = displayH;
-            displayCanvasEl.getContext("2d").drawImage(img, 0, 0, displayW, displayH);
-
-            scaleX = img.width / displayW;
-            scaleY = img.height / displayH;
-
-            const pos = [
-              { left: '0%', top: '0%' },
-              { left: '100%', top: '0%' },
-              { left: '100%', top: '100%' },
-              { left: '0%', top: '100%' }
-            ];
-            
-            handles.forEach((h, i) => {
-              h.style.left = pos[i].left;
-              h.style.top = pos[i].top;
-            });
+            updateDisplay();
+            resetHandles();
 
             startCard.classList.add("hidden");
             editorDiv.classList.remove("hidden");
@@ -99,10 +115,56 @@
         reader.readAsDataURL(file);
       }, { signal });
 
+      rotateBtn.addEventListener("click", () => {
+        if (!isLoaded) return;
+        
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = originalCanvas.height;
+        tempCanvas.height = originalCanvas.width;
+        const tempCtx = tempCanvas.getContext("2d");
+        
+        tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
+        tempCtx.rotate(Math.PI / 2);
+        tempCtx.drawImage(originalCanvas, -originalCanvas.width / 2, -originalCanvas.height / 2);
+        
+        originalCanvas.width = tempCanvas.width;
+        originalCanvas.height = tempCanvas.height;
+        originalCanvas.getContext("2d").drawImage(tempCanvas, 0, 0);
+        
+        img.src = originalCanvas.toDataURL();
+        img.onload = () => {
+          updateDisplay();
+          resetHandles();
+        };
+      }, { signal });
+
       wrapperDiv.addEventListener("pointerdown", (e) => {
-        if (e.target.classList.contains("sk-handle")) {
-          activeHandle = e.target;
-          activeHandle.setPointerCapture(e.pointerId);
+        const rect = displayCanvasEl.getBoundingClientRect();
+        const touchX = e.clientX - rect.left;
+        const touchY = e.clientY - rect.top;
+
+        let closestHandle = null;
+        let minDist = Infinity;
+
+        handles.forEach(h => {
+          const hX = parseFloat(h.style.left) / 100 * rect.width;
+          const hY = parseFloat(h.style.top) / 100 * rect.height;
+          const dist = Math.hypot(touchX - hX, touchY - hY);
+          if (dist < minDist) {
+            minDist = dist;
+            closestHandle = h;
+          }
+        });
+
+        if (closestHandle && minDist < 60) {
+          activeHandle = closestHandle;
+          const hX = parseFloat(activeHandle.style.left) / 100 * rect.width;
+          const hY = parseFloat(activeHandle.style.top) / 100 * rect.height;
+          
+          dragOffsetX = touchX - hX;
+          dragOffsetY = touchY - hY;
+          
+          wrapperDiv.setPointerCapture(e.pointerId);
         }
       }, { signal });
 
@@ -110,8 +172,8 @@
         if (!activeHandle) return;
         const rect = displayCanvasEl.getBoundingClientRect();
         
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
+        let x = e.clientX - rect.left - dragOffsetX;
+        let y = e.clientY - rect.top - dragOffsetY;
 
         x = Math.max(0, Math.min(x, rect.width));
         y = Math.max(0, Math.min(y, rect.height));
@@ -122,7 +184,7 @@
 
       wrapperDiv.addEventListener("pointerup", (e) => {
         if (activeHandle) {
-          activeHandle.releasePointerCapture(e.pointerId);
+          wrapperDiv.releasePointerCapture(e.pointerId);
           activeHandle = null;
         }
       }, { signal });
@@ -203,7 +265,7 @@
             alert("Błąd: " + err.message);
           } finally {
             pdfBtn.disabled = false;
-            pdfBtn.textContent = "Zapisz jako PDF";
+            pdfBtn.textContent = "Zapisz PDF";
           }
         }, 50);
       }, { signal });
