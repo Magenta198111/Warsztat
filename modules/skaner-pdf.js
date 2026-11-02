@@ -94,7 +94,6 @@
       let activeHandle = null;
       let dragStartHandleX = 0, dragStartHandleY = 0;
       let dragStartTouchX = 0, dragStartTouchY = 0;
-      let scaleX = 1, scaleY = 1;
 
       function applyLiveFilter() {
         const contrast = contrastSlider.value;
@@ -125,8 +124,6 @@
         displayCanvasEl.height = displayH;
         displayCanvasEl.getContext("2d").drawImage(originalCanvas, 0, 0, displayW, displayH);
 
-        scaleX = originalCanvas.width / displayW;
-        scaleY = originalCanvas.height / displayH;
         applyLiveFilter();
       }
 
@@ -269,8 +266,9 @@
             const dst = [[0,0], [outW,0], [outW,outH], [0,outH]];
             const H = solveHomography(dst, src);
 
-            const contrast = parseFloat(contrastSlider.value) / 100;
-            const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+            const sliderVal = parseFloat(contrastSlider.value);
+            const contrastValue = (sliderVal - 100) * 2.55;
+            const factor = (259 * (contrastValue + 255)) / (255 * (259 - contrastValue));
             const isColorMode = isColor;
 
             for (let y = 0; y < outH; y++) {
