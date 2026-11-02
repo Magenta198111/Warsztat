@@ -1,11 +1,19 @@
-const CACHE_NAME = "warsztat-cache-v1";
+const CACHE_NAME = "warsztat-cache-v2";
 
 self.addEventListener("install", event => {
   self.skipWaiting();
 });
 
 self.addEventListener("activate", event => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) return caches.delete(key);
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener("fetch", event => {
@@ -13,7 +21,7 @@ self.addEventListener("fetch", event => {
 
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
-      const fetchPromise = fetch(event.request).then(networkResponse => {
+      const fetchPromise = fetch(event.request, { cache: "no-store" }).then(networkResponse => {
         if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then(cache => {
