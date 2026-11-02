@@ -7,5 +7,8 @@
   },
   {
     "file": "./modules/konwerter-jednostek.js"
+  },
+  {
+    "file": "./modules/skaner-pdf.js"
   }
 ]
