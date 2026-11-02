@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14171c">
+<link rel="manifest" href="./manifest.json">
+<title>Warsztat</title>
+<style>
+:root {
+  --bg: #14171c;
+  --surface: #1d2229;
+  --ink: #eef0f4;
+  --muted: #9aa3b0;
+  --line: #2e3540;
+  --accent: #7b90ff;
+  --accent-ink: #0d1020;
+  --danger: #ff8a80;
+  --ok: #81c784;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0; background: var(--bg); color: var(--ink); min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* Pasek górny */
+.topbar { padding: 16px 16px 8px; }
+.topbar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.topbar-title { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; margin: 0; }
+.btn-settings {
+  padding: 10px 14px; border-radius: 14px; border: 1.5px solid var(--line);
+  background: var(--surface); color: var(--ink); font-weight: 600; font-size: 14px;
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+}
+.status { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--muted); }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); }
+
+/* Główne menu */
+.container { max-width: 600px; margin: 0 auto; padding: 16px; }
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.tile {
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 20px;
+  padding: 16px; display: flex; flex-direction: column; align-items: flex-start;
+  gap: 10px; cursor: pointer; transition: transform 0.1s, border-color 0.1s;
+}
+.tile:active { transform: scale(0.96); border-color: var(--accent); }
+.tile-icon {
+  font-size: 24px; background: var(--bg); border: 1.5px solid var(--line);
+  width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+}
+.tile-title { font-weight: 700; font-size: 15px; line-height: 1.2; margin-top: 4px; }
+.tile-desc { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+
+/* Pływający przycisk + */
+.fab {
+  position: fixed; bottom: 24px; right: 24px; width: 64px; height: 64px;
+  border-radius: 20px; background: var(--accent); color: var(--accent-ink);
+  font-size: 32px; border: none; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 50;
+}
+
+/* Ekran modułu (ukryty domyślnie) */
+#view-module { display: none; }
+#view-module.active { display: block; }
+#view-home.hidden { display: none; }
+
+/* Pasek błędu (do debugowania) */
+#error-bar {
+  position: fixed; bottom: 0; left: 0; width: 100%; background: #ff8a80;
+  color: #000; padding: 10px; font-size: 12px; z-index: 9999; display: none;
+}
+
+/* Style dla modułów (karty, przyciski) */
+.card { background: var(--surface); border: 1.5px solid var(--line); border-radius: 20px; padding: 16px; margin-bottom: 16px; }
+h2 { margin: 0 0 12px; font-size: 20px; letter-spacing: -0.02em; }
+label { display: block; margin: 14px 0 6px; color: var(--muted); font-size: 14px; }
+input[type=text], select, button, input[type=file] { font: inherit; width: 100%; font-size: 15px; }
+input[type=text], select { padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); }
+input[type=file] { padding: 8px; border-radius: 12px; border: 1.5px dashed var(--line); background: var(--bg); color: var(--muted); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+button { padding: 14px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); font-weight: 600; cursor: pointer; }
+button.p { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); margin-top: 14px; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- Pasek górny -->
+<div class="topbar">
+  <div class="topbar-header">
+    <h1 class="topbar-title" id="app-title">Warsztat</h1>
+    <button class="btn-settings" id="btn-settings">⚙️ Kopia i Biblioteki</button>
+  </div>
+  <div class="status">
+    <div class="status-dot"></div>
+    <span id="status-text">Online (zapisano do pracy offline)</span>
+  </div>
+</div>
+
+<!-- Widok główny (kafelki) -->
+<main class="container" id="view-home">
+  <div class="grid" id="modules-grid">
+    <!-- Tutaj moduły dodadzą swoje kafelki -->
+  </div>
+</main>
+
+<!-- Widok aktywnego modułu -->
+<main class="container" id="view-module"></main>
+
+<!-- Przycisk + -->
+<button class="fab" id="fab-add">+</button>
+
+<!-- Pasek błędów -->
+<div id="error-bar"></div>
+
+<script>
+// ==========================================
+// 1. GŁÓWNY SILNIK APLIKACJI (HUB)
+// ==========================================
+window.Hub = (() => {
+  const DB_NAME = "WarsztatDB";
+  const DB_VER = 1;
+  const STORE = "kv";
+  let dbPromise = null;
+
+  // Baza IndexedDB
+  function openDB() {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VER);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+      };
+      req.onsuccess = e => resolve(e.target.result);
+      req.onerror = e => reject(e.target.error);
+    });
+    return dbPromise;
+  }
+
+  const db = {
+    async get(key, def = null) {
+      try {
+        const d = await openDB();
+        return new Promise((res, rej) => {
+          const req = d.transaction(STORE, "readonly").objectStore(STORE).get(key);
+          req.onsuccess = () => res(req.result !== undefined ? req.result : def);
+          req.onerror = () => rej(req.error);
+        });
+      } catch(e) { return def; }
+    },
+    async set(key, val) {
+      try {
+        const d = await openDB();
+        return new Promise((res, rej) => {
+          const req = d.transaction(STORE, "readwrite").objectStore(STORE).put(val, key);
+          req.onsuccess = () => res(true);
+          req.onerror = () => rej(req.error);
+        });
+      } catch(e) { return false; }
+    }
+  };
+
+  // Zarządzanie modułami i widokami
+  const modules = new Map();
+  let activeModule = null;
+  let activeAbort = null;
+  const elHome = document.getElementById("view-home");
+  const elModule = document.getElementById("view-module");
+  const elGrid = document.getElementById("modules-grid");
+  const elTitle = document.getElementById("app-title");
+
+  function cleanup() {
+    if (activeAbort) { activeAbort.abort(); activeAbort = null; }
+    if (activeModule && activeModule.unmount) {
+      try { activeModule.unmount(); } catch(e) { console.error(e); }
+    }
+    activeModule = null;
+    elModule.innerHTML = "";
+  }
+
+  function showHome(push = false) {
+    cleanup();
+    elModule.classList.remove("active");
+    elHome.classList.remove("hidden");
+    elTitle.textContent = "Warsztat";
+    document.getElementById("btn-settings").classList.remove("hidden");
+    if (push) history.pushState({ view: "home" }, "", "./");
+  }
+
+  function openModule(id, push = true) {
+    const mod = modules.get(id);
+    if (!mod) return showHome();
+
+    cleanup();
+    elHome.classList.add("hidden");
+    elModule.classList.add("active");
+    elTitle.textContent = mod.title;
+    document.getElementById("btn-settings").classList.add("hidden");
+
+    activeModule = mod;
+    activeAbort = new AbortController();
+
+    if (push) history.pushState({ view: "module", id }, "", `#${id}`);
+    
+    // Wywołanie modułu (przekazujemy kontener i sygnał do przerywania)
+    mod.mount(elModule, activeAbort.signal);
+    window.scrollTo(0, 0);
+  }
+
+  function register(mod) {
+    modules.set(mod.id, mod);
+    const tile = document.createElement("div");
+    tile.className = "tile";
+    tile.innerHTML = `
+      <div class="tile-icon">${mod.icon}</div>
+      <div class="tile-title">${mod.title}</div>
+      <div class="tile-desc">${mod.desc || ""}</div>
+    `;
+    tile.addEventListener("click", () => openModule(mod.id, true));
+    elGrid.appendChild(tile);
+  }
+
+  // Obsługa przycisku wstecz (Android)
+  window.addEventListener("popstate", () => {
+    const hash = location.hash.replace(/^#/, "");
+    if (hash && modules.has(hash)) openModule(hash, false);
+    else showHome(false);
+  });
+
+  // Start
+  window.addEventListener("DOMContentLoaded", () => {
+    // Obsługa przycisku ustawień i plusa (na razie tylko powiadomienie)
+    document.getElementById("btn-settings").addEventListener("click", () => alert("Tu będzie kopia zapasowa i biblioteki."));
+    document.getElementById("fab-add").addEventListener("click", () => alert("Wkrótce dodawanie własnych modułów!"));
+    
+    const initHash = location.hash.replace(/^#/, "");
+    if (initHash && modules.has(initHash)) openModule(initHash, false);
+  });
+
+  return { db, register, openModule, showHome };
+})();
+
+// ==========================================
+// 2. REJESTRACJA SERVICE WORKERA
+// ==========================================
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").then(reg => {
+      reg.addEventListener("updatefound", () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener("statechange", () => {
+          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+    });
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!refreshing) { refreshing = true; window.location.reload(); }
+    });
+  });
+}
+
+// ==========================================
+// 3. PAASEK BŁĘDÓW (DEBUGOWANIE)
+// ==========================================
+window.addEventListener('error', function(e) {
+  const bar = document.getElementById('error-bar');
+  bar.style.display = 'block';
+  bar.textContent = 'BŁĄD: ' + e.message;
+});
+</script>
+
+<!-- Tutaj bedą ladowane moduly (na razie zakomentowane, dodamy za chwile) -->
+<!-- <script src="./modules/konwerter.js"></script> -->
+<!-- <script src="./modules/qr.js"></script> -->
+<!-- <script src="./modules/exif.js"></script> -->
+
+</body>
+</html>
