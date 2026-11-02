@@ -18,9 +18,9 @@
 
         <div class="card" id="sk-start-card">
           <h2>Skaner Dokumentów</h2>
-          <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">Zrób zdjęcie dokumentowi. Następnie przeciągnij fioletowe punkty na jego rogi, aby idealnie go wyprostować.</p>
+          <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">Wybierz zdjęcie z galerii lub zrób nowe. Następnie przeciągnij fioletowe punkty na rogi dokumentu, aby go wyprostować.</p>
           <label>Zdjęcie dokumentu</label>
-          <input type="file" id="sk-file" accept="image/*" capture="environment">
+          <input type="file" id="sk-file" accept="image/*">
         </div>
 
         <div id="sk-editor" class="hidden">
