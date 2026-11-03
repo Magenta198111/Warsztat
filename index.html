@@ -20,11 +20,10 @@ body {
   min-height: 100vh; padding-bottom: 80px; 
   -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
   -webkit-touch-callout: none;
-overscroll-behavior-y: none;
+  overscroll-behavior-y: none; /* Blokada odświeżania przez przeciągnięcie */
 }
 input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; }
 
-/* KLUCZOWA REGUŁA, KTÓREJ BRAKOWAŁO */
 .hidden { display: none !important; }
 
 .topbar { position: sticky; top: 0; z-index: 100; padding: 16px 20px; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
@@ -129,7 +128,6 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 
 <button class="fab" id="fab-add">+</button>
 <div id="toast-container"></div>
-
 <script>
 window.addEventListener('error', e => { const b = document.getElementById('error-bar'); if(b){ b.style.display='block'; b.textContent = 'BŁĄD: ' + e.message; } });
 window.showToast = m => { const c = document.getElementById('toast-container'); const t = document.createElement('div'); t.className='toast'; t.textContent=m; c.appendChild(t); requestAnimationFrame(()=>t.classList.add('show')); setTimeout(()=>{t.classList.remove('show'); setTimeout(()=>t.remove(),300)}, 3800); };
@@ -280,17 +278,47 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  // Poprawione ładowanie modułów - czeka, aż wszystkie skrypty się wczytają, zanim sprawdzi hash
   fetch('./modules.json?t=' + Date.now())
     .then(r => r.json())
     .then(list => {
-      list.forEach(mod => { const s = document.createElement('script'); s.src = mod.file; document.body.appendChild(s); });
+      const promises = list.map(mod => {
+        return new Promise((resolve) => {
+          const s = document.createElement('script');
+          s.src = mod.file;
+          s.onload = resolve;
+          s.onerror = () => { console.error("Błąd ładowania: " + mod.file); resolve(); };
+          document.body.appendChild(s);
+        });
+      });
+      return Promise.all(promises);
+    })
+    .then(() => {
+      const initHash = location.hash.replace(/^#/, "");
+      if (initHash === "settings") Hub.openSettings(false);
+      else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
     })
     .catch(e => { document.getElementById('modules-grid').innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd modules.json</div>'; });
-
-  const initHash = location.hash.replace(/^#/, "");
-  if (initHash === "settings") Hub.openSettings(false);
-  else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
 });
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").then(reg => {
+      reg.addEventListener("updatefound", () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener("statechange", () => {
+          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+    });
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!refreshing) { refreshing = true; window.location.reload(); }
+    });
+  });
+}
 </script>
 </body>
 </html>
