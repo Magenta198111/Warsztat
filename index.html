@@ -23,6 +23,9 @@ body {
 }
 input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; }
 
+/* KLUCZOWA REGUŁA, KTÓREJ BRAKOWAŁO */
+.hidden { display: none !important; }
+
 .topbar { position: sticky; top: 0; z-index: 100; padding: 16px 20px; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
 .topbar-title { font-size: 14px; font-weight: 600; letter-spacing: 0.05em; margin: 0; text-transform: uppercase; }
 .menu-btn { position: absolute; left: 16px; background: none; border: none; color: var(--ink); padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; }
@@ -154,7 +157,7 @@ window.Hub = {
 
   renderGrid: function() {
     const grid = document.getElementById("modules-grid");
-    grid.innerHTML = ""; // Czyszczenie przed ponownym ułożeniem
+    grid.innerHTML = "";
 
     if (Hub.modules.size === 0) {
       grid.innerHTML = '<div class="empty-state">Brak modułów w systemie.</div>';
@@ -171,7 +174,6 @@ window.Hub = {
       "kalkulator-prog": `<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>`
     };
 
-    // Konwersja Mapy na tablicę, sortowanie po tytule (alfabetycznie) i generowanie kafelków
     const sortedModules = Array.from(Hub.modules.values()).sort((a, b) => 
       a.title.localeCompare(b.title, 'pl', { sensitivity: 'base' })
     );
