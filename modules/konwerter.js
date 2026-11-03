@@ -91,8 +91,34 @@
           .n-option .check { opacity: 0; color: var(--accent); }
           .n-option.active .check { opacity: 1; }
 
-          .n-range { -webkit-appearance: none; appearance: none; height: 4px; background: var(--line); border-radius: 2px; outline: none; margin: 16px 0; width: 100%; }
-          .n-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+          /* Ulepszony suwak z wypełnieniem i pionowym offsetem */
+          .n-range { 
+            -webkit-appearance: none; 
+            appearance: none; 
+            height: 6px; 
+            border-radius: 3px; 
+            outline: none; 
+            margin: 20px 0; 
+            width: 100%; 
+            background: linear-gradient(to right, var(--accent) var(--percent, 50%), var(--line) var(--percent, 50%));
+            touch-action: pan-y; /* Zapobiega przewijaniu strony podczas przesuwania w poziomie */
+          }
+          .n-range::-webkit-slider-thumb { 
+            -webkit-appearance: none; 
+            appearance: none; 
+            width: 22px; 
+            height: 22px; 
+            border-radius: 50%; 
+            background: var(--accent); 
+            cursor: pointer; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            margin-top: -2px; /* Lekki offset pionowy (uniesienie) */
+            transition: transform 0.1s, box-shadow 0.1s;
+          }
+          .n-range:active::-webkit-slider-thumb {
+            transform: scale(1.15);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.6);
+          }
           
           .n-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 500; font-size: 15px; cursor: pointer; text-align: center; display: block; margin-top: 16px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); transition: background 0.2s; outline: none; -webkit-tap-highlight-color: transparent; }
           .n-btn:active { background: var(--surface-hover); }
@@ -161,6 +187,20 @@
 
       let currentFmt = savedFmt, currentFile = null;
 
+      // Funkcja aktualizująca wypełnienie suwaka
+      function updateSliderFill(el) {
+        const percent = ((el.value - el.min) / (el.max - el.min)) * 100;
+        el.style.setProperty('--percent', `${percent}%`);
+      }
+
+      // Inicjalizacja i nasłuchiwanie suwaka
+      updateSliderFill(qualInput);
+      qualInput.addEventListener("input", () => {
+        qualLabel.textContent = `Jakość: ${qualInput.value}%`;
+        updateSliderFill(qualInput);
+        Hub.db.set("conv_qual", Number(qualInput.value)).catch(()=>{});
+      }, { signal });
+
       function updateOptionStyles() {
         options.forEach(opt => { 
           if (opt.dataset.value === currentFmt) opt.classList.add("active"); 
@@ -211,11 +251,6 @@
           }, { signal });
         });
       }
-
-      qualInput.addEventListener("input", () => {
-        qualLabel.textContent = `Jakość: ${qualInput.value}%`;
-        Hub.db.set("conv_qual", Number(qualInput.value)).catch(()=>{});
-      }, { signal });
 
       fileInput.addEventListener("change", (e) => {
         currentFile = e.target.files[0] || null;
