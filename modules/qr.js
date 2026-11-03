@@ -309,9 +309,28 @@
           
           .qr-divider-line { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
-          /* Zmniejszenie kodu QR o 20% */
-          .qr-canvas-box { display: flex; justify-content: center; align-items: center; min-height: 200px; transition: all 0.3s ease; }
-          .qr-canvas-box.has-canvas { background: #ffffff; padding: 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-height: auto; width: 80%; margin: 0 auto; }
+          .qr-canvas-box { display: flex; justify-content: center; align-items: center; min-height: 150px; transition: all 0.3s ease; }
+          .qr-canvas-box.has-canvas { 
+            background: #ffffff; 
+            padding: 8px; /* Zmniejszony biały margines o 50% */
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+            min-height: auto; 
+            width: 40%; /* Zmniejszony rozmiar o 50% */
+            margin: 0 auto; 
+            cursor: pointer; 
+          }
+          .qr-canvas-box.fullscreen {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100vh; max-height: 100vh;
+            background: #ffffff; z-index: 9999;
+            padding: 24px; margin: 0; border-radius: 0;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: none; cursor: pointer;
+          }
+          .qr-canvas-box.fullscreen canvas {
+            max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;
+          }
           .qr-placeholder { color: var(--line); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
           .qr-canvas-box.has-canvas .qr-placeholder { display: none; }
           .qr-canvas-box canvas { display: none; max-width: 100%; height: auto; }
@@ -415,6 +434,12 @@
       
       $("q-back").addEventListener("click", () => history.back(), { signal });
 
+      canvasContainer.addEventListener("click", () => {
+        if (canvasContainer.classList.contains("has-canvas")) {
+          canvasContainer.classList.toggle("fullscreen");
+        }
+      }, { signal });
+
       function resetScanUI() {
         camContainer.classList.remove("active");
         camOverlay.classList.remove("active");
@@ -490,6 +515,7 @@
         if (!text) return showToast("Wpisz tekst do wygenerowania!");
         
         canvasContainer.classList.remove("has-canvas");
+        canvasContainer.classList.remove("fullscreen");
         dlBtn.disabled = true;
         dlBtn.style.opacity = "0.5";
 
