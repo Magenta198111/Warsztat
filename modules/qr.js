@@ -183,7 +183,7 @@
   function stopCamera() {
     if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
     if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-    if (videoEl) { videoEl.srcObject = null; }
+    if (videoEl) videoEl.srcObject = null;
   }
 
   Hub.register({
@@ -194,23 +194,30 @@
     async mount(container, signal) {
       container.innerHTML = `
         <style>
-          .qr-tab-container { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+          /* Nowy styl zakładek - czysty i płaski */
+          .qr-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
           .qr-tab { 
-            flex: 1; padding: 10px; border-radius: 6px; font-weight: 600; font-size: 14px; 
-            text-align: center; cursor: pointer; transition: 0.2s; border: 1px solid var(--line);
-            background: transparent; color: var(--muted);
+            padding: 12px 0; font-size: 14px; font-weight: 600; color: var(--muted); 
+            cursor: pointer; position: relative; transition: color 0.2s;
           }
-          .qr-tab.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+          .qr-tab.active { color: var(--ink); }
+          .qr-tab.active::after { 
+            content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; 
+            background: var(--accent); border-radius: 2px 2px 0 0;
+          }
           
-          .qr-input-container { margin-bottom: 24px; }
+          /* Czyste pole tekstowe */
+          .qr-input-wrapper { margin-bottom: 24px; }
           .qr-input-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
           .qr-input { 
-            width: 100%; padding: 16px; border-radius: 6px; border: 1px solid var(--line); 
-            background: var(--surface); color: var(--ink); font-size: 16px; outline: none; 
-            transition: border-color 0.2s;
+            width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); 
+            color: var(--ink); font-size: 20px; padding: 12px 0; outline: none; 
+            text-align: center; transition: border-color 0.2s;
           }
-          .qr-input:focus { border-color: var(--accent); }
+          .qr-input:focus { border-bottom-color: var(--accent); }
+          .qr-input::placeholder { color: var(--line); font-size: 16px; }
           
+          /* Przyciski */
           .qr-btn { 
             width: 100%; padding: 14px; border-radius: 6px; font-weight: 600; font-size: 15px; 
             cursor: pointer; text-align: center; display: block; margin-top: 16px;
@@ -222,32 +229,31 @@
             background: transparent; color: var(--ink); border: 1px solid var(--line);
           }
           
+          /* Podgląd wygenerowanego QR */
           .qr-canvas-box {
             display: flex; justify-content: center; margin-top: 24px;
-            background: #ffffff; padding: 16px; border-radius: 12px; display: none;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            background: #ffffff; padding: 16px; border-radius: 8px; display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
           }
-          .qr-canvas-box canvas {
-            max-width: 100%; display: block;
-          }
+          .qr-canvas-box canvas { max-width: 100%; display: block; }
           
-          .qr-camera-container {
-            position: relative; width: 100%; aspect-ratio: 1; background: var(--surface); 
-            border-radius: 12px; overflow: hidden; border: 1px dashed var(--line);
+          /* Kamera */
+          .qr-cam-wrapper {
+            width: 100%; aspect-ratio: 1; background: var(--surface); 
+            border-radius: 8px; overflow: hidden; border: 1px solid var(--line);
             display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+            margin-top: 8px;
           }
-          .qr-camera-container.active { border: 1px solid var(--accent); }
+          .qr-cam-icon { color: var(--line); }
+          .qr-cam-text { color: var(--muted); font-size: 13px; font-weight: 500; }
           
-          .qr-camera-icon { color: var(--muted); opacity: 0.5; }
-          .qr-camera-text { color: var(--muted); font-size: 13px; font-weight: 500; }
+          .qr-cam-wrapper video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+          .qr-cam-wrapper video.active { display: block; }
           
-          .qr-camera-container video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
-          .qr-camera-container video.active { display: block; }
-          
-          .qr-camera-overlay {
+          .qr-cam-overlay {
             position: absolute; inset: 15%; border: 2px solid var(--accent); border-radius: 12px; pointer-events: none; display: none;
           }
-          .qr-camera-overlay.active { display: block; }
+          .qr-cam-overlay.active { display: block; }
           
           .qr-status { 
             text-align: center; color: var(--muted); font-size: 12px; font-family: monospace; 
@@ -263,13 +269,13 @@
           </button>
         </div>
 
-        <div class="qr-tab-container">
+        <div class="qr-tabs">
           <div id="tab-gen" class="qr-tab active">Generator</div>
           <div id="tab-scan" class="qr-tab">Skaner</div>
         </div>
 
         <div id="view-gen">
-          <div class="qr-input-container">
+          <div class="qr-input-wrapper">
             <label class="qr-input-label">Tekst lub link do zakodowania</label>
             <input type="text" id="q-text" class="qr-input" placeholder="Wpisz coś...">
           </div>
@@ -283,13 +289,13 @@
         </div>
 
         <div id="view-scan" class="hidden">
-          <div id="q-cam-container" class="qr-camera-container">
+          <div id="q-cam-container" class="qr-cam-wrapper">
             <video id="q-video" autoplay playsinline muted></video>
-            <div id="q-cam-overlay" class="qr-camera-overlay"></div>
+            <div id="q-cam-overlay" class="qr-cam-overlay"></div>
             
             <div id="q-cam-placeholder" style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
-              <svg class="qr-camera-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-              <span class="qr-camera-text">Kamera jest wyłączona</span>
+              <svg class="qr-cam-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              <span class="qr-cam-text">Kamera jest wyłączona</span>
             </div>
           </div>
           
@@ -340,7 +346,7 @@
         try {
           const mat = QR.encode(text);
           const size = mat.length;
-          const scale = 8; // Zmniejszony scale, by nie był za duży na mobile
+          const scale = 8; 
           const margin = 4 * scale; 
           
           canvas.width = (size * scale) + (margin * 2);
