@@ -106,7 +106,6 @@
 
       container.innerHTML = `
         <style>
-          /* Nowy, ultra-minimalistyczny styl */
           .uc-top-trigger {
             display: flex; justify-content: space-between; align-items: center;
             padding: 16px 0; border-bottom: 1px solid var(--line);
@@ -166,9 +165,9 @@
           .uc-modal-item.active .check { opacity: 1; }
         </style>
 
-        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
-          <button id="u-back" style="width:auto; padding:10px 12px; border-radius:6px; margin:0; border:1px solid var(--line); background:transparent; color:var(--ink); display:flex; align-items:center; justify-content:center;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:8px;">
+          <button id="u-back" style="width:auto; padding:8px 12px 8px 0; border:none; background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
         </div>
 
