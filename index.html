@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="./manifest.json">
-<title>Warsztat</title>
+<title>Workspace</title>
 <style>
 :root {
   --bg: #000000;
@@ -18,106 +18,62 @@
   --accent-ink: #000000;
   --danger: #ef4444;
 }
-
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   margin: 0; background: var(--bg); color: var(--ink); min-height: 100vh;
-  padding-bottom: 80px; overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
+  padding-bottom: 80px; overflow-x: hidden; -webkit-font-smoothing: antialiased;
 }
-
 .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
-
 .topbar {
-  position: sticky; top: 0; z-index: 100;
-  padding: 16px 20px;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: sticky; top: 0; z-index: 100; padding: 16px 20px;
+  background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center;
 }
-.topbar-title { 
-  font-size: 14px; font-weight: 600; letter-spacing: 0.05em; margin: 0; text-transform: uppercase; color: var(--ink);
-}
+.topbar-title { font-size: 14px; font-weight: 600; letter-spacing: 0.05em; margin: 0; text-transform: uppercase; color: var(--ink); }
 .menu-btn {
-  position: absolute; left: 16px;
-  background: none; border: none; color: var(--ink); cursor: pointer;
-  padding: 8px; display: flex; align-items: center; justify-content: center;
-  width: auto; margin: 0; border-radius: 6px;
+  position: absolute; left: 16px; background: none; border: none; color: var(--ink); cursor: pointer;
+  padding: 8px; display: flex; align-items: center; justify-content: center; width: auto; margin: 0; border-radius: 6px;
 }
 .menu-btn:active { background: var(--surface-hover); }
 
+/* Drawer */
 .drawer-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 998;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.3s ease;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
 }
 .drawer-overlay.open { opacity: 1; pointer-events: auto; }
-
 .drawer {
-  position: fixed; top: 0; left: 0; bottom: 0;
-  width: 80%; max-width: 320px;
-  background: var(--surface);
-  border-right: 1px solid var(--line);
-  z-index: 999;
-  transform: translateX(-100%);
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: fixed; top: 0; left: 0; bottom: 0; width: 80%; max-width: 320px;
+  background: var(--surface); border-right: 1px solid var(--line); z-index: 999;
+  transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   display: flex; flex-direction: column;
 }
 .drawer.open { transform: translateX(0); }
-
-.drawer-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid var(--line);
-  display: flex; align-items: center; gap: 12px;
-}
+.drawer-header { padding: 24px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; }
 .drawer-title { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
-
-.drawer-menu {
-  padding: 12px;
-  display: flex; flex-direction: column; gap: 4px;
-  flex: 1; overflow-y: auto;
-}
+.drawer-menu { padding: 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
 .drawer-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px; border-radius: 6px;
-  color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 500;
-  cursor: pointer; transition: background 0.2s;
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 6px;
+  color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s;
 }
 .drawer-item:active { background: var(--surface-hover); }
 .drawer-item svg { width: 20px; height: 20px; stroke-width: 1.5; color: var(--muted); }
 .drawer-item span { flex: 1; }
 
+/* Main views */
 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
 .list { display: flex; flex-direction: column; gap: 12px; }
-
 .tile {
-  display: flex; align-items: center; gap: 16px;
-  padding: 16px; cursor: pointer;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  transition: background 0.15s, border-color 0.15s;
+  display: flex; align-items: center; gap: 16px; padding: 16px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; transition: background 0.15s, border-color 0.15s;
 }
 .tile:active { background: var(--surface-hover); border-color: var(--muted); }
-
 .tile-icon {
-  width: 36px; height: 36px; border-radius: 4px;
-  background: var(--bg); border: 1px solid var(--line);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--ink); flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: 4px; background: var(--bg); border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center; color: var(--ink); flex-shrink: 0;
 }
 .tile-icon svg { width: 18px; height: 18px; stroke-width: 1.5; }
-
 .tile-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .tile-title { font-weight: 500; font-size: 15px; color: var(--ink); }
 .tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
@@ -126,24 +82,21 @@ body {
   position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px;
   border-radius: 8px; background: var(--ink); color: var(--bg);
   font-size: 24px; border: none; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; z-index: 50; transition: transform 0.1s, opacity 0.2s;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  cursor: pointer; z-index: 50; transition: transform 0.1s; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 .fab:active { transform: scale(0.92); }
 
 #view-module { display: none; }
 #view-module.active { display: block; }
+#view-settings { display: none; }
+#view-settings.active { display: block; }
 #view-home.hidden { display: none; }
+#fab-add.hidden { display: none; }
 
-.empty-state {
-  border: 1px dashed var(--line); border-radius: 6px; padding: 40px 20px;
-  text-align: center; color: var(--muted); background: var(--surface);
-}
-#error-bar {
-  position: fixed; bottom: 0; left: 0; width: 100%; background: var(--danger);
-  color: #fff; padding: 10px; font-size: 12px; z-index: 9999; display: none; text-align: center; font-weight: 500;
-}
+.empty-state { border: 1px dashed var(--line); border-radius: 6px; padding: 40px 20px; text-align: center; color: var(--muted); background: var(--surface); }
+#error-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--danger); color: #fff; padding: 10px; font-size: 12px; z-index: 9999; display: none; text-align: center; font-weight: 500; }
 
+/* Card & Settings style */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 20px; margin-bottom: 16px; }
 h2 { margin: 0 0 16px; font-size: 18px; font-weight: 600; }
 label { display: block; margin: 16px 0 8px; color: var(--muted); font-size: 13px; font-weight: 500; }
@@ -154,23 +107,24 @@ input[type=file] { padding: 8px; border-radius: 6px; border: 1px dashed var(--li
 input[type=range] { width: 100%; accent-color: var(--ink); margin: 12px 0; }
 button { padding: 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 500; cursor: pointer; transition: background 0.2s, transform 0.1s; }
 button:active { transform: scale(0.98); }
-button.p { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; }
+button.p { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 .hidden { display: none !important; }
 .i { font-size: 13px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
 
-/* System powiadomień Toast - GÓRA */
-#toast-container {
-  position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
-  display: flex; flex-direction: column; gap: 8px; z-index: 10000;
-  pointer-events: none; width: 90%; max-width: 400px;
-}
-.toast {
-  background: var(--surface-hover); color: var(--ink);
-  padding: 14px 20px; border-radius: 8px; border: 1px solid var(--line);
-  font-size: 14px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-  opacity: 0; transform: translateY(-20px); transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  text-align: center;
-}
+/* Settings specific */
+.settings-block { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+.settings-header { padding: 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--line); }
+.settings-row:last-child { border-bottom: none; }
+.settings-label { font-size: 15px; color: var(--ink); font-weight: 500; }
+.settings-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.settings-options { display: flex; gap: 8px; }
+.settings-opt-btn { padding: 8px 16px; font-size: 13px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); cursor: pointer; }
+.settings-opt-btn.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+
+/* Toasts */
+#toast-container { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 10000; pointer-events: none; width: 90%; max-width: 400px; }
+.toast { background: var(--surface-hover); color: var(--ink); padding: 14px 20px; border-radius: 8px; border: 1px solid var(--line); font-size: 14px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.6); opacity: 0; transform: translateY(-20px); transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); text-align: center; }
 .toast.show { opacity: 1; transform: translateY(0); }
 </style>
 </head>
@@ -178,11 +132,9 @@ button.p { background: var(--ink); color: var(--bg); border-color: var(--ink); f
 
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <div class="drawer" id="drawer">
-  <div class="drawer-header">
-    <h2 class="drawer-title">Warsztat</h2>
-  </div>
+  <div class="drawer-header"><h2 class="drawer-title">Workspace</h2></div>
   <div class="drawer-menu">
-    <div class="drawer-item" onclick="showToast('Ustawienia pojawią się w kolejnej aktualizacji.')">
+    <div class="drawer-item" onclick="Hub.openSettings()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       <span>Ustawienia</span>
     </div>
@@ -208,11 +160,30 @@ button.p { background: var(--ink); color: var(--bg); border-color: var(--ink); f
   <h1 class="topbar-title" id="app-title">Workspace</h1>
 </div>
 
-<main class="container" id="view-home">
-  <div class="list" id="modules-grid"></div>
-</main>
-
+<main class="container" id="view-home"><div class="list" id="modules-grid"></div></main>
 <main class="container" id="view-module"></main>
+
+<main class="container" id="view-settings">
+  <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:20px;">
+    <button id="set-back" style="width:auto; padding:10px 12px; border-radius:6px; margin:0; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:flex; align-items:center; justify-content:center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </button>
+  </div>
+
+  <div class="settings-block">
+    <div class="settings-header">Wygląd</div>
+    <div class="settings-row" style="flex-direction:column; align-items:flex-start; gap:12px;">
+      <div>
+        <div class="settings-label">Animacja menu wyboru</div>
+        <div class="settings-desc">Sposób w jaki pojawiają się listy rozwijane w modułach</div>
+      </div>
+      <div class="settings-options">
+        <button class="settings-opt-btn" id="opt-bottom">Z dołu ekranu</button>
+        <button class="settings-opt-btn" id="opt-dropdown">Z przycisku</button>
+      </div>
+    </div>
+  </div>
+</main>
 
 <button class="fab" id="fab-add">+</button>
 <div id="toast-container"></div>
@@ -225,29 +196,19 @@ window.showToast = function(message) {
   toast.className = 'toast';
   toast.textContent = message;
   container.appendChild(toast);
-  
   requestAnimationFrame(() => toast.classList.add('show'));
-  
-  setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 300);
-  }, 3800);
+  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3800);
 };
 
 window.Hub = (() => {
-  const DB_NAME = "WarsztatDB";
-  const DB_VER = 1;
-  const STORE = "kv";
+  const DB_NAME = "WarsztatDB"; const DB_VER = 1; const STORE = "kv";
   let dbPromise = null;
 
   function openDB() {
     if (dbPromise) return dbPromise;
     dbPromise = new Promise((resolve, reject) => {
       const req = indexedDB.open(DB_NAME, DB_VER);
-      req.onupgradeneeded = e => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
-      };
+      req.onupgradeneeded = e => { const db = e.target.result; if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE); };
       req.onsuccess = e => resolve(e.target.result);
       req.onerror = e => reject(e.target.error);
     });
@@ -256,69 +217,68 @@ window.Hub = (() => {
 
   const db = {
     async get(key, def = null) {
-      try {
-        const d = await openDB();
-        return new Promise((res, rej) => {
-          const req = d.transaction(STORE, "readonly").objectStore(STORE).get(key);
-          req.onsuccess = () => res(req.result !== undefined ? req.result : def);
-          req.onerror = () => rej(req.error);
-        });
-      } catch(e) { return def; }
+      try { const d = await openDB(); return new Promise((res, rej) => { const req = d.transaction(STORE, "readonly").objectStore(STORE).get(key); req.onsuccess = () => res(req.result !== undefined ? req.result : def); req.onerror = () => rej(req.error); }); } catch(e) { return def; }
     },
     async set(key, val) {
-      try {
-        const d = await openDB();
-        return new Promise((res, rej) => {
-          const req = d.transaction(STORE, "readwrite").objectStore(STORE).put(val, key);
-          req.onsuccess = () => res(true);
-          req.onerror = () => rej(req.error);
-        });
-      } catch(e) { return false; }
+      try { const d = await openDB(); return new Promise((res, rej) => { const req = d.transaction(STORE, "readwrite").objectStore(STORE).put(val, key); req.onsuccess = () => res(true); req.onerror = () => rej(req.error); }); } catch(e) { return false; }
     }
   };
 
   const modules = new Map();
-  let activeModule = null;
-  let activeAbort = null;
+  let activeModule = null; let activeAbort = null;
   const elHome = document.getElementById("view-home");
   const elModule = document.getElementById("view-module");
+  const elSettings = document.getElementById("view-settings");
   const elGrid = document.getElementById("modules-grid");
   const elTitle = document.getElementById("app-title");
+  const fab = document.getElementById("fab-add");
 
   function cleanup() {
     if (activeAbort) { activeAbort.abort(); activeAbort = null; }
-    if (activeModule && activeModule.unmount) {
-      try { activeModule.unmount(); } catch(e) { console.error(e); }
-    }
-    activeModule = null;
-    elModule.innerHTML = "";
+    if (activeModule && activeModule.unmount) { try { activeModule.unmount(); } catch(e) { console.error(e); } }
+    activeModule = null; elModule.innerHTML = "";
   }
 
   function showHome(push = false) {
     cleanup();
-    elModule.classList.remove("active");
-    elHome.classList.remove("hidden");
-    elTitle.textContent = "Workspace";
+    elModule.classList.remove("active"); elSettings.classList.remove("active");
+    elHome.classList.remove("hidden"); elTitle.textContent = "Workspace";
+    fab.classList.remove("hidden");
     if (push) history.pushState({ view: "home" }, "", "./");
   }
 
   function openModule(id, push = true) {
     const mod = modules.get(id);
     if (!mod) return showHome();
-
     cleanup();
-    elHome.classList.add("hidden");
-    elModule.classList.add("active");
-    elTitle.textContent = mod.title.toUpperCase();
-
-    activeModule = mod;
-    activeAbort = new AbortController();
-
+    elHome.classList.add("hidden"); elSettings.classList.remove("active"); elModule.classList.add("active");
+    elTitle.textContent = mod.title.toUpperCase(); fab.classList.add("hidden");
+    activeModule = mod; activeAbort = new AbortController();
     if (push) history.pushState({ view: "module", id }, "", `#${id}`);
-    
-    mod.mount(elModule, activeAbort.signal);
-    window.scrollTo(0, 0);
+    mod.mount(elModule, activeAbort.signal); window.scrollTo(0, 0);
   }
+
+  async function openSettings(push = true) {
+    cleanup();
+    document.getElementById("drawer").classList.remove("open");
+    document.getElementById("drawer-overlay").classList.remove("open");
+    
+    elHome.classList.add("hidden"); elModule.classList.remove("active"); elSettings.classList.add("active");
+    elTitle.textContent = "USTAWIENIA"; fab.classList.add("hidden");
+    if (push) history.pushState({ view: "settings" }, "", `#settings`);
+    
+    const style = await db.get("menu_style", "bottom");
+    const btnBottom = document.getElementById("opt-bottom");
+    const btnDropdown = document.getElementById("opt-dropdown");
+    
+    if (style === "bottom") { btnBottom.classList.add("active"); btnDropdown.classList.remove("active"); }
+    else { btnDropdown.classList.add("active"); btnBottom.classList.remove("active"); }
+    
+    btnBottom.onclick = () => { db.set("menu_style", "bottom"); btnBottom.classList.add("active"); btnDropdown.classList.remove("active"); };
+    btnDropdown.onclick = () => { db.set("menu_style", "dropdown"); btnDropdown.classList.add("active"); btnBottom.classList.remove("active"); };
+  }
+
+  document.getElementById("set-back").addEventListener("click", () => history.back());
 
   const iconMap = {
     "konwerter": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
@@ -326,111 +286,20 @@ window.Hub = (() => {
     "jednostki": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="M3 7h18"></path><path d="M6 7l-3 7h6l-3-7z"></path><path d="M18 7l-3 7h6l-3-7z"></path></svg>`,
     "skaner-pdf": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
     "oczyszczacz": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
-    "zdjecie-dokument": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><circle cx="9" cy="10" r="2"></circle><line x1="15" y1="8" x2="21" y2="8"></line><line x1="15" y1="12" x2="21" y2="12"></line><line x1="7" y1="16" x2="21" y2="16"></line></svg>`
+    "zdjecie-dokument": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><circle cx="9" cy="10" r="2"></circle><line x1="15" y1="8" x2="21" y2="8"></line><line x1="15" y1="12" x2="21" y2="12"></line><line x1="7" y1="16" x2="21" y2="16"></line></svg>`,
+    "kalkulator-prog": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>`
   };
 
   function register(mod) {
     modules.set(mod.id, mod);
-    const empty = elGrid.querySelector('.empty-state');
-    if (empty) empty.remove();
-
+    const empty = elGrid.querySelector('.empty-state'); if (empty) empty.remove();
     const iconSvg = iconMap[mod.id] || `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
-
-    const tile = document.createElement("div");
-    tile.className = "tile";
-    
-    tile.innerHTML = `
-      <div class="tile-icon">${iconSvg}</div>
-      <div class="tile-content">
-        <div class="tile-title">${mod.title}</div>
-        <div class="tile-desc">${mod.desc || ""}</div>
-      </div>
-    `;
-    tile.addEventListener("click", () => openModule(mod.id, true));
-    elGrid.appendChild(tile);
+    const tile = document.createElement("div"); tile.className = "tile";
+    tile.innerHTML = `<div class="tile-icon">${iconSvg}</div><div class="tile-content"><div class="tile-title">${mod.title}</div><div class="tile-desc">${mod.desc || ""}</div></div>`;
+    tile.addEventListener("click", () => openModule(mod.id, true)); elGrid.appendChild(tile);
   }
 
   window.addEventListener("popstate", () => {
     const hash = location.hash.replace(/^#/, "");
-    if (hash && modules.has(hash)) openModule(hash, false);
-    else showHome(false);
-  });
-
-  window.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("fab-add").addEventListener("click", () => showToast("Aby dodać moduł, wgraj plik do folderu 'modules' i dopisz go do 'modules.json'."));
-    
-    const initHash = location.hash.replace(/^#/, "");
-    if (initHash && modules.has(initHash)) openModule(initHash, false);
-  });
-
-  return { db, register, openModule, showHome };
-})();
-
-document.addEventListener("DOMContentLoaded", () => {
-  const drawer = document.getElementById("drawer");
-  const overlay = document.getElementById("drawer-overlay");
-  const menuBtn = document.getElementById("menu-btn");
-
-  function toggleMenu() {
-    drawer.classList.toggle("open");
-    overlay.classList.toggle("open");
-  }
-
-  menuBtn.addEventListener("click", toggleMenu);
-  overlay.addEventListener("click", toggleMenu);
-});
-
-async function loadModulesFromManifest() {
-  try {
-    const response = await fetch('./modules.json?t=' + Date.now());
-    if (!response.ok) throw new Error("Brak manifestu");
-    
-    const modulesList = await response.json();
-    
-    if (!modulesList || modulesList.length === 0) {
-      document.getElementById("modules-grid").innerHTML = `<div class="empty-state">Brak modułów w systemie.</div>`;
-      return;
-    }
-
-    modulesList.forEach(mod => {
-      const script = document.createElement("script");
-      script.src = mod.file;
-      script.onerror = () => console.error(`Nie załadowano: ${mod.file}`);
-      document.body.appendChild(script);
-    });
-
-  } catch (err) {
-    document.getElementById("modules-grid").innerHTML = `<div class="empty-state">Błąd krytyczny: Brak pliku modules.json.</div>`;
-  }
-}
-
-window.addEventListener("DOMContentLoaded", loadModulesFromManifest);
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").then(reg => {
-      reg.addEventListener("updatefound", () => {
-        const newWorker = reg.installing;
-        newWorker.addEventListener("statechange", () => {
-          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-            newWorker.postMessage({ type: "SKIP_WAITING" });
-          }
-        });
-      });
-    });
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (!refreshing) { refreshing = true; window.location.reload(); }
-    });
-  });
-}
-
-window.addEventListener('error', function(e) {
-  const bar = document.getElementById('error-bar');
-  bar.style.display = 'block';
-  bar.textContent = 'ERR: ' + e.message;
-});
-</script>
-
-</body>
-</html>
+    if (hash === "settings") openSettings(false);
+    else if (hash && modules.has(hash)) open
