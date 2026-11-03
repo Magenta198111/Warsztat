@@ -303,6 +303,14 @@
           .qr-cam-overlay { position: absolute; inset: 15%; border: 2px solid var(--accent); border-radius: 12px; pointer-events: none; display: none; }
           .qr-cam-overlay.active { display: block; }
           
+          .qr-result-box { background: var(--surface); border: 1px solid var(--accent); border-radius: 8px; padding: 16px; margin-top: 16px; }
+          .qr-result-header { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; letter-spacing: 0.5px; }
+          .qr-result-body { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+          .qr-result-text { font-family: monospace; font-size: 14px; color: var(--ink); word-break: break-all; line-height: 1.5; flex: 1; }
+          .qr-copy-btn { background: transparent; border: none; padding: 4px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color 0.2s; }
+          .qr-copy-btn:active { transform: scale(0.9); }
+          .qr-copy-btn svg { width: 18px; height: 18px; }
+
           .qr-status { text-align: center; color: var(--muted); font-size: 12px; font-family: monospace; margin-top: 16px; min-height: 18px; word-break: break-all; line-height: 1.4; }
           .qr-divider { text-align: center; color: var(--line); font-size: 11px; font-weight: 600; margin: 24px 0; letter-spacing: 1px; }
         </style>
@@ -342,6 +350,16 @@
           
           <div id="q-scan-status" class="qr-status">Gotowy do skanowania</div>
           
+          <div id="q-scan-result" class="qr-result-box hidden">
+            <div class="qr-result-header">Znaleziono kod QR</div>
+            <div class="qr-result-body">
+              <span id="q-scan-result-text" class="qr-result-text"></span>
+              <button id="q-scan-copy-btn" class="qr-copy-btn" title="Kopiuj">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+            </div>
+          </div>
+          
           <button id="q-scan-toggle" class="qr-btn qr-btn-primary">Uruchom kamerę</button>
           
           <div class="qr-divider">LUB</div>
@@ -362,8 +380,44 @@
       const camContainer = $("q-cam-container"), camPlaceholder = $("q-cam-placeholder"), camOverlay = $("q-cam-overlay");
       const scanFileBtn = $("q-scan-file-btn"), scanFileInput = $("q-scan-file"), scanFileName = $("q-scan-file-name");
       const modeOptions = container.querySelectorAll(".uc-modal-item, .uc-dropdown-item");
+      const status = $("q-scan-status");
+      const resultBox = $("q-scan-result");
+      const resultText = $("q-scan-result-text");
+      const copyBtn = $("q-scan-copy-btn");
       
       $("q-back").addEventListener("click", () => history.back(), { signal });
+
+      function resetScanUI() {
+        camContainer.classList.remove("active");
+        camOverlay.classList.remove("active");
+        $("q-video").classList.remove("active");
+        camPlaceholder.style.display = "flex";
+        resultBox.classList.add("hidden");
+        status.classList.remove("hidden");
+        status.textContent = "Gotowy do skanowania";
+      }
+
+      function showResult(text) {
+        stopCamera();
+        $("q-scan-toggle").textContent = "Uruchom kamerę";
+        camContainer.classList.remove("active");
+        camOverlay.classList.remove("active");
+        $("q-video").classList.remove("active");
+        camPlaceholder.style.display = "flex";
+        
+        status.classList.add("hidden");
+        resultBox.classList.remove("hidden");
+        resultText.textContent = text;
+      }
+
+      copyBtn.addEventListener("click", () => {
+        const textToCopy = resultText.textContent;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          const originalHTML = copyBtn.innerHTML;
+          copyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+          setTimeout(() => { copyBtn.innerHTML = originalHTML; }, 1500);
+        }).catch(() => showToast("Błąd kopiowania"));
+      }, { signal });
 
       if (menuStyle === "bottom") {
         const modal = $("qr-mode-modal");
@@ -393,15 +447,12 @@
             modeText.textContent = "Generator";
             modeIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
             viewGen.classList.remove("hidden"); viewScan.classList.add("hidden");
-            stopCamera();
-            camContainer.classList.remove("active");
-            camOverlay.classList.remove("active");
-            $("q-video").classList.remove("active");
-            camPlaceholder.style.display = "flex";
+            resetScanUI();
           } else {
             modeText.textContent = "Skaner";
             modeIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`;
             viewScan.classList.remove("hidden"); viewGen.classList.add("hidden");
+            resetScanUI();
           }
         }, { signal });
       });
@@ -448,18 +499,13 @@
       }, { signal });
 
       videoEl = $("q-video");
-      const status = $("q-scan-status");
       const toggleBtn = $("q-scan-toggle");
 
       toggleBtn.addEventListener("click", async () => {
         if (stream) {
           stopCamera();
           toggleBtn.textContent = "Uruchom kamerę";
-          status.textContent = "Kamera zatrzymana";
-          camContainer.classList.remove("active");
-          camOverlay.classList.remove("active");
-          videoEl.classList.remove("active");
-          camPlaceholder.style.display = "flex";
+          resetScanUI();
           return;
         }
 
@@ -467,6 +513,8 @@
           stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
           videoEl.srcObject = stream;
           toggleBtn.textContent = "Zatrzymaj kamerę";
+          resultBox.classList.add("hidden");
+          status.classList.remove("hidden");
           status.textContent = "Skanowanie...";
           
           camContainer.classList.add("active");
@@ -480,16 +528,7 @@
               try {
                 const codes = await detector.detect(videoEl);
                 if (codes.length > 0 && codes[0].rawValue) {
-                  stopCamera();
-                  toggleBtn.textContent = "Uruchom kamerę";
-                  status.innerHTML = `<b>Znaleziono:</b><br>${codes[0].rawValue}`;
-                  
-                  camContainer.classList.remove("active");
-                  camOverlay.classList.remove("active");
-                  videoEl.classList.remove("active");
-                  camPlaceholder.style.display = "flex";
-                  
-                  alert("Odczytano: " + codes[0].rawValue);
+                  showResult(codes[0].rawValue);
                 }
               } catch (e) {}
             }, 500);
@@ -497,10 +536,7 @@
             status.textContent = "Brak wsparcia. Użyj opcji wgrania zdjęcia.";
             stopCamera();
             toggleBtn.textContent = "Uruchom kamerę";
-            camContainer.classList.remove("active");
-            camOverlay.classList.remove("active");
-            videoEl.classList.remove("active");
-            camPlaceholder.style.display = "flex";
+            resetScanUI();
           }
         } catch (e) {
           status.textContent = "Błąd dostępu do kamery.";
@@ -525,12 +561,15 @@
           const detector = new BarcodeDetector({ formats: ['qr_code'] });
           const codes = await detector.detect(bitmap);
           if (codes.length > 0 && codes[0].rawValue) {
-            status.innerHTML = `<b>Znaleziono:</b><br>${codes[0].rawValue}`;
-            alert("Odczytano: " + codes[0].rawValue);
+            showResult(codes[0].rawValue);
           } else {
+            resultBox.classList.add("hidden");
+            status.classList.remove("hidden");
             status.textContent = "Nie znaleziono kodu QR na zdjęciu.";
           }
         } catch (err) {
+          resultBox.classList.add("hidden");
+          status.classList.remove("hidden");
           status.textContent = "Błąd odczytu zdjęcia.";
         }
       }, { signal });
