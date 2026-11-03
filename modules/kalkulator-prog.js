@@ -32,12 +32,12 @@
           </div>
         </div>
 
-        <div class="card" style="padding:16px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div class="card" style="padding:16px 10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 6px;">
             <label style="margin:0; font-size:12px;">Siatka bitów</label>
-            <span style="font-size:11px; color:var(--muted); font-family:monospace;">Bajty: 31-24 | 23-16 | 15-8 | 7-0</span>
+            <span style="font-size:11px; color:var(--muted); font-family:monospace;">31 &rarr; 0</span>
           </div>
-          <div style="display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; justify-items:center;" id="cp-bit-grid"></div>
+          <div style="display:grid; grid-template-columns:repeat(8, 1fr); gap:4px; justify-items:center;" id="cp-bit-grid"></div>
         </div>
 
         <div class="card" style="padding:16px;">
@@ -115,7 +115,8 @@
         wrapper.style.display = "flex";
         wrapper.style.flexDirection = "column";
         wrapper.style.alignItems = "center";
-        wrapper.style.gap = "4px";
+        wrapper.style.gap = "2px";
+        wrapper.style.width = "100%";
 
         const span = document.createElement("span");
         span.className = "cp-bit";
@@ -126,7 +127,8 @@
         span.style.aspectRatio = "1";
         span.style.borderRadius = "6px";
         span.style.border = "1px solid var(--line)";
-        span.style.fontSize = "16px";
+        span.style.fontSize = "20px";
+        span.style.fontWeight = "600";
         span.style.fontFamily = "monospace";
         span.style.cursor = "pointer";
         span.style.transition = "all 0.1s";
@@ -142,6 +144,7 @@
         label.style.fontSize = "10px";
         label.style.color = "var(--muted)";
         label.style.fontFamily = "monospace";
+        label.style.marginTop = "2px";
         
         wrapper.appendChild(span);
         wrapper.appendChild(label);
