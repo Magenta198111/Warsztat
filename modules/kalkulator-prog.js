@@ -16,13 +16,28 @@
           
           .cp-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
           .cp-input-group { display: flex; flex-direction: column; }
-          .cp-input { 
-            width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); 
-            color: var(--ink); font-size: 18px; font-family: monospace; padding: 8px 0; 
-            outline: none; transition: border-color 0.2s;
+          
+          .cp-input-wrapper {
+            display: flex; align-items: center;
+            border-bottom: 1px solid var(--line);
+            transition: border-color 0.2s;
           }
-          .cp-input:focus { border-bottom-color: var(--accent); }
+          .cp-input-wrapper:focus-within { border-bottom-color: var(--accent); }
+          
+          .cp-input { 
+            width: 100%; background: transparent; border: none; 
+            color: var(--ink); font-size: 18px; font-family: monospace; padding: 8px 0; 
+            outline: none;
+          }
           .cp-input::placeholder { color: var(--line); font-size: 14px; }
+          
+          .cp-copy-btn {
+            background: transparent; border: none; padding: 8px; margin: 0;
+            color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: color 0.2s, transform 0.1s; flex-shrink: 0; outline: none;
+          }
+          .cp-copy-btn:active { transform: scale(0.9); }
+          .cp-copy-btn svg { width: 16px; height: 16px; }
           
           .cp-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
@@ -38,6 +53,7 @@
           
           .cp-op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
           .cp-op-inputs { display: flex; gap: 12px; margin-bottom: 16px; }
+          .cp-op-inputs .cp-input-wrapper { flex: 1; }
           .cp-op-inputs .cp-input { text-align: center; }
           
           .cp-btn {
@@ -48,7 +64,10 @@
           }
           .cp-btn:active { background: var(--surface-hover); }
           
-          .cp-result { text-align: center; font-family: monospace; font-size: 24px; font-weight: 700; color: var(--accent); margin-top: 8px; }
+          .cp-result-wrapper {
+            display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 8px;
+          }
+          .cp-result { text-align: center; font-family: monospace; font-size: 24px; font-weight: 700; color: var(--accent); }
         </style>
 
         <button id="cp-back" class="cp-back-btn">
@@ -58,19 +77,39 @@
         <div class="cp-inputs-grid">
           <div class="cp-input-group">
             <label class="cp-label">HEX</label>
-            <input type="text" id="cp-in-hex" class="cp-input" autocomplete="off" autocorrect="off" spellcheck="false">
+            <div class="cp-input-wrapper">
+              <input type="text" id="cp-in-hex" class="cp-input" autocomplete="off" autocorrect="off" spellcheck="false">
+              <button class="cp-copy-btn" data-target="cp-in-hex" title="Kopiuj">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+            </div>
           </div>
           <div class="cp-input-group">
             <label class="cp-label">DEC</label>
-            <input type="text" id="cp-in-dec" class="cp-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false">
+            <div class="cp-input-wrapper">
+              <input type="text" id="cp-in-dec" class="cp-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false">
+              <button class="cp-copy-btn" data-target="cp-in-dec" title="Kopiuj">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+            </div>
           </div>
           <div class="cp-input-group">
             <label class="cp-label">OCT</label>
-            <input type="text" id="cp-in-oct" class="cp-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false">
+            <div class="cp-input-wrapper">
+              <input type="text" id="cp-in-oct" class="cp-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false">
+              <button class="cp-copy-btn" data-target="cp-in-oct" title="Kopiuj">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+            </div>
           </div>
           <div class="cp-input-group">
             <label class="cp-label">BIN</label>
-            <input type="text" id="cp-in-bin" class="cp-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false">
+            <div class="cp-input-wrapper">
+              <input type="text" id="cp-in-bin" class="cp-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false">
+              <button class="cp-copy-btn" data-target="cp-in-bin" title="Kopiuj">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -83,8 +122,12 @@
 
         <label class="cp-label">Operacje bitowe</label>
         <div class="cp-op-inputs">
-          <input type="text" id="cp-op-a" class="cp-input" inputmode="numeric" pattern="[0-9]*" placeholder="A" autocomplete="off" autocorrect="off" spellcheck="false">
-          <input type="text" id="cp-op-b" class="cp-input" inputmode="numeric" pattern="[0-9]*" placeholder="B" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div class="cp-input-wrapper">
+            <input type="text" id="cp-op-a" class="cp-input" inputmode="numeric" pattern="[0-9]*" placeholder="A" autocomplete="off" autocorrect="off" spellcheck="false">
+          </div>
+          <div class="cp-input-wrapper">
+            <input type="text" id="cp-op-b" class="cp-input" inputmode="numeric" pattern="[0-9]*" placeholder="B" autocomplete="off" autocorrect="off" spellcheck="false">
+          </div>
         </div>
         
         <div class="cp-op-grid">
@@ -98,7 +141,12 @@
 
         <div style="text-align: center; margin-top: 16px;">
           <div class="cp-label" style="margin-bottom: 4px;">Wynik operacji (DEC)</div>
-          <div id="cp-op-result" class="cp-result">0</div>
+          <div class="cp-result-wrapper">
+            <div id="cp-op-result" class="cp-result">0</div>
+            <button class="cp-copy-btn" id="cp-copy-op-result" title="Kopiuj">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
         </div>
       `;
 
@@ -106,6 +154,27 @@
       const inHex = $("cp-in-hex"), inDec = $("cp-in-dec"), inOct = $("cp-in-oct"), inBin = $("cp-in-bin");
       const bitGrid = $("cp-bit-grid");
       const opA = $("cp-op-a"), opB = $("cp-op-b"), opResult = $("cp-op-result");
+
+      // Obsługa kopiowania
+      container.querySelectorAll(".cp-copy-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          let textToCopy = "";
+          if (btn.id === "cp-copy-op-result") {
+            textToCopy = opResult.textContent;
+          } else {
+            const targetInput = $(btn.dataset.target);
+            if (targetInput) textToCopy = targetInput.value;
+          }
+
+          if (!textToCopy) return;
+
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            setTimeout(() => { btn.innerHTML = originalHTML; }, 1500);
+          }).catch(() => showToast("Błąd kopiowania"));
+        }, { signal });
+      });
 
       let currentValue = 0n;
 
