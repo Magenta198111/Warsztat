@@ -62,15 +62,15 @@
           </div>
           <div class="cp-input-group">
             <label class="cp-label">DEC</label>
-            <input type="text" id="cp-in-dec" class="cp-input" autocomplete="off" autocorrect="off" spellcheck="false">
+            <input type="text" id="cp-in-dec" class="cp-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false">
           </div>
           <div class="cp-input-group">
             <label class="cp-label">OCT</label>
-            <input type="text" id="cp-in-oct" class="cp-input" autocomplete="off" autocorrect="off" spellcheck="false">
+            <input type="text" id="cp-in-oct" class="cp-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false">
           </div>
           <div class="cp-input-group">
             <label class="cp-label">BIN</label>
-            <input type="text" id="cp-in-bin" class="cp-input" autocomplete="off" autocorrect="off" spellcheck="false">
+            <input type="text" id="cp-in-bin" class="cp-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false">
           </div>
         </div>
 
@@ -83,8 +83,8 @@
 
         <label class="cp-label">Operacje bitowe</label>
         <div class="cp-op-inputs">
-          <input type="text" id="cp-op-a" class="cp-input" placeholder="A" autocomplete="off" autocorrect="off" spellcheck="false">
-          <input type="text" id="cp-op-b" class="cp-input" placeholder="B" autocomplete="off" autocorrect="off" spellcheck="false">
+          <input type="text" id="cp-op-a" class="cp-input" inputmode="numeric" pattern="[0-9]*" placeholder="A" autocomplete="off" autocorrect="off" spellcheck="false">
+          <input type="text" id="cp-op-b" class="cp-input" inputmode="numeric" pattern="[0-9]*" placeholder="B" autocomplete="off" autocorrect="off" spellcheck="false">
         </div>
         
         <div class="cp-op-grid">
@@ -101,6 +101,7 @@
           <div id="cp-op-result" class="cp-result">0</div>
         </div>
       `;
+
       const $ = id => container.querySelector("#" + id);
       const inHex = $("cp-in-hex"), inDec = $("cp-in-dec"), inOct = $("cp-in-oct"), inBin = $("cp-in-bin");
       const bitGrid = $("cp-bit-grid");
