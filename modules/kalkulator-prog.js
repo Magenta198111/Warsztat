@@ -27,17 +27,17 @@
             </div>
             <div>
               <label style="margin-top:0; font-size:12px;">BIN (binarny)</label>
-              <input type="text" id="cp-in-bin" style="font-family:monospace; font-size:16px; padding:12px; background:#000; border:1px solid var(--line); color:var(--ink); border-radius:6px; width:100%;">
+              <input type="text" id="cp-in-bin" style="font-family:monospace; font-size:13px; padding:12px; background:#000; border:1px solid var(--line); color:var(--ink); border-radius:6px; width:100%; overflow-x:auto; white-space:nowrap;">
             </div>
           </div>
         </div>
 
         <div class="card" style="padding:16px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <label style="margin:0; font-size:12px;">Siatka bitów</label>
-            <span style="font-size:10px; color:var(--muted); font-family:monospace;">31 &rarr; 0</span>
+            <span style="font-size:11px; color:var(--muted); font-family:monospace;">Bajty: 31-24 | 23-16 | 15-8 | 7-0</span>
           </div>
-          <div style="display:flex; gap:12px; justify-content:space-between;" id="cp-bit-grid"></div>
+          <div style="display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; justify-items:center;" id="cp-bit-grid"></div>
         </div>
 
         <div class="card" style="padding:16px;">
@@ -108,59 +108,44 @@
         }
       }
 
-      for (let byteIndex = 3; byteIndex >= 0; byteIndex--) {
-        const byteDiv = document.createElement("div");
-        byteDiv.style.display = "flex";
-        byteDiv.style.flexDirection = "column";
-        byteDiv.style.gap = "4px";
-        byteDiv.style.flex = "1";
+      for (let i = 0; i < 32; i++) {
+        const bitIndex = 31 - i;
         
-        const bitsContainer = document.createElement("div");
-        bitsContainer.style.display = "grid";
-        bitsContainer.style.gridTemplateColumns = "repeat(8, 1fr)";
-        bitsContainer.style.gap = "2px";
+        const wrapper = document.createElement("div");
+        wrapper.style.display = "flex";
+        wrapper.style.flexDirection = "column";
+        wrapper.style.alignItems = "center";
+        wrapper.style.gap = "4px";
 
-        const labelsContainer = document.createElement("div");
-        labelsContainer.style.display = "grid";
-        labelsContainer.style.gridTemplateColumns = "repeat(8, 1fr)";
-        labelsContainer.style.gap = "2px";
-        labelsContainer.style.fontSize = "9px";
-        labelsContainer.style.color = "var(--muted)";
-        labelsContainer.style.textAlign = "center";
-        labelsContainer.style.fontFamily = "monospace";
+        const span = document.createElement("span");
+        span.className = "cp-bit";
+        span.style.display = "flex";
+        span.style.alignItems = "center";
+        span.style.justifyContent = "center";
+        span.style.width = "100%";
+        span.style.aspectRatio = "1";
+        span.style.borderRadius = "6px";
+        span.style.border = "1px solid var(--line)";
+        span.style.fontSize = "16px";
+        span.style.fontFamily = "monospace";
+        span.style.cursor = "pointer";
+        span.style.transition = "all 0.1s";
+        span.style.userSelect = "none";
         
-        for (let bit = 7; bit >= 0; bit--) {
-          const bitIndex = byteIndex * 8 + bit;
-          
-          const span = document.createElement("span");
-          span.className = "cp-bit";
-          span.style.display = "flex";
-          span.style.alignItems = "center";
-          span.style.justifyContent = "center";
-          span.style.height = "32px";
-          span.style.borderRadius = "4px";
-          span.style.border = "1px solid var(--line)";
-          span.style.fontSize = "12px";
-          span.style.fontFamily = "monospace";
-          span.style.cursor = "pointer";
-          span.style.transition = "all 0.1s";
-          span.style.userSelect = "none";
-          
-          span.addEventListener("click", () => {
-            currentValue ^= (1n << BigInt(bitIndex));
-            updateAll(currentValue);
-          }, { signal });
-          
-          bitsContainer.appendChild(span);
+        span.addEventListener("click", () => {
+          currentValue ^= (1n << BigInt(bitIndex));
+          updateAll(currentValue);
+        }, { signal });
 
-          const label = document.createElement("span");
-          label.textContent = bitIndex;
-          labelsContainer.appendChild(label);
-        }
+        const label = document.createElement("span");
+        label.textContent = bitIndex;
+        label.style.fontSize = "10px";
+        label.style.color = "var(--muted)";
+        label.style.fontFamily = "monospace";
         
-        byteDiv.appendChild(bitsContainer);
-        byteDiv.appendChild(labelsContainer);
-        bitGrid.appendChild(byteDiv);
+        wrapper.appendChild(span);
+        wrapper.appendChild(label);
+        bitGrid.appendChild(wrapper);
       }
 
       inHex.addEventListener("input", (e) => {
