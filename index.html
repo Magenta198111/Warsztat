@@ -14,13 +14,18 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+html {
+  height: 100%;
+  overflow-y: scroll;
+  overscroll-behavior-y: contain;
+}
+
 body { 
   font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
   margin: 0; background: var(--bg); color: var(--ink); 
-  min-height: 100vh; padding-bottom: 80px; 
+  min-height: 100%; padding-bottom: 80px; 
   -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
   -webkit-touch-callout: none;
-  overscroll-behavior-y: none; /* Blokada odświeżania przez przeciągnięcie */
 }
 input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; }
 
@@ -137,6 +142,16 @@ document.addEventListener('contextmenu', event => {
     event.preventDefault();
   }
 });
+
+// Blokada gestu pull-to-refresh (dla pewności)
+let _lastTouchY = 0;
+document.addEventListener('touchstart', e => { _lastTouchY = e.touches[0].clientY; }, { passive: true });
+document.addEventListener('touchmove', e => {
+  const deltaY = e.touches[0].clientY - _lastTouchY;
+  if (deltaY > 0 && window.scrollY <= 0) {
+    e.preventDefault();
+  }
+}, { passive: false });
 
 window.Hub = {
   modules: new Map(),
@@ -278,7 +293,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Poprawione ładowanie modułów - czeka, aż wszystkie skrypty się wczytają, zanim sprawdzi hash
   fetch('./modules.json?t=' + Date.now())
     .then(r => r.json())
     .then(list => {
