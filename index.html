@@ -1,324 +1,262 @@
-(() => {
-  Hub.register({
-    id: "jednostki",
-    title: "Konwerter Jednostek",
-    desc: "Błyskawiczne przeliczanie długości, masy, temperatury, objętości, prędkości, czasu i powierzchni",
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="./manifest.json">
+<title>Workspace</title>
+<style>
+:root {
+  --bg: #000000; --surface: #09090b; --surface-hover: #18181b;
+  --ink: #ededed; --muted: #8b8b93; --line: #27272a;
+  --accent: #818cf8; --accent-ink: #000000; --danger: #ef4444;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; background: var(--bg); color: var(--ink); min-height: 100vh; padding-bottom: 80px; }
+.topbar { position: sticky; top: 0; z-index: 100; padding: 16px 20px; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
+.topbar-title { font-size: 14px; font-weight: 600; letter-spacing: 0.05em; margin: 0; text-transform: uppercase; }
+.menu-btn { position: absolute; left: 16px; background: none; border: none; color: var(--ink); padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+.menu-btn:active { background: var(--surface-hover); }
 
-    async mount(container, signal) {
-      let menuStyle = "bottom";
-      try { menuStyle = await Hub.db.get("menu_style", "bottom"); } catch(e) {}
+.drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.drawer-overlay.open { opacity: 1; pointer-events: auto; }
+.drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 80%; max-width: 320px; background: var(--surface); border-right: 1px solid var(--line); z-index: 999; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; }
+.drawer.open { transform: translateX(0); }
+.drawer-header { padding: 24px 20px; border-bottom: 1px solid var(--line); }
+.drawer-title { font-size: 18px; font-weight: 700; margin: 0; }
+.drawer-menu { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+.drawer-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 6px; color: var(--ink); font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+.drawer-item:active { background: var(--surface-hover); }
+.drawer-item.active { background: var(--surface-hover); color: var(--accent); }
+.drawer-item svg { width: 20px; height: 20px; color: var(--muted); stroke-width: 1.5; transition: color 0.2s; }
+.drawer-item.active svg { color: var(--accent); }
 
-      const data = {
-        length: {
-          name: "Długość",
-          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="4" y1="12" x2="20" y2="12"></line></svg>`,
-          units: { m: 1, cm: 0.01, km: 1000, in: 0.0254, ft: 0.3048, mi: 1609.34 },
-          names: { m: 'Metry', cm: 'Centymetry', km: 'Kilometry', in: 'Cale', ft: 'Stopy', mi: 'Mile' }
-        },
-        mass: {
-          name: "Masa",
-          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="M3 7h18"></path><path d="M6 7l-3 7h6l-3-7z"></path><path d="M18 7l-3 7h6l-3-7z"></path></svg>`,
-          units: { kg: 1, g: 0.001, t: 1000, lb: 0.453592, oz: 0.0283495 },
-          names: { kg: 'Kilogramy', g: 'Gramy', t: 'Tony', lb: 'Funty', oz: 'Uncje' }
-        },
-        temp: {
-          name: "Temperatura",
-          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>`,
-          units: ['C', 'F', 'K'],
-          names: { C: 'Celsjusz', F: 'Fahrenheit', K: 'Kelwin' }
-        },
-        volume: {
-          name: "Objętość",
-          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12"></path><path d="M6 22h12"></path><path d="M6 2l1.5 18h9L18 2"></path><path d="M7 14h10"></path></svg>`,
-          units: { l: 1, ml: 0.001, gal: 3.78541, pt: 0.473176 },
-          names: { l: 'Litry', ml: 'Mililitry', gal: 'Galony (US)', pt: 'Pinty (US)' }
-        },
-        speed: {
-          name: "Prędkość",
-          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>`,
-          units: { ms: 1, kmh: 0.277778, mph: 0.44704, knot: 0.514444 },
-          names: { ms: 'Metry na sekundę', kmh: 'Kilometry na godzinę', mph: 'Mile na godzinę', knot: 'Węzły' }
-        },
-        time: {
-          name: "Czas",
-          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
-          units: { s: 1, min: 60, h: 3600, d: 86400, w: 604800, mo: 2629800, y: 31557600 },
-          names: { s: 'Sekundy', min: 'Minuty', h: 'Godziny', d: 'Dni', w: 'Tygodnie', mo: 'Miesiące', y: 'Lata' }
-        },
-        area: {
-          name: "Powierzchnia",
-          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>`,
-          units: { m2: 1, km2: 1000000, cm2: 0.0001, ha: 10000, a: 100, ft2: 0.092903, in2: 0.00064516 },
-          names: { m2: 'Metry kwadratowe', km2: 'Kilometry kwadratowe', cm2: 'Centymetry kwadratowe', ha: 'Hektary', a: 'Ary', ft2: 'Stopy kwadratowe', in2: 'Cale kwadratowe' }
-        }
-      };
+.container { max-width: 600px; margin: 0 auto; padding: 20px; }
+.list { display: flex; flex-direction: column; gap: 12px; }
+.tile { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+.tile:active { background: var(--surface-hover); border-color: var(--muted); }
+.tile-icon { width: 36px; height: 36px; border-radius: 4px; background: var(--bg); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tile-icon svg { width: 18px; height: 18px; stroke-width: 1.5; stroke: currentColor; fill: none; }
+.tile-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.tile-title { font-weight: 500; font-size: 15px; }
+.tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
 
-      let currentCat = 'length';
+.fab { position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px; border-radius: 8px; background: var(--ink); color: var(--bg); font-size: 24px; border: none; display: flex; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+.fab:active { transform: scale(0.92); }
 
-      let selectorHtml = "";
-      if (menuStyle === "bottom") {
-        selectorHtml = `
-          <div id="u-cat-trigger" class="uc-top-trigger">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <div class="uc-top-icon">${data[currentCat].icon}</div>
-              <span>${data[currentCat].name}</span>
-            </div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div id="u-modal" class="uc-modal-overlay bottom-mode">
-            <div class="uc-modal-sheet">
-              <div class="uc-modal-title">Kategoria</div>
-              ${Object.keys(data).map(key => `
-                <div class="uc-modal-item ${key === currentCat ? 'active' : ''}" data-cat="${key}">
-                  <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="width:18px;height:18px;opacity:0.7;">${data[key].icon}</div>
-                    <span>${data[key].name}</span>
-                  </div>
-                  <span class="check">✓</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-      } else {
-        selectorHtml = `
-          <div style="position: relative;">
-            <div id="u-cat-trigger" class="uc-top-trigger">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <div class="uc-top-icon">${data[currentCat].icon}</div>
-                <span>${data[currentCat].name}</span>
-              </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </div>
-            <div id="u-dropdown" class="uc-dropdown">
-              ${Object.keys(data).map(key => `
-                <div class="uc-dropdown-item ${key === currentCat ? 'active' : ''}" data-cat="${key}">
-                  <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="width:18px;height:18px;opacity:0.7;">${data[key].icon}</div>
-                    <span>${data[key].name}</span>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-      }
+#view-module { display: none; }
+#view-module.active { display: block; }
+#view-settings { display: none; }
+#view-settings.active { display: block; }
+#view-home.hidden { display: none; }
+#fab-add.hidden { display: none; }
 
-      container.innerHTML = `
-        <style>
-          .uc-top-trigger {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 16px 0; border-bottom: 1px solid var(--line);
-            font-size: 14px; font-weight: 600; color: var(--ink);
-            cursor: pointer; margin-bottom: 24px;
-          }
-          .uc-top-icon { width: 20px; height: 20px; color: var(--accent); }
-          
-          .uc-input-container {
-            display: flex; flex-direction: column; align-items: center;
-            padding: 20px 0 32px 0; border-bottom: 1px solid var(--line);
-            margin-bottom: 24px;
-          }
-          
-          .uc-big-input {
-            width: 100%; background: transparent; border: none;
-            color: var(--ink); font-size: 48px; font-weight: 700;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-            text-align: center; outline: none; padding: 0;
-            letter-spacing: -0.03em;
-          }
-          .uc-big-input::-webkit-outer-spin-button,
-          .uc-big-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-          
-          .uc-select-trigger {
-            display: flex; align-items: center; gap: 6px;
-            background: transparent; border: none;
-            color: var(--accent); font-size: 16px; font-weight: 600;
-            cursor: pointer; margin-top: 8px; padding: 4px 8px; border-radius: 4px;
-          }
-          .uc-select-trigger:active { background: rgba(129, 140, 248, 0.1); }
-          
-          .uc-list { display: flex; flex-direction: column; }
-          .uc-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
-          .uc-row:last-child { border-bottom: none; }
-          .uc-row-name { color: var(--muted); font-weight: 500; }
-          .uc-row-val { color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; }
-          
-          /* Modal i dropdown style */
-          .uc-dropdown { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); z-index: 100; overflow: hidden; opacity: 0; transform: translateY(-5px); pointer-events: none; transition: opacity 0.15s, transform 0.15s; }
-          .uc-dropdown.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
-          .uc-dropdown-item { padding: 14px 16px; font-size: 14px; color: var(--ink); display: flex; align-items: center; cursor: pointer; border-bottom: 1px solid var(--line); }
-          .uc-dropdown-item:last-child { border-bottom: none; }
-          .uc-dropdown-item.active { color: var(--accent); font-weight: 600; background: rgba(129, 140, 248, 0.05); }
-          
-          .uc-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-          .uc-modal-overlay.open { opacity: 1; pointer-events: auto; }
-          .uc-modal-sheet { background: var(--surface); width: 100%; max-width: 600px; border: 1px solid var(--line); padding: 24px 16px; }
-          .uc-modal-overlay.bottom-mode { align-items: flex-end; }
-          .uc-modal-overlay.bottom-mode .uc-modal-sheet { border-top-left-radius: 16px; border-top-right-radius: 16px; border-bottom: none; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); max-height: 80vh; overflow-y: auto; }
-          .uc-modal-overlay.bottom-mode.open .uc-modal-sheet { transform: translateY(0); }
-          .uc-modal-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 16px; letter-spacing: 0.5px; }
-          .uc-modal-item { padding: 16px; border-radius: 6px; margin-bottom: 4px; font-size: 15px; color: var(--ink); display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: var(--bg); }
-          .uc-modal-item:active { background: var(--line); }
-          .uc-modal-item.active { color: var(--accent); font-weight: 600; }
-          .uc-modal-item .check { opacity: 0; color: var(--accent); }
-          .uc-modal-item.active .check { opacity: 1; }
-        </style>
+.empty-state { border: 1px dashed var(--line); border-radius: 6px; padding: 40px 20px; text-align: center; color: var(--muted); background: var(--surface); }
+#error-bar { position: fixed; top: 0; left: 0; width: 100%; background: var(--danger); color: #fff; padding: 10px; font-size: 12px; z-index: 9999; display: none; text-align: center; font-weight: bold; }
+.settings-block { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+.settings-header { padding: 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); }
+.settings-row { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+.settings-label { font-size: 15px; font-weight: 500; }
+.settings-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.settings-options { display: flex; gap: 8px; }
+.settings-opt-btn { padding: 8px 16px; font-size: 13px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); cursor: pointer; }
+.settings-opt-btn.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 
-        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:8px;">
-          <button id="u-back" style="width:auto; padding:8px 12px 8px 0; border:none; background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </button>
-        </div>
+#toast-container { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 10000; pointer-events: none; width: 90%; max-width: 400px; }
+.toast { background: var(--surface-hover); color: var(--ink); padding: 14px 20px; border-radius: 8px; border: 1px solid var(--line); font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); opacity: 0; transform: translateY(-20px); transition: all 0.3s; text-align: center; }
+.toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
 
-        ${selectorHtml}
+<div id="error-bar"></div>
 
-        <div class="uc-input-container">
-          <input type="number" id="u-input" class="uc-big-input" placeholder="0" value="1" inputmode="decimal">
-          <div id="u-unit-trigger" class="uc-select-trigger">
-            <span id="u-unit-text">Metry</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-        </div>
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header"><h2 class="drawer-title">Workspace</h2></div>
+  <div class="drawer-menu">
+    <div class="drawer-item" id="drawer-home" onclick="Hub.showHome(true)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      <span>Główny hub</span>
+    </div>
+    <div class="drawer-item" id="drawer-settings" onclick="Hub.openSettings()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      <span>Ustawienia</span>
+    </div>
+    <div class="drawer-item" onclick="showToast('Kopia zapasowa w budowie.')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      <span>Kopia zapasowa</span>
+    </div>
+  </div>
+</div>
 
-        <div>
-          <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; letter-spacing: 0.5px;">Przeliczenia</div>
-          <div id="u-all-list" class="uc-list"></div>
-        </div>
+<div class="topbar">
+  <button class="menu-btn" id="menu-btn">
+    <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+  </button>
+  <h1 class="topbar-title" id="app-title">Workspace</h1>
+</div>
 
-        <div id="u-unit-modal" class="uc-modal-overlay ${menuStyle === 'bottom' ? 'bottom-mode' : ''}">
-          <div class="uc-modal-sheet">
-            <div class="uc-modal-title">Wybierz jednostkę</div>
-            <div id="u-unit-options"></div>
-          </div>
-        </div>
-      `;
+<main class="container" id="view-home"><div class="list" id="modules-grid"></div></main>
+<main class="container" id="view-module"></main>
 
-      const $ = id => container.querySelector("#" + id);
-      const inputEl = $("u-input");
-      const allList = $("u-all-list");
-      const unitText = $("u-unit-text");
-      const unitTrigger = $("u-unit-trigger");
-      const unitModal = $("u-unit-modal");
-      const unitOptionsContainer = $("u-unit-options");
-      
-      const catTrigger = $("u-cat-trigger");
-      const catTitle = catTrigger.querySelector('span');
-      const catIcon = catTrigger.querySelector('.uc-top-icon');
-      const options = container.querySelectorAll(".uc-modal-item, .uc-dropdown-item");
+<main class="container" id="view-settings">
+  <div class="settings-block">
+    <div class="settings-header">Wygląd</div>
+    <div class="settings-row">
+      <div><div class="settings-label">Animacja menu wyboru</div><div class="settings-desc">Sposób w jaki pojawiają się listy rozwijane</div></div>
+      <div class="settings-options">
+        <button class="settings-opt-btn" id="opt-bottom">Z dołu ekranu</button>
+        <button class="settings-opt-btn" id="opt-dropdown">Z przycisku</button>
+      </div>
+    </div>
+  </div>
+</main>
 
-      let currentUnit = Object.keys(data[currentCat].units)[0];
+<button class="fab" id="fab-add">+</button>
+<div id="toast-container"></div>
 
-      function convertTemp(val, from, to) {
-        let c;
-        if (from === 'C') c = val;
-        if (from === 'F') c = (val - 32) * 5/9;
-        if (from === 'K') c = val - 273.15;
-        if (to === 'C') return c;
-        if (to === 'F') return (c * 9/5) + 32;
-        if (to === 'K') return c + 273.15;
-      }
+<script>
+window.addEventListener('error', e => { const b = document.getElementById('error-bar'); if(b){ b.style.display='block'; b.textContent = 'BŁĄD: ' + e.message; } });
+window.showToast = m => { const c = document.getElementById('toast-container'); const t = document.createElement('div'); t.className='toast'; t.textContent=m; c.appendChild(t); requestAnimationFrame(()=>t.classList.add('show')); setTimeout(()=>{t.classList.remove('show'); setTimeout(()=>t.remove(),300)}, 3800); };
 
-      function formatNumber(num) {
-        if (num === 0) return "0";
-        if (isNaN(num)) return "";
-        return Number(num.toPrecision(7)).toLocaleString('pl-PL', { maximumFractionDigits: 6 });
-      }
+window.Hub = {
+  modules: new Map(),
+  activeModule: null,
+  activeAbort: null,
+  
+  db: {
+    open: () => new Promise((res, rej) => { const r = indexedDB.open("WarsztatDB", 1); r.onupgradeneeded = e => { if(!e.target.result.objectStoreNames.contains("kv")) e.target.result.createObjectStore("kv"); }; r.onsuccess = e => res(e.target.result); r.onerror = e => rej(e.target.error); }),
+    get: async function(k, d=null) { try { const db = await this.open(); return new Promise((res, rej) => { const r = db.transaction("kv","readonly").objectStore("kv").get(k); r.onsuccess = () => res(r.result !== undefined ? r.result : d); r.onerror = () => rej(r.error); }); } catch(e) { return d; } },
+    set: async function(k, v) { try { const db = await this.open(); return new Promise((res, rej) => { const r = db.transaction("kv","readwrite").objectStore("kv").put(v, k); r.onsuccess = () => res(true); r.onerror = () => rej(r.error); }); } catch(e) { return false; } }
+  },
 
-      function calculate() {
-        const val = parseFloat(inputEl.value);
-        if (isNaN(val)) { allList.innerHTML = ""; return; }
+  register: function(mod) {
+    Hub.modules.set(mod.id, mod);
+    const grid = document.getElementById("modules-grid");
+    const empty = grid.querySelector('.empty-state'); if(empty) empty.remove();
+    
+    const iconMap = {
+      "konwerter": `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
+      "qr": `<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`,
+      "jednostki": `<svg viewBox="0 0 24 24"><path d="M12 3v18"></path><path d="M3 7h18"></path><path d="M6 7l-3 7h6l-3-7z"></path><path d="M18 7l-3 7h6l-3-7z"></path></svg>`,
+      "skaner-pdf": `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
+      "oczyszczacz": `<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
+      "zdjecie-dokument": `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><circle cx="9" cy="10" r="2"></circle><line x1="15" y1="8" x2="21" y2="8"></line><line x1="15" y1="12" x2="21" y2="12"></line><line x1="7" y1="16" x2="21" y2="16"></line></svg>`,
+      "kalkulator-prog": `<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>`
+    };
 
-        allList.innerHTML = "";
-        const catData = data[currentCat];
-        const keys = currentCat === 'temp' ? catData.units : Object.keys(catData.units);
+    const icon = iconMap[mod.id] || `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
+    
+    const tile = document.createElement("div"); tile.className = "tile";
+    tile.innerHTML = `<div class="tile-icon">${icon}</div><div class="tile-content"><div class="tile-title">${mod.title}</div><div class="tile-desc">${mod.desc||""}</div></div>`;
+    tile.onclick = () => Hub.openModule(mod.id, true);
+    grid.appendChild(tile);
+  },
 
-        keys.forEach(k => {
-          if (k === currentUnit) return;
-          let r = 0;
-          if (currentCat === 'temp') {
-            r = convertTemp(val, currentUnit, k);
-          } else {
-            r = val * catData.units[currentUnit] / catData.units[k];
-          }
-          allList.innerHTML += `
-            <div class="uc-row">
-              <span class="uc-row-name">${catData.names[k]}</span>
-              <span class="uc-row-val">${formatNumber(r)}</span>
-            </div>
-          `;
-        });
-      }
+  cleanup: function() {
+    if (Hub.activeAbort) { Hub.activeAbort.abort(); Hub.activeAbort = null; }
+    if (Hub.activeModule && Hub.activeModule.unmount) { try { Hub.activeModule.unmount(); } catch(e){} }
+    Hub.activeModule = null; document.getElementById("view-module").innerHTML = "";
+  },
 
-      function updateUnitList() {
-        const catData = data[currentCat];
-        const keys = currentCat === 'temp' ? catData.units : Object.keys(catData.units);
-        
-        currentUnit = keys[0];
-        unitText.textContent = catData.names[currentUnit];
+  showHome: function(push = false) {
+    Hub.cleanup();
+    document.getElementById("drawer").classList.remove("open");
+    document.getElementById("drawer-overlay").classList.remove("open");
+    document.getElementById("view-module").classList.remove("active");
+    document.getElementById("view-settings").classList.remove("active");
+    document.getElementById("view-home").classList.remove("hidden");
+    document.getElementById("app-title").textContent = "Workspace";
+    document.getElementById("fab-add").classList.remove("hidden");
+    
+    document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('drawer-home').classList.add('active');
+    
+    if (push) {
+      if (location.hash !== '' && location.hash !== '#') history.pushState(null, "", "./");
+    } else {
+      history.replaceState(null, "", "./");
+    }
+  },
 
-        unitOptionsContainer.innerHTML = keys.map(k => `
-          <div class="uc-modal-item ${k === currentUnit ? 'active' : ''}" data-unit="${k}">
-            <span>${catData.names[k]}</span>
-            <span class="check">✓</span>
-          </div>
-        `).join('');
+  openModule: function(id, push = true) {
+    const mod = Hub.modules.get(id); if(!mod) return Hub.showHome();
+    Hub.cleanup();
+    document.getElementById("drawer").classList.remove("open");
+    document.getElementById("drawer-overlay").classList.remove("open");
+    document.getElementById("view-home").classList.add("hidden");
+    document.getElementById("view-settings").classList.remove("active");
+    document.getElementById("view-module").classList.add("active");
+    document.getElementById("app-title").textContent = mod.title.toUpperCase();
+    document.getElementById("fab-add").classList.add("hidden");
+    document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
+    
+    Hub.activeModule = mod; Hub.activeAbort = new AbortController();
+    if (push && location.hash !== `#${id}`) history.pushState(null, "", `#${id}`);
+    mod.mount(document.getElementById("view-module"), Hub.activeAbort.signal);
+    window.scrollTo(0, 0);
+  },
 
-        unitOptionsContainer.querySelectorAll('.uc-modal-item').forEach(opt => {
-          opt.addEventListener('click', () => {
-            currentUnit = opt.dataset.unit;
-            unitText.textContent = catData.names[currentUnit];
-            
-            unitOptionsContainer.querySelectorAll('.uc-modal-item').forEach(o => o.classList.remove('active'));
-            opt.classList.add('active');
-            
-            unitModal.classList.remove('open');
-            calculate();
-          }, { signal });
-        });
+  openSettings: async function(push = true) {
+    Hub.cleanup();
+    document.getElementById("drawer").classList.remove("open");
+    document.getElementById("drawer-overlay").classList.remove("open");
+    document.getElementById("view-home").classList.add("hidden");
+    document.getElementById("view-module").classList.remove("active");
+    document.getElementById("view-settings").classList.add("active");
+    document.getElementById("app-title").textContent = "USTAWIENIA";
+    document.getElementById("fab-add").classList.add("hidden");
+    document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('drawer-settings').classList.add('active');
+    
+    if (push && location.hash !== '#settings') history.pushState(null, "", `#settings`);
+    
+    const st = await Hub.db.get("menu_style", "bottom");
+    const b1 = document.getElementById("opt-bottom"), b2 = document.getElementById("opt-dropdown");
+    if(st === "bottom") { b1.classList.add("active"); b2.classList.remove("active"); }
+    else { b2.classList.add("active"); b1.classList.remove("active"); }
+    b1.onclick = () => { Hub.db.set("menu_style", "bottom"); b1.classList.add("active"); b2.classList.remove("active"); };
+    b2.onclick = () => { Hub.db.set("menu_style", "dropdown"); b2.classList.add("active"); b1.classList.remove("active"); };
+  }
+};
 
-        calculate();
-      }
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById('drawer-home').classList.add('active');
 
-      $("u-back").addEventListener("click", () => history.back(), { signal });
+  document.getElementById("fab-add").onclick = () => showToast("Wgraj plik do folderu modules i dopisz do modules.json");
+  
+  document.getElementById("menu-btn").onclick = () => { 
+    document.getElementById("drawer").classList.add("open"); 
+    document.getElementById("drawer-overlay").classList.add("open"); 
+  };
+  document.getElementById("drawer-overlay").onclick = () => { 
+    document.getElementById("drawer").classList.remove("open"); 
+    document.getElementById("drawer-overlay").classList.remove("open"); 
+  };
 
-      unitTrigger.addEventListener("click", () => unitModal.classList.add("open"), { signal });
-      unitModal.addEventListener("click", (e) => { if (e.target === unitModal) unitModal.classList.remove("open"); }, { signal });
+  // Fizyczny przycisk Wstecz zawsze wraca do Głównego huba (jeśli jesteśmy w module lub ustawieniach)
+  window.onpopstate = () => {
+    const isModule = document.getElementById("view-module").classList.contains("active");
+    const isSettings = document.getElementById("view-settings").classList.contains("active");
+    
+    if (isModule || isSettings) {
+      Hub.showHome(false); 
+    }
+  };
 
-      if (menuStyle === "bottom") {
-        catTrigger.addEventListener("click", () => $("u-modal").classList.add("open"), { signal });
-        $("u-modal").addEventListener("click", (e) => { if (e.target === $("u-modal")) $("u-modal").classList.remove("open"); }, { signal });
-      } else {
-        const dropdown = $("u-dropdown");
-        catTrigger.addEventListener("click", (e) => {
-          e.stopPropagation();
-          dropdown.classList.toggle("open");
-        }, { signal });
-        document.addEventListener("click", (e) => {
-          if (!catTrigger.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove("open");
-        }, { signal });
-      }
+  fetch('./modules.json?t=' + Date.now())
+    .then(r => r.json())
+    .then(list => {
+      list.forEach(mod => { const s = document.createElement('script'); s.src = mod.file; document.body.appendChild(s); });
+    })
+    .catch(e => { document.getElementById('modules-grid').innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd modules.json</div>'; });
 
-      options.forEach(opt => {
-        opt.addEventListener("click", () => {
-          currentCat = opt.dataset.cat;
-          catTitle.textContent = data[currentCat].name;
-          catIcon.innerHTML = data[currentCat].icon;
-          
-          options.forEach(o => o.classList.remove("active"));
-          opt.classList.add("active");
-          
-          if (menuStyle === "bottom") $("u-modal").classList.remove("open");
-          else $("u-dropdown").classList.remove("open");
-          
-          inputEl.value = "1";
-          updateUnitList();
-        }, { signal });
-      });
-
-      inputEl.addEventListener("input", calculate, { signal });
-      updateUnitList();
-    },
-    unmount() {}
-  });
-})();
+  const initHash = location.hash.replace(/^#/, "");
+  if (initHash === "settings") Hub.openSettings(false);
+  else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
+});
+</script>
+</body>
+</html>
