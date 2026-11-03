@@ -287,13 +287,30 @@
           .qr-input:focus { border-bottom-color: var(--accent); }
           .qr-input::placeholder { color: var(--line); font-size: 16px; }
           
-          .qr-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; text-align: center; display: block; margin-top: 16px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); transition: background 0.2s, border-color 0.2s; }
+          .qr-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; text-align: center; display: block; margin-top: 16px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); transition: background 0.2s, border-color 0.2s, opacity 0.2s; }
           .qr-btn:active { background: var(--surface-hover); }
           .qr-btn-primary { background: rgba(129, 140, 248, 0.1); color: var(--accent); border: 1px solid rgba(129, 140, 248, 0.3); }
           .qr-btn-primary:active { background: rgba(129, 140, 248, 0.2); }
+          .qr-btn:disabled { cursor: not-allowed; }
           
-          .qr-canvas-box { display: flex; justify-content: center; margin-top: 24px; background: #ffffff; padding: 16px; border-radius: 8px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-          .qr-canvas-box canvas { max-width: 100%; display: block; }
+          /* Nowy styl dla miejsca na kod QR */
+          .qr-divider-line { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
+          .qr-canvas-box { 
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 240px; /* Rezerwacja miejsca, aby nic nie skakało */
+            transition: all 0.3s ease;
+          }
+          .qr-canvas-box.has-canvas { 
+            background: #ffffff; padding: 16px; border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-height: auto; 
+          }
+          .qr-placeholder { 
+            color: var(--line); font-size: 12px; font-weight: 600; 
+            text-transform: uppercase; letter-spacing: 1px; text-align: center;
+          }
+          .qr-canvas-box.has-canvas .qr-placeholder { display: none; }
+          .qr-canvas-box canvas { display: none; max-width: 100%; }
+          .qr-canvas-box.has-canvas canvas { display: block; }
           
           .qr-cam-wrapper { width: 100%; aspect-ratio: 1; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; margin-top: 8px; position: relative; }
           .qr-cam-icon { color: var(--line); }
@@ -331,10 +348,16 @@
           
           <button id="q-gen-btn" class="qr-btn qr-btn-primary">Wygeneruj kod QR</button>
           
+          <div class="qr-divider-line"></div>
+          
           <div id="q-canvas-container" class="qr-canvas-box">
             <canvas id="q-canvas"></canvas>
+            <div id="q-placeholder" class="qr-placeholder">Miejsce na kod QR</div>
           </div>
-          <button id="q-dl" class="qr-btn hidden" style="margin-top: 20px;">Pobierz kod QR</button>
+          
+          <div class="qr-divider-line"></div>
+          
+          <button id="q-dl" class="qr-btn" disabled style="opacity: 0.5;">Pobierz kod QR</button>
         </div>
 
         <div id="view-scan" class="hidden">
@@ -460,8 +483,11 @@
       $("q-gen-btn").addEventListener("click", () => {
         const text = $("q-text").value.trim();
         if (!text) return alert("Wpisz tekst do wygenerowania!");
-        dlBtn.classList.add("hidden");
-        canvasContainer.style.display = "none";
+        
+        // Resetowanie stanu przycisku i kontenera przed nowym generowaniem
+        canvasContainer.classList.remove("has-canvas");
+        dlBtn.disabled = true;
+        dlBtn.style.opacity = "0.5";
 
         try {
           const mat = QR.encode(text);
@@ -483,8 +509,10 @@
             }
           }
           
-          canvasContainer.style.display = "flex";
-          dlBtn.classList.remove("hidden");
+          // Aktywacja widoku kodu i przycisku pobierania
+          canvasContainer.classList.add("has-canvas");
+          dlBtn.disabled = false;
+          dlBtn.style.opacity = "1";
 
         } catch (e) {
           alert(e.message);
@@ -492,6 +520,7 @@
       }, { signal });
 
       dlBtn.addEventListener("click", () => {
+        if (dlBtn.disabled) return;
         const link = document.createElement('a');
         link.download = 'kod-qr.png';
         link.href = canvas.toDataURL("image/png");
