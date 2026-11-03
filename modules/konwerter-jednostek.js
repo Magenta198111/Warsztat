@@ -139,10 +139,20 @@
           .uc-select-trigger:active { background: rgba(129, 140, 248, 0.1); }
           
           .uc-list { display: flex; flex-direction: column; }
-          .uc-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+          .uc-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
           .uc-row:last-child { border-bottom: none; }
           .uc-row-name { color: var(--muted); font-weight: 500; }
+          
+          .uc-row-val-container { display: flex; align-items: center; gap: 12px; }
           .uc-row-val { color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; }
+          
+          .uc-copy-btn {
+            background: transparent; border: none; padding: 4px; margin: 0;
+            color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: color 0.2s, transform 0.1s;
+          }
+          .uc-copy-btn:active { transform: scale(0.9); }
+          .uc-copy-btn svg { width: 16px; height: 16px; }
           
           .uc-dropdown { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); z-index: 100; overflow: hidden; opacity: 0; transform: translateY(-5px); pointer-events: none; transition: opacity 0.15s, transform 0.15s; }
           .uc-dropdown.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
@@ -218,10 +228,11 @@
         if (to === 'K') return c + 273.15;
       }
 
-      function formatNumber(num) {
+      function formatNumber(num, raw = false) {
         if (num === 0) return "0";
         if (isNaN(num)) return "";
         let str = Number(num.toPrecision(7)).toLocaleString('pl-PL', { maximumFractionDigits: 6 });
+        if (raw) return str;
         return str.replace(/,/g, '<span style="color: var(--accent);">,</span>');
       }
 
@@ -241,14 +252,43 @@
           } else {
             r = val * catData.units[currentUnit] / catData.units[k];
           }
+          
+          const rawVal = formatNumber(r, true);
+          const displayVal = formatNumber(r, false);
+
           allList.innerHTML += `
             <div class="uc-row">
               <span class="uc-row-name">${catData.names[k]}</span>
-              <span class="uc-row-val">${formatNumber(r)}</span>
+              <div class="uc-row-val-container">
+                <span class="uc-row-val">${displayVal}</span>
+                <button class="uc-copy-btn" data-copy="${rawVal}" title="Kopiuj">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+              </div>
             </div>
           `;
         });
       }
+
+      // Obsługa kopiowania (delegacja zdarzeń)
+      allList.addEventListener("click", (e) => {
+        const btn = e.target.closest(".uc-copy-btn");
+        if (!btn) return;
+
+        const textToCopy = btn.dataset.copy;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+          btn.style.color = "var(--accent)";
+          
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.color = "var(--muted)";
+          }, 1500);
+        }).catch(err => {
+          showToast("Błąd kopiowania do schowka");
+        });
+      }, { signal });
 
       function updateUnitList() {
         const catData = data[currentCat];
