@@ -36,10 +36,7 @@
 
     function getBCHDigit(data) {
       let digit = 0;
-      while (data !== 0) {
-        digit += 1;
-        data >>>= 1;
-      }
+      while (data !== 0) { digit += 1; data >>>= 1; }
       return digit;
     }
 
@@ -62,30 +59,20 @@
     function encode(text) {
       const bytes = new TextEncoder().encode(text);
       let ver = 1;
-      
       while (ver <= 10) {
         const lenBits = ver < 10 ? 8 : 16;
         const requiredBits = 4 + lenBits + bytes.length * 8;
-        const requiredBytes = Math.ceil(requiredBits / 8);
-        if (requiredBytes <= DATA_CAP[ver]) break;
+        if (Math.ceil(requiredBits / 8) <= DATA_CAP[ver]) break;
         ver++;
       }
-      
-      if (ver > 10) throw new Error("Tekst jest za długi (maks. ok. 270 znaków).");
+      if (ver > 10) throw new Error("Tekst jest za długi.");
 
-      const totalData = DATA_CAP[ver];
-      const ecLen = EC_CAP[ver];
-      const numBlocks = BLOCKS[ver];
-      
+      const totalData = DATA_CAP[ver], ecLen = EC_CAP[ver], numBlocks = BLOCKS[ver];
       const bits = [];
-      const push = (val, len) => {
-        for (let i = len - 1; i >= 0; i--) bits.push((val >> i) & 1);
-      };
+      const push = (val, len) => { for (let i = len - 1; i >= 0; i--) bits.push((val >> i) & 1); };
       
-      push(0b0100, 4);
-      push(bytes.length, ver < 10 ? 8 : 16);
+      push(0b0100, 4); push(bytes.length, ver < 10 ? 8 : 16);
       for (const b of bytes) push(b, 8);
-      
       for (let i = 0; i < 4 && bits.length < totalData * 8; i++) bits.push(0);
       while (bits.length % 8 !== 0) bits.push(0);
 
@@ -99,37 +86,26 @@
       const pads = [0xec, 0x11];
       for (let i = bits.length / 8, p = 0; i < totalData; i++, p ^= 1) dataCW[i] = pads[p];
 
-      const bLen = Math.floor(totalData / numBlocks);
-      const extra = totalData % numBlocks;
-      const dBlocks = [];
-      const eBlocks = [];
+      const bLen = Math.floor(totalData / numBlocks), extra = totalData % numBlocks;
+      const dBlocks = [], eBlocks = [];
       let offset = 0;
       
       for (let b = 0; b < numBlocks; b++) {
         const size = bLen + (b >= numBlocks - extra ? 1 : 0);
         const blk = dataCW.slice(offset, offset + size);
         offset += size;
-        dBlocks.push(blk);
-        eBlocks.push(rsEncode(blk, ecLen));
+        dBlocks.push(blk); eBlocks.push(rsEncode(blk, ecLen));
       }
 
       const finalCW = [];
       const maxDataLen = Math.max(...dBlocks.map(b => b.length));
       
-      for (let i = 0; i < maxDataLen; i++) {
-        for (let b = 0; b < numBlocks; b++) {
-          if (i < dBlocks[b].length) finalCW.push(dBlocks[b][i]);
-        }
-      }
-      
-      for (let i = 0; i < ecLen; i++) {
-        for (let b = 0; b < numBlocks; b++) finalCW.push(eBlocks[b][i]);
-      }
+      for (let i = 0; i < maxDataLen; i++) for (let b = 0; b < numBlocks; b++) if (i < dBlocks[b].length) finalCW.push(dBlocks[b][i]);
+      for (let i = 0; i < ecLen; i++) for (let b = 0; b < numBlocks; b++) finalCW.push(eBlocks[b][i]);
 
       const size = ver * 4 + 17;
       const mat = Array.from({ length: size }, () => new Uint8Array(size));
       const func = Array.from({ length: size }, () => new Uint8Array(size));
-      
       const set = (r, c, v) => { mat[r][c] = v ? 1 : 0; func[r][c] = 1; };
       
       const finder = (R, C) => {
@@ -137,42 +113,33 @@
           for (let c = -1; c <= 7; c++) {
             const rr = R + r, cc = C + c;
             if (rr < 0 || rr >= size || cc < 0 || cc >= size) continue;
-            set(rr, cc, (r >= 0 && r <= 6 && (c === 0 || c === 6)) ||
-                        (c >= 0 && c <= 6 && (r === 0 || r === 6)) ||
-                        (r >= 2 && r <= 4 && c >= 2 && c <= 4));
+            set(rr, cc, (r >= 0 && r <= 6 && (c === 0 || c === 6)) || (c >= 0 && c <= 6 && (r === 0 || r === 6)) || (r >= 2 && r <= 4 && c >= 2 && c <= 4));
           }
         }
       };
       
       finder(0, 0); finder(0, size - 7); finder(size - 7, 0);
 
+      for (let i = 8; i < size - 8; i++) { 
+        if (!func[i][6]) set(i, 6, i % 2 === 0); 
+        if (!func[6][i]) set(6, i, i % 2 === 0); 
+      }
+
       const al = ALIGN[ver];
       for (let i = 0; i < al.length; i++) {
         for (let j = 0; j < al.length; j++) {
           const R = al[i], C = al[j];
           if (func[R][C]) continue;
-          for (let r = -2; r <= 2; r++) 
-            for (let c = -2; c <= 2; c++) 
-              set(R + r, C + c, Math.max(Math.abs(r), Math.abs(c)) !== 1);
+          for (let r = -2; r <= 2; r++) for (let c = -2; c <= 2; c++) set(R + r, C + c, Math.max(Math.abs(r), Math.abs(c)) !== 1);
         }
-      }
-
-      for (let i = 8; i < size - 8; i++) { 
-        if (!func[i][6]) set(i, 6, i % 2 === 0); 
-        if (!func[6][i]) set(6, i, i % 2 === 0); 
       }
 
       const data = 1 << 3 | 0;
       const fmt = getBCHTypeInfo(data);
       for (let i = 0; i < 15; i++) {
         const mod = (fmt >> i) & 1;
-        if (i < 6) set(i, 8, mod);
-        else if (i < 8) set(i + 1, 8, mod);
-        else set(size - 15 + i, 8, mod);
-        
-        if (i < 8) set(8, size - 1 - i, mod);
-        else if (i < 9) set(8, 15 - i - 1 + 1, mod);
-        else set(8, 15 - i - 1, mod);
+        if (i < 6) set(i, 8, mod); else if (i < 8) set(i + 1, 8, mod); else set(size - 15 + i, 8, mod);
+        if (i < 8) set(8, size - 1 - i, mod); else if (i < 9) set(8, 15 - i - 1 + 1, mod); else set(8, 15 - i - 1, mod);
       }
       set(size - 8, 8, 1);
 
@@ -185,10 +152,7 @@
         }
       }
 
-      let byteIndex = 0;
-      let bitIndex = 7;
-      let upward = true;
-
+      let byteIndex = 0, bitIndex = 7, upward = true;
       for (let col = size - 1; col > 0; col -= 2) {
         if (col === 6) col--;
         for (let vert = 0; vert < size; vert++) {
@@ -197,23 +161,16 @@
             const cc = col - c;
             if (!func[row][cc]) {
               let dark = false;
-              if (byteIndex < finalCW.length) {
-                dark = ((finalCW[byteIndex] >> bitIndex) & 1) === 1;
-              }
+              if (byteIndex < finalCW.length) dark = ((finalCW[byteIndex] >> bitIndex) & 1) === 1;
               if ((row + cc) % 2 === 0) dark = !dark;
               mat[row][cc] = dark ? 1 : 0;
-              
               bitIndex--;
-              if (bitIndex === -1) {
-                byteIndex++;
-                bitIndex = 7;
-              }
+              if (bitIndex === -1) { byteIndex++; bitIndex = 7; }
             }
           }
         }
         upward = !upward;
       }
-
       return mat;
     }
     return { encode };
@@ -225,10 +182,7 @@
 
   function stopCamera() {
     if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
-    if (stream) {
-      stream.getTracks().forEach(t => t.stop());
-      stream = null;
-    }
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
     if (videoEl) videoEl.srcObject = null;
   }
 
@@ -240,108 +194,110 @@
     async mount(container, signal) {
       container.innerHTML = `
         <style>
-          .q-tab {
-            flex: 1;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 14px;
-            text-align: center;
-            transition: 0.2s;
-            cursor: pointer;
+          .qr-tab-container { display: flex; gap: 8px; margin-bottom: 24px; }
+          .qr-tab { 
+            flex: 1; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 14px; 
+            text-align: center; cursor: pointer; transition: 0.2s; border: 1px solid var(--line);
+            background: var(--surface); color: var(--muted);
           }
-          .q-tab.active {
-            background: var(--accent);
-            color: var(--accent-ink);
-            border: 1px solid var(--accent);
+          .qr-tab.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+          
+          .qr-input { 
+            width: 100%; padding: 16px; border-radius: 6px; border: 1px solid var(--line); 
+            background: var(--bg); color: var(--ink); font-size: 16px; outline: none; 
           }
-          .q-tab.inactive {
-            background: var(--surface);
-            color: var(--muted);
-            border: 1px solid var(--line);
+          .qr-input:focus { border-color: var(--muted); }
+          
+          .qr-btn { 
+            width: 100%; padding: 14px; border-radius: 6px; font-weight: 600; font-size: 15px; 
+            cursor: pointer; text-align: center; display: block; margin-top: 16px;
+            background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent);
           }
-          .q-input {
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid var(--line);
-            background: var(--bg);
-            color: var(--ink);
-            font: inherit;
-            width: 100%;
-            outline: none;
+          .qr-btn-dark {
+            background: var(--surface); color: var(--ink); border: 1px solid var(--line);
           }
+          
+          .qr-canvas-box {
+            display: flex; justify-content: center; margin-top: 24px;
+          }
+          .qr-canvas-box canvas {
+            max-width: 100%; border-radius: 8px; border: 1px solid var(--line); display: none;
+          }
+          
+          .qr-camera-box {
+            position: relative; width: 100%; aspect-ratio: 1; background: #000; border-radius: 8px; 
+            overflow: hidden; margin-top: 16px; border: 1px solid var(--line);
+          }
+          .qr-camera-box video { width: 100%; height: 100%; object-fit: cover; }
+          .qr-camera-overlay {
+            position: absolute; inset: 15%; border: 2px solid var(--accent); border-radius: 12px; pointer-events: none;
+          }
+          
+          .qr-status { 
+            text-align: center; color: var(--muted); font-size: 13px; font-family: monospace; 
+            margin-top: 16px; min-height: 20px;
+          }
+          
+          .qr-separator { text-align: center; color: var(--line); font-size: 12px; margin: 24px 0 16px 0; }
         </style>
 
         <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
-          <button id="q-back" style="width:auto; padding:10px 12px; border-radius:6px; margin:0; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:flex; align-items:center; justify-content:center;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <button id="q-back" style="width:auto; padding:8px 12px 8px 0; border:none; background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
-        </div>
-        
-        <div style="display:flex; gap:8px; margin-bottom:16px;">
-          <div id="q-tab-gen" class="q-tab active">Generator</div>
-          <div id="q-tab-scan" class="q-tab inactive">Skaner</div>
         </div>
 
-        <div id="q-view-gen" class="card" style="padding:16px;">
-          <label style="margin-top:0;">Tekst lub link do zakodowania</label>
-          <input type="text" id="q-text" class="q-input" placeholder="Wpisz coś...">
-          
-          <button id="q-gen-btn" style="width:100%; padding:14px; border-radius:6px; background:var(--accent); color:var(--accent-ink); border:1px solid var(--accent); font-weight:600; margin-top:16px;">
-            Wygeneruj kod QR
-          </button>
-          
-          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; margin-top:16px; width:100%;">
-            <canvas id="q-canvas" style="display:none; max-width:100%; border-radius:6px;"></canvas>
-            <button id="q-dl" class="hidden" style="width:100%; padding:14px; border-radius:6px; background:var(--accent); color:var(--accent-ink); border:1px solid var(--accent); font-weight:600; margin-top:14px;">
-              Pobierz kod QR
-            </button>
-          </div>
+        <div class="qr-tab-container">
+          <div id="tab-gen" class="qr-tab active">Generator</div>
+          <div id="tab-scan" class="qr-tab">Skaner</div>
         </div>
 
-        <div id="q-view-scan" class="card hidden" style="padding:16px;">
-          <div style="position:relative; width:100%; aspect-ratio:1; background:#000; border-radius:6px; overflow:hidden; margin-bottom:14px; border:1px solid var(--line);">
-            <video id="q-video" style="width:100%; height:100%; object-fit:cover;" autoplay playsinline muted></video>
-            <div style="position:absolute; inset:15%; border:2px solid var(--accent); border-radius:12px; pointer-events:none;"></div>
+        <div id="view-gen">
+          <label style="display:block; margin-bottom: 8px; font-size: 13px; color: var(--muted);">Tekst lub link do zakodowania</label>
+          <input type="text" id="q-text" class="qr-input" placeholder="Wpisz coś...">
+          
+          <button id="q-gen-btn" class="qr-btn">Wygeneruj kod QR</button>
+          
+          <div class="qr-canvas-box">
+            <canvas id="q-canvas"></canvas>
+          </div>
+          <button id="q-dl" class="qr-btn hidden">Pobierz kod QR</button>
+        </div>
+
+        <div id="view-scan" class="hidden">
+          <div class="qr-camera-box">
+            <video id="q-video" autoplay playsinline muted></video>
+            <div class="qr-camera-overlay"></div>
           </div>
           
-          <div id="q-scan-status" style="text-align:center; color:var(--muted); font-size:13px; margin-bottom:14px; font-family:monospace;">Skieruj kamerę na kod QR</div>
+          <div id="q-scan-status" class="qr-status">Skieruj kamerę na kod QR</div>
           
-          <button id="q-scan-toggle" style="width:100%; padding:14px; border-radius:6px; background:var(--accent); color:var(--accent-ink); border:1px solid var(--accent); font-weight:600;">
-            Uruchom kamerę
-          </button>
+          <button id="q-scan-toggle" class="qr-btn">Uruchom kamerę</button>
           
-          <div style="text-align:center; margin-top:16px; margin-bottom:8px; color:var(--line); font-size:12px;">LUB</div>
+          <div class="qr-separator">LUB</div>
           
           <input type="file" id="q-scan-file" accept="image/*" style="display:none;">
-          <button id="q-scan-file-btn" style="width:100%; padding:14px; border-radius:6px; background:var(--surface); color:var(--ink); border:1px solid var(--line); font-weight:600;">
-            Wybierz zdjęcie z kodem QR
-          </button>
+          <button id="q-scan-file-btn" class="qr-btn qr-btn-dark">Wybierz zdjęcie z kodem QR</button>
           <div id="q-scan-file-name" style="font-size:12px; color:var(--muted); margin-top:8px; text-align:center; word-break:break-all;"></div>
         </div>
       `;
 
       const $ = id => container.querySelector("#" + id);
-      const tabGen = $("q-tab-gen"), tabScan = $("q-tab-scan");
-      const viewGen = $("q-view-gen"), viewScan = $("q-view-scan");
-      const dlBtn = $("q-dl");
-      const canvas = $("q-canvas");
-      const scanFileBtn = $("q-scan-file-btn");
-      const scanFileInput = $("q-scan-file");
-      const scanFileName = $("q-scan-file-name");
+      const tabGen = $("tab-gen"), tabScan = $("tab-scan");
+      const viewGen = $("view-gen"), viewScan = $("view-scan");
+      const dlBtn = $("q-dl"), canvas = $("q-canvas");
+      const scanFileBtn = $("q-scan-file-btn"), scanFileInput = $("q-scan-file"), scanFileName = $("q-scan-file-name");
       
       $("q-back").addEventListener("click", () => history.back(), { signal });
 
       tabGen.addEventListener("click", () => {
-        tabGen.classList.add("active"); tabGen.classList.remove("inactive");
-        tabScan.classList.add("inactive"); tabScan.classList.remove("active");
+        tabGen.classList.add("active"); tabScan.classList.remove("active");
         viewGen.classList.remove("hidden"); viewScan.classList.add("hidden");
         stopCamera();
       }, { signal });
 
       tabScan.addEventListener("click", () => {
-        tabScan.classList.add("active"); tabScan.classList.remove("inactive");
-        tabGen.classList.add("inactive"); tabGen.classList.remove("active");
+        tabScan.classList.add("active"); tabGen.classList.remove("active");
         viewScan.classList.remove("hidden"); viewGen.classList.add("hidden");
       }, { signal });
 
@@ -367,9 +323,7 @@
           ctx.fillStyle = "#000";
           for (let r = 0; r < size; r++) {
             for (let c = 0; c < size; c++) {
-              if (mat[r][c]) {
-                ctx.fillRect(margin + (c * scale), margin + (r * scale), scale, scale);
-              }
+              if (mat[r][c]) ctx.fillRect(margin + (c * scale), margin + (r * scale), scale, scale);
             }
           }
           
