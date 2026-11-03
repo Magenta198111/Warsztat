@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="./manifest.json">
 <title>Workspace</title>
@@ -11,30 +11,24 @@
   --bg: #000000; --surface: #09090b; --surface-hover: #18181b;
   --ink: #ededed; --muted: #8b8b93; --line: #27272a;
   --accent: #818cf8; --accent-ink: #000000; --danger: #ef4444;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-/* KLUCZOWA ZMIANA: html i body nie mogą się przewijać */
 html, body {
-  height: 100%;
-  margin: 0;
-  overflow: hidden;
-  overscroll-behavior: none;
-  background: var(--bg);
+  height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; background: var(--bg);
+  touch-action: manipulation; -webkit-text-size-adjust: 100%;
 }
 
-/* Cały widok jest przewijany wewnątrz tego kontenera */
 #app-scroll {
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
+  height: 100%; overflow-y: auto; overflow-x: hidden; overscroll-behavior: none; -webkit-overflow-scrolling: touch;
 }
 
 body { 
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
-  color: var(--ink); 
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: var(--ink); 
   -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
   -webkit-touch-callout: none;
 }
@@ -42,16 +36,41 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 
 .hidden { display: none !important; }
 
-.topbar { position: sticky; top: 0; z-index: 100; padding: 16px 20px; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
+/* --- GLOBALNE KOMPONENTY UI --- */
+.n-btn {
+  padding: 12px 16px; border-radius: 6px; font-weight: 500; font-size: 14px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--line); color: var(--ink);
+  transition: background 0.2s, border-color 0.2s; outline: none;
+}
+.n-btn:active { background: var(--surface-hover); border-color: var(--muted); }
+.n-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.n-input {
+  width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line);
+  color: var(--ink); font-size: 16px; padding: 8px 0; outline: none;
+  transition: border-color 0.2s; border-radius: 0;
+}
+.n-input:focus { border-bottom-color: var(--accent); }
+.n-input::placeholder { color: var(--muted); }
+
+.n-back {
+  width: auto; padding: 8px 16px 8px 0; border: none; background: transparent;
+  color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.n-back:active { opacity: 0.7; }
+
+/* --- TOPBAR I MENU --- */
+.topbar { position: sticky; top: 0; z-index: 100; padding: 16px 20px; padding-top: calc(16px + var(--safe-top)); background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
 .topbar-title { font-size: 14px; font-weight: 600; letter-spacing: 0.05em; margin: 0; text-transform: uppercase; }
 .menu-btn { position: absolute; left: 16px; background: none; border: none; color: var(--ink); padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; }
 .menu-btn:active { background: var(--surface-hover); }
 
 .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
 .drawer-overlay.open { opacity: 1; pointer-events: auto; }
-.drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 80%; max-width: 320px; background: var(--surface); border-right: 1px solid var(--line); z-index: 999; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; overflow-y: auto; }
+.drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 80%; max-width: 320px; background: var(--surface); border-right: 1px solid var(--line); z-index: 999; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; overflow-y: auto; padding-bottom: var(--safe-bottom); }
 .drawer.open { transform: translateX(0); }
-.drawer-header { padding: 24px 20px; border-bottom: 1px solid var(--line); }
+.drawer-header { padding: 24px 20px; padding-top: calc(24px + var(--safe-top)); border-bottom: 1px solid var(--line); }
 .drawer-title { font-size: 18px; font-weight: 700; margin: 0; }
 .drawer-menu { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
 .drawer-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 6px; color: var(--ink); font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
@@ -60,7 +79,8 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .drawer-item svg { width: 20px; height: 20px; color: var(--muted); stroke-width: 1.5; transition: color 0.2s; }
 .drawer-item.active svg { color: var(--accent); }
 
-.container { max-width: 600px; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
+/* --- SIATKA GŁÓWNA --- */
+.container { max-width: 600px; margin: 0 auto; padding: 20px; padding-bottom: calc(100px + var(--safe-bottom)); padding-left: max(20px, var(--safe-left)); padding-right: max(20px, var(--safe-right)); }
 .list { display: flex; flex-direction: column; gap: 12px; }
 .tile { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; transition: background 0.15s; }
 .tile:active { background: var(--surface-hover); border-color: var(--muted); }
@@ -70,18 +90,21 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .tile-title { font-weight: 500; font-size: 15px; }
 .tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
 
-.fab { position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px; border-radius: 8px; background: var(--ink); color: var(--bg); font-size: 24px; border: none; display: flex; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; }
+.fab { position: fixed; bottom: calc(24px + var(--safe-bottom)); right: calc(24px + var(--safe-right)); width: 48px; height: 48px; border-radius: 8px; background: var(--ink); color: var(--bg); font-size: 24px; border: none; display: flex; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; }
 .fab:active { transform: scale(0.92); }
 
 #view-module { display: none; }
-#view-module.active { display: block; }
+#view-module.active { display: block; animation: moduleIn 0.22s ease-out; }
+@keyframes moduleIn { from { opacity: 0; } to { opacity: 1; } }
 #view-settings { display: none; }
 #view-settings.active { display: block; }
 #view-home.hidden { display: none; }
 #fab-add.hidden { display: none; }
 
 .empty-state { border: 1px dashed var(--line); border-radius: 6px; padding: 40px 20px; text-align: center; color: var(--muted); background: var(--surface); }
-#error-bar { position: fixed; top: 0; left: 0; width: 100%; background: var(--danger); color: #fff; padding: 10px; font-size: 12px; z-index: 9999; display: none; text-align: center; font-weight: bold; }
+
+/* --- USTAWIENIA I TOAST --- */
+#error-bar { position: fixed; top: 0; left: 0; width: 100%; background: var(--danger); color: #fff; padding: 10px; padding-top: calc(10px + var(--safe-top)); font-size: 12px; z-index: 9999; display: none; text-align: center; font-weight: bold; }
 .settings-block { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
 .settings-header { padding: 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); }
 .settings-row { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
@@ -91,15 +114,98 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .settings-opt-btn { padding: 8px 16px; font-size: 13px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); cursor: pointer; }
 .settings-opt-btn.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 
-#toast-container { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 10000; pointer-events: none; width: 90%; max-width: 400px; }
+#toast-container { position: fixed; top: calc(70px + var(--safe-top)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 10000; pointer-events: none; width: 90%; max-width: 400px; }
 .toast { background: var(--surface-hover); color: var(--ink); padding: 14px 20px; border-radius: 8px; border: 1px solid var(--line); font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); opacity: 0; transform: translateY(-20px); transition: all 0.3s; text-align: center; }
 .toast.show { opacity: 1; transform: translateY(0); }
+
+/* --- HUB: SELEKTOR (bottom-sheet / dropdown) --- */
+.hub-select-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.hub-select-overlay.open { opacity: 1; pointer-events: auto; }
+.hub-select-overlay.dropdown-mode { background: transparent; backdrop-filter: none; }
+
+.hub-select-sheet {
+  width: 100%; max-width: 600px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-top-left-radius: 16px; border-top-right-radius: 16px;
+  padding: 24px 16px calc(24px + var(--safe-bottom));
+  max-height: 80vh; overflow-y: auto; overscroll-behavior: contain;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hub-select-overlay.open .hub-select-sheet { transform: translateY(0); }
+
+.hub-select-title {
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  color: var(--muted); text-align: center; margin-bottom: 16px; letter-spacing: 0.5px;
+}
+.hub-select-item {
+  padding: 16px; border-radius: 6px; margin-bottom: 4px;
+  font-size: 15px; color: var(--ink);
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  background: var(--bg);
+}
+.hub-select-item:active { background: var(--line); }
+.hub-select-item.active { color: var(--accent); font-weight: 600; }
+
+.hub-select-dropdown {
+  position: fixed;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+  overflow: hidden; opacity: 0; transform: translateY(-4px);
+  transition: opacity 0.15s, transform 0.15s;
+  max-height: 60vh; overflow-y: auto; overscroll-behavior: contain;
+}
+.hub-select-overlay.open .hub-select-dropdown { opacity: 1; transform: translateY(0); }
+.hub-select-dd-item {
+  padding: 14px 16px; font-size: 14px; color: var(--ink);
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  border-bottom: 1px solid var(--line);
+}
+.hub-select-dd-item:last-child { border-bottom: none; }
+.hub-select-dd-item.active { color: var(--accent); font-weight: 600; background: rgba(129, 140, 248, 0.05); }
+
+/* --- HUB: MODAL (pełnoekranowy podgląd) --- */
+.hub-modal-overlay {
+  position: fixed; inset: 0; z-index: 9100;
+  background: rgba(0,0,0,0.95);
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  display: flex; align-items: center; justify-content: center;
+  padding: calc(20px + var(--safe-top)) max(20px, var(--safe-right)) calc(20px + var(--safe-bottom)) max(20px, var(--safe-left));
+}
+.hub-modal-overlay.open { opacity: 1; pointer-events: auto; }
+.hub-modal-content { max-width: 100%; max-height: 100%; display: flex; align-items: center; justify-content: center; }
+.hub-modal-content > * { max-width: 100%; max-height: calc(100vh - 40px - var(--safe-top) - var(--safe-bottom)); }
+.hub-modal-close {
+  position: absolute; top: calc(16px + var(--safe-top)); right: calc(16px + var(--safe-right));
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(24, 24, 27, 0.8); border: 1px solid var(--line);
+  color: var(--ink); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.hub-modal-close:active { background: var(--surface-hover); }
+
+/* --- HUB: CONFIRM --- */
+.hub-confirm-overlay {
+  position: fixed; inset: 0; z-index: 9200;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.hub-confirm-overlay.open { opacity: 1; pointer-events: auto; }
+.hub-confirm-box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 24px; width: 100%; max-width: 400px; }
+.hub-confirm-msg { font-size: 15px; color: var(--ink); margin-bottom: 20px; line-height: 1.5; }
+.hub-confirm-btns { display: flex; gap: 8px; }
+.hub-confirm-btns .n-btn { flex: 1; }
 </style>
 </head>
 <body>
 
 <div id="app-scroll">
-
 <div id="error-bar"></div>
 
 <div class="drawer-overlay" id="drawer-overlay"></div>
@@ -146,24 +252,23 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 
 <button class="fab" id="fab-add">+</button>
 <div id="toast-container"></div>
-
 </div>
+
 <script>
+// Globalny system obsługi błędów
 window.addEventListener('error', e => { const b = document.getElementById('error-bar'); if(b){ b.style.display='block'; b.textContent = 'BŁĄD: ' + e.message; } });
+
+// Globalny system powiadomień Toast
 window.showToast = m => { const c = document.getElementById('toast-container'); const t = document.createElement('div'); t.className='toast'; t.textContent=m; c.appendChild(t); requestAnimationFrame(()=>t.classList.add('show')); setTimeout(()=>{t.classList.remove('show'); setTimeout(()=>t.remove(),300)}, 3800); };
 
+// Blokada menu kontekstowego
 document.addEventListener('contextmenu', event => {
-  if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
-    event.preventDefault();
-  }
+  if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') event.preventDefault();
 });
 
-// Agresywna blokada pull-to-refresh (fallback dla CSS)
+// Blokada Pull-to-Refresh
 let _startTouchY = 0;
-document.addEventListener('touchstart', e => {
-  if (e.touches.length === 1) _startTouchY = e.touches[0].clientY;
-}, { passive: true });
-
+document.addEventListener('touchstart', e => { if (e.touches.length === 1) _startTouchY = e.touches[0].clientY; }, { passive: true });
 document.addEventListener('touchmove', e => {
   if (e.touches.length !== 1) return;
   const scroll = document.getElementById('app-scroll');
@@ -174,15 +279,18 @@ document.addEventListener('touchmove', e => {
   }
 }, { passive: false });
 
+// Blokada zoomu (double-tap + pinch) - wsparcie dla iOS
+['gesturestart','gesturechange','gestureend'].forEach(evt => {
+  document.addEventListener(evt, e => e.preventDefault(), { passive: false });
+});
+document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
+
 window.Hub = {
   modules: new Map(),
   activeModule: null,
   activeAbort: null,
 
-  refreshApp: function() {
-    showToast("Odświeżanie aplikacji...");
-    setTimeout(() => location.reload(), 300);
-  },
+  refreshApp: function() { showToast("Odświeżanie aplikacji..."); setTimeout(() => location.reload(), 300); },
   
   db: {
     open: () => new Promise((res, rej) => { const r = indexedDB.open("WarsztatDB", 1); r.onupgradeneeded = e => { if(!e.target.result.objectStoreNames.contains("kv")) e.target.result.createObjectStore("kv"); }; r.onsuccess = e => res(e.target.result); r.onerror = e => rej(e.target.error); }),
@@ -195,135 +303,50 @@ window.Hub = {
     Hub.renderGrid();
   },
 
-  renderGrid: function() {
-    const grid = document.getElementById("modules-grid");
-    grid.innerHTML = "";
-    if (Hub.modules.size === 0) {
-      grid.innerHTML = '<div class="empty-state">Brak modułów w systemie.</div>';
-      return;
-    }
-    const iconMap = {
-      "konwerter": `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
-      "qr": `<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`,
-      "jednostki": `<svg viewBox="0 0 24 24"><path d="M12 3v18"></path><path d="M3 7h18"></path><path d="M6 7l-3 7h6l-3-7z"></path><path d="M18 7l-3 7h6l-3-7z"></path></svg>`,
-      "skaner-pdf": `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
-      "oczyszczacz": `<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
-      "zdjecie-dokument": `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><circle cx="9" cy="10" r="2"></circle><line x1="15" y1="8" x2="21" y2="8"></line><line x1="15" y1="12" x2="21" y2="12"></line><line x1="7" y1="16" x2="21" y2="16"></line></svg>`,
-      "kalkulator-prog": `<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>`
+  // =========================================================
+  // FUNKCJE POMOCNICZE DLA MODUŁÓW
+  // =========================================================
+
+  // [3] Skrót do ustawienia menu
+  getMenuStyle: function() { return Hub.db.get("menu_style", "bottom"); },
+
+  // [2] Pobieranie plików
+  download: function(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
+
+  // [8] Debounce
+  debounce: function(fn, delay = 200) {
+    let timer;
+    return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
+  },
+
+  // [8] Throttle
+  throttle: function(fn, delay = 200) {
+    let last = 0, timer;
+    return (...args) => {
+      const now = Date.now(); const remaining = delay - (now - last);
+      if (remaining <= 0) { last = now; fn(...args); }
+      else if (!timer) {
+        timer = setTimeout(() => { last = Date.now(); timer = null; fn(...args); }, remaining);
+      }
     };
-    const sortedModules = Array.from(Hub.modules.values()).sort((a, b) => a.title.localeCompare(b.title, 'pl', { sensitivity: 'base' }));
-    sortedModules.forEach(mod => {
-      const icon = iconMap[mod.id] || `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
-      const tile = document.createElement("div"); tile.className = "tile";
-      tile.innerHTML = `<div class="tile-icon">${icon}</div><div class="tile-content"><div class="tile-title">${mod.title}</div><div class="tile-desc">${mod.desc||""}</div></div>`;
-      tile.onclick = () => Hub.openModule(mod.id, true);
-      grid.appendChild(tile);
-    });
   },
 
-  cleanup: function() {
-    if (Hub.activeAbort) { Hub.activeAbort.abort(); Hub.activeAbort = null; }
-    if (Hub.activeModule && Hub.activeModule.unmount) { try { Hub.activeModule.unmount(); } catch(e){} }
-    Hub.activeModule = null; document.getElementById("view-module").innerHTML = "";
+  // Kopiowanie z wizualnym potwierdzeniem (ptaszek)
+  copy: function(text, btnEl) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const originalHTML = btnEl.innerHTML;
+      btnEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+      setTimeout(() => { btnEl.innerHTML = originalHTML; }, 1500);
+    }).catch(() => showToast("Błąd kopiowania"));
   },
 
-  showHome: function(push = false) {
-    Hub.cleanup();
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
-    document.getElementById("view-module").classList.remove("active");
-    document.getElementById("view-settings").classList.remove("active");
-    document.getElementById("view-home").classList.remove("hidden");
-    document.getElementById("app-title").textContent = "Workspace";
-    document.getElementById("fab-add").classList.remove("hidden");
-    document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
-    document.getElementById('drawer-home').classList.add('active');
-    if (push) { if (location.hash !== '' && location.hash !== '#') history.pushState(null, "", "./"); }
-    else { history.replaceState(null, "", "./"); }
-  },
-
-  openModule: function(id, push = true) {
-    const mod = Hub.modules.get(id); if(!mod) return Hub.showHome();
-    Hub.cleanup();
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
-    document.getElementById("view-home").classList.add("hidden");
-    document.getElementById("view-settings").classList.remove("active");
-    document.getElementById("view-module").classList.add("active");
-    document.getElementById("app-title").textContent = mod.title.toUpperCase();
-    document.getElementById("fab-add").classList.add("hidden");
-    document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
-    Hub.activeModule = mod; Hub.activeAbort = new AbortController();
-    if (push && location.hash !== `#${id}`) history.pushState(null, "", `#${id}`);
-    mod.mount(document.getElementById("view-module"), Hub.activeAbort.signal);
-    document.getElementById('app-scroll').scrollTo(0, 0);
-  },
-
-  openSettings: async function(push = true) {
-    Hub.cleanup();
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
-    document.getElementById("view-home").classList.add("hidden");
-    document.getElementById("view-module").classList.remove("active");
-    document.getElementById("view-settings").classList.add("active");
-    document.getElementById("app-title").textContent = "USTAWIENIA";
-    document.getElementById("fab-add").classList.add("hidden");
-    document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
-    document.getElementById('drawer-settings').classList.add('active');
-    if (push && location.hash !== '#settings') history.pushState(null, "", `#settings`);
-    const st = await Hub.db.get("menu_style", "bottom");
-    const b1 = document.getElementById("opt-bottom"), b2 = document.getElementById("opt-dropdown");
-    if(st === "bottom") { b1.classList.add("active"); b2.classList.remove("active"); }
-    else { b2.classList.add("active"); b1.classList.remove("active"); }
-    b1.onclick = () => { Hub.db.set("menu_style", "bottom"); b1.classList.add("active"); b2.classList.remove("active"); };
-    b2.onclick = () => { Hub.db.set("menu_style", "dropdown"); b2.classList.add("active"); b1.classList.remove("active"); };
-  }
-};
-
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById('drawer-home').classList.add('active');
-  document.getElementById("fab-add").onclick = () => showToast("Wgraj plik do folderu modules i dopisz do modules.json");
-  document.getElementById("menu-btn").onclick = () => { document.getElementById("drawer").classList.add("open"); document.getElementById("drawer-overlay").classList.add("open"); };
-  document.getElementById("drawer-overlay").onclick = () => { document.getElementById("drawer").classList.remove("open"); document.getElementById("drawer-overlay").classList.remove("open"); };
-  window.onpopstate = () => {
-    const isModule = document.getElementById("view-module").classList.contains("active");
-    const isSettings = document.getElementById("view-settings").classList.contains("active");
-    if (isModule || isSettings) Hub.showHome(false);
-  };
-  fetch('./modules.json?t=' + Date.now()).then(r => r.json()).then(list => {
-    const promises = list.map(mod => new Promise((resolve) => {
-      const s = document.createElement('script');
-      s.src = mod.file;
-      s.onload = resolve;
-      s.onerror = () => { console.error("Błąd ładowania: " + mod.file); resolve(); };
-      document.body.appendChild(s);
-    }));
-    return Promise.all(promises);
-  }).then(() => {
-    const initHash = location.hash.replace(/^#/, "");
-    if (initHash === "settings") Hub.openSettings(false);
-    else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
-  }).catch(e => { document.getElementById('modules-grid').innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd modules.json</div>'; });
-});
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").then(reg => {
-      reg.addEventListener("updatefound", () => {
-        const newWorker = reg.installing;
-        newWorker.addEventListener("statechange", () => {
-          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-            newWorker.postMessage({ type: "SKIP_WAITING" });
-          }
-        });
-      });
-    });
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (!refreshing) { refreshing = true; window.location.reload(); }
-    });
-  });
-}
-</script>
-</body>
-</html>
+  // Gotowy HTML przycisku powrotu
+  backButtonHtml: `<button class="n-back" onclick="history.back()"><svg width="24" height="24" viewBox="0 0 24 24" fill="n
