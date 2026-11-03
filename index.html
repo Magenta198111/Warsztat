@@ -56,7 +56,9 @@ body {
   color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s;
 }
 .drawer-item:active { background: var(--surface-hover); }
-.drawer-item svg { width: 20px; height: 20px; stroke-width: 1.5; color: var(--muted); }
+.drawer-item.active { background: var(--surface-hover); color: var(--accent); }
+.drawer-item svg { width: 20px; height: 20px; stroke-width: 1.5; color: var(--muted); transition: color 0.2s; }
+.drawer-item.active svg { color: var(--accent); }
 .drawer-item span { flex: 1; }
 
 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -116,7 +118,7 @@ body {
 <div class="drawer" id="drawer">
   <div class="drawer-header"><h2 class="drawer-title">Workspace</h2></div>
   <div class="drawer-menu">
-    <div class="drawer-item" onclick="Hub.openSettings()">
+    <div class="drawer-item" id="drawer-settings" onclick="Hub.openSettings()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       <span>Ustawienia</span>
     </div>
@@ -162,13 +164,11 @@ body {
 <div id="toast-container"></div>
 
 <script>
-// Obsługa błędów
 window.addEventListener('error', function(e) {
   const bar = document.getElementById('error-bar');
   if (bar) { bar.style.display = 'block'; bar.textContent = 'BŁĄD: ' + e.message; }
 });
 
-// Powiadomienia
 window.showToast = function(msg) {
   const c = document.getElementById('toast-container');
   const t = document.createElement('div');
@@ -179,7 +179,6 @@ window.showToast = function(msg) {
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3800);
 };
 
-// Główny obiekt aplikacji
 window.Hub = {
   db: {
     open: function() {
@@ -257,7 +256,11 @@ window.Hub = {
     document.getElementById("view-home").classList.remove("hidden");
     document.getElementById("app-title").textContent = "Workspace";
     document.getElementById("fab-add").classList.remove("hidden");
-    if (push) history.pushState({ view: "home" }, "", "./");
+    document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
+    
+    if (push && location.hash !== './' && location.hash !== '' && location.hash !== '#') {
+      history.pushState({ view: "home" }, "", "./");
+    }
   },
 
   openModule: function(id, push = true) {
@@ -269,10 +272,11 @@ window.Hub = {
     document.getElementById("view-module").classList.add("active");
     document.getElementById("app-title").textContent = mod.title.toUpperCase();
     document.getElementById("fab-add").classList.add("hidden");
+    document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     
     Hub.activeModule = mod;
     Hub.activeAbort = new AbortController();
-    if (push) history.pushState({ view: "module", id }, "", `#${id}`);
+    if (push && location.hash !== `#${id}`) history.pushState({ view: "module", id }, "", `#${id}`);
     mod.mount(document.getElementById("view-module"), Hub.activeAbort.signal);
     window.scrollTo(0, 0);
   },
@@ -286,7 +290,13 @@ window.Hub = {
     document.getElementById("view-settings").classList.add("active");
     document.getElementById("app-title").textContent = "USTAWIENIA";
     document.getElementById("fab-add").classList.add("hidden");
-    if (push) history.pushState({ view: "settings" }, "", `#settings`);
+    
+    document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('drawer-settings').classList.add('active');
+
+    if (push && location.hash !== '#settings') {
+      history.pushState({ view: "settings" }, "", `#settings`);
+    }
     
     const style = await Hub.db.get("menu_style", "bottom");
     const btnBottom = document.getElementById("opt-bottom");
@@ -300,7 +310,6 @@ window.Hub = {
   }
 };
 
-// Podpinanie zdarzeń do interfejsu
 document.getElementById("set-back").addEventListener("click", () => history.back());
 document.getElementById("fab-add").addEventListener("click", () => showToast("Wgraj plik do folderu modules i dopisz go do modules.json"));
 document.getElementById("menu-btn").addEventListener("click", () => {
@@ -319,7 +328,6 @@ window.addEventListener("popstate", () => {
   else Hub.showHome(false);
 });
 
-// Ładowanie modułów (identyczne jak w wersji 40-liniowej, która zadziałała)
 fetch('./modules.json?t=' + Date.now())
   .then(res => res.json())
   .then(list => {
@@ -340,15 +348,4 @@ else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js").then(reg => {
-      reg.addEventListener("updatefound", () => {
-        const newWorker = reg.installing;
-        newWorker.addEventListener("statechange", () => { if (newWorker.state === "installed" && navigator.serviceWorker.controller) { newWorker.postMessage({ type: "SKIP_WAITING" }); } });
-      });
-    });
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => { if (!refreshing) { refreshing = true; window.location.reload(); } });
-  });
-}
-</script>
-</body>
-</html>
+      reg.addEventListener("updatefound", () 
