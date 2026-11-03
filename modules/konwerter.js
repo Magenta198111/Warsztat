@@ -24,44 +24,57 @@
 
       container.innerHTML = `
         <style>
-          .c-select {
+          .n-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin-bottom: 8px;
+            margin-top: 0;
+          }
+          .n-select {
             appearance: none;
             -webkit-appearance: none;
-            background-color: transparent;
+            background-color: var(--bg);
             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238b8b93%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat;
-            background-position: right 0 top 50%;
-            background-size: 12px auto;
-            border: none;
-            border-bottom: 1px solid var(--line);
-            border-radius: 0;
-            padding: 12px 0;
+            background-position: right 12px top 50%;
+            background-size: 10px auto;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 12px 36px 12px 12px;
             color: var(--ink);
             font: inherit;
-            font-size: 16px;
+            font-size: 15px;
             width: 100%;
             outline: none;
           }
-          .c-range {
+          .n-select:focus { border-color: var(--muted); }
+          
+          .n-range {
             -webkit-appearance: none;
             appearance: none;
             height: 4px;
             background: var(--line);
             border-radius: 2px;
             outline: none;
-            margin: 20px 0;
+            margin: 16px 0;
             width: 100%;
           }
-          .c-range::-webkit-slider-thumb {
+          .n-range::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: var(--accent);
             cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
           }
-          .purple-btn {
+          
+          .n-btn-purple {
             width: 100%;
             padding: 14px;
             border-radius: 6px;
@@ -74,55 +87,75 @@
             text-align: center;
             text-decoration: none;
             display: block;
+            transition: opacity 0.2s;
+          }
+          .n-btn-purple:active { opacity: 0.8; }
+          
+          .n-block {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+          }
+          
+          .n-file-name {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 12px;
+            text-align: center;
+            word-break: break-all;
           }
         </style>
 
-        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:24px;">
+        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:20px;">
           <button id="c-back" style="width:auto; padding:10px 12px; border-radius:6px; margin:0; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:flex; align-items:center; justify-content:center;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
         </div>
 
-        <div style="margin-bottom: 24px;">
+        <div class="n-block">
+          <span class="n-label">Plik źródłowy</span>
           <input type="file" id="c-file" accept="image/*" style="display:none;">
-          <button id="c-file-btn" class="purple-btn">
-            Wybierz zdjęcie z galerii
+          <button id="c-file-btn" class="n-btn-purple">
+            Wybierz zdjęcie
           </button>
-          <div id="c-file-name" style="color:var(--muted); font-size:13px; margin-top:12px; text-align:center; word-break:break-all;">Nie wybrano pliku</div>
+          <div id="c-file-name" class="n-file-name">Nie wybrano pliku</div>
         </div>
 
-        <div style="border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 8px 0; margin-bottom: 24px;">
-          <div>
-            <label style="margin-top:8px; font-size:13px; color:var(--muted);">Format docelowy</label>
-            <select id="c-fmt" class="c-select">
+        <div class="n-block">
+          <span class="n-label">Ustawienia konwersji</span>
+          
+          <div style="margin-bottom: 20px;">
+            <select id="c-fmt" class="n-select">
               <option value="image/webp">WebP (najmniejszy rozmiar)</option>
               <option value="image/jpeg">JPEG (standard)</option>
               <option value="image/png">PNG (bezstratny)</option>
             </select>
           </div>
 
-          <div style="margin-top: 12px;">
-            <label id="c-qual-label" style="margin-top:0; font-size:13px; color:var(--muted);">Jakość (JPEG i WebP): ${savedQual}%</label>
-            <input type="range" id="c-qual" min="10" max="100" value="${savedQual}" class="c-range">
+          <div>
+            <span id="c-qual-label" class="n-label" style="margin-bottom:0;">Jakość: ${savedQual}%</span>
+            <input type="range" id="c-qual" min="10" max="100" value="${savedQual}" class="n-range">
           </div>
         </div>
 
-        <button id="c-btn" class="purple-btn">Konwertuj zdjęcie</button>
+        <button id="c-btn" class="n-btn-purple" style="margin-bottom: 24px;">Konwertuj zdjęcie</button>
         
-        <div class="i hidden" id="c-stats" style="margin-top:20px; font-family:monospace; text-align:center; font-size:13px; line-height:1.5;"></div>
+        <div class="i hidden" id="c-stats" style="font-family:monospace; text-align:center; font-size:13px; line-height:1.6; margin-bottom: 24px;"></div>
 
-        <div id="c-preview-container" class="hidden" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px;">
+        <div id="c-preview-container" class="hidden" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom: 20px;">
           <div>
-            <div style="font-size:11px; color:var(--muted); margin-bottom:6px; text-align:center; text-transform:uppercase; letter-spacing:0.5px;">Przed</div>
+            <div class="n-label" style="text-align:center; margin-bottom:6px;">Przed</div>
             <img id="c-img-before" style="width:100%; border-radius:6px; border:1px solid var(--line); display:block; object-fit:cover;">
           </div>
           <div>
-            <div style="font-size:11px; color:var(--muted); margin-bottom:6px; text-align:center; text-transform:uppercase; letter-spacing:0.5px;">Po</div>
+            <div class="n-label" style="text-align:center; margin-bottom:6px;">Po</div>
             <img id="c-img-after" style="width:100%; border-radius:6px; border:1px solid var(--line); display:block; object-fit:cover;">
           </div>
         </div>
 
-        <a class="purple-btn hidden" id="c-dl" style="margin-top:20px;">Pobierz plik</a>
+        <a class="n-btn-purple hidden" id="c-dl">Pobierz plik</a>
       `;
 
       const $ = id => container.querySelector("#" + id);
@@ -150,7 +183,7 @@
       }, { signal });
 
       qualInput.addEventListener("input", () => {
-        qualLabel.textContent = `Jakość (JPEG i WebP): ${qualInput.value}%`;
+        qualLabel.textContent = `Jakość: ${qualInput.value}%`;
         Hub.db.set("conv_qual", Number(qualInput.value)).catch(()=>{});
       }, { signal });
 
