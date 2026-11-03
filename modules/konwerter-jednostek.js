@@ -58,7 +58,7 @@
       let selectorHtml = "";
       if (menuStyle === "bottom") {
         selectorHtml = `
-          <div id="u-cat-trigger" class="cat-selector">
+          <div id="u-cat-trigger" class="cat-selector" style="margin-bottom: 24px;">
             <div class="cat-icon-box" id="u-cat-icon">${data[currentCat].icon}</div>
             <div class="cat-title" id="u-cat-title">${data[currentCat].name}</div>
             <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -80,7 +80,7 @@
         `;
       } else {
         selectorHtml = `
-          <div style="position: relative; margin-bottom: 16px;">
+          <div style="position: relative; margin-bottom: 24px;">
             <div id="u-cat-trigger" class="cat-selector">
               <div class="cat-icon-box" id="u-cat-icon">${data[currentCat].icon}</div>
               <div class="cat-title" id="u-cat-title">${data[currentCat].name}</div>
@@ -100,8 +100,7 @@
 
       container.innerHTML = `
         <style>
-          .n-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 0; }
-          .n-block { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+          .n-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 12px; margin-top: 0; }
           
           .cat-selector { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; cursor: pointer; transition: border-color 0.2s; }
           .cat-selector:active { border-color: var(--muted); }
@@ -131,17 +130,34 @@
           .n-option .check { opacity: 0; color: var(--accent); }
           .n-option.active .check { opacity: 1; }
 
+          .section-divider {
+            border-bottom: 1px solid var(--line);
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+          }
+
           .conv-row { display: flex; gap: 12px; align-items: flex-start; }
           .conv-col { flex: 1; display: flex; flex-direction: column; }
-          .conv-input { width: 100%; padding: 14px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 18px; font-family: monospace; outline: none; text-align: center; }
+          
+          .conv-input { 
+            width: 100%; padding: 16px; border-radius: 6px; border: 1px solid var(--line); 
+            background: var(--bg); color: var(--ink); font-size: 20px; font-family: monospace; 
+            outline: none; text-align: center; 
+          }
           .conv-input:focus { border-color: var(--muted); }
-          .conv-select { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-hover); color: var(--ink); font-size: 14px; outline: none; margin-top: 8px; appearance: none; text-align: center; font-weight: 500; }
+          
+          .conv-select { 
+            width: 100%; padding: 16px; border-radius: 6px; 
+            background: var(--accent); color: var(--accent-ink); 
+            border: 1px solid var(--accent); font-size: 16px; font-weight: 600;
+            outline: none; margin-top: 8px; appearance: none; 
+            text-align: center;
+          }
 
-          .all-units-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-          .unit-row { display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 14px; }
-          .unit-row:last-child { border-bottom: none; }
-          .unit-name { color: var(--muted); }
-          .unit-val { font-family: monospace; font-weight: 600; }
+          .insta-list { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+          .unit-row { display: flex; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 16px; align-items: center; }
+          .unit-name { color: var(--ink); font-weight: 500; }
+          .unit-val { font-family: monospace; color: var(--muted); }
         </style>
 
         <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
@@ -152,7 +168,7 @@
 
         ${selectorHtml}
 
-        <div class="n-block">
+        <div class="section-divider">
           <span class="n-label">Wprowadź wartość</span>
           <div class="conv-row">
             <div class="conv-col">
@@ -162,9 +178,9 @@
           </div>
         </div>
 
-        <div class="n-block">
+        <div>
           <span class="n-label">Wszystkie jednostki</span>
-          <div id="u-all-list" class="all-units-list"></div>
+          <div id="u-all-list" class="insta-list"></div>
         </div>
       `;
 
