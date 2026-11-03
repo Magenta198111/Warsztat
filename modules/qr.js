@@ -183,7 +183,7 @@
   function stopCamera() {
     if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
     if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-    if (videoEl) videoEl.srcObject = null;
+    if (videoEl) { videoEl.srcObject = null; }
   }
 
   Hub.register({
@@ -194,51 +194,67 @@
     async mount(container, signal) {
       container.innerHTML = `
         <style>
-          .qr-tab-container { display: flex; gap: 8px; margin-bottom: 24px; }
+          .qr-tab-container { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
           .qr-tab { 
-            flex: 1; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 14px; 
+            flex: 1; padding: 10px; border-radius: 6px; font-weight: 600; font-size: 14px; 
             text-align: center; cursor: pointer; transition: 0.2s; border: 1px solid var(--line);
-            background: var(--surface); color: var(--muted);
+            background: transparent; color: var(--muted);
           }
           .qr-tab.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
           
+          .qr-input-container { margin-bottom: 24px; }
+          .qr-input-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
           .qr-input { 
             width: 100%; padding: 16px; border-radius: 6px; border: 1px solid var(--line); 
-            background: var(--bg); color: var(--ink); font-size: 16px; outline: none; 
+            background: var(--surface); color: var(--ink); font-size: 16px; outline: none; 
+            transition: border-color 0.2s;
           }
-          .qr-input:focus { border-color: var(--muted); }
+          .qr-input:focus { border-color: var(--accent); }
           
           .qr-btn { 
             width: 100%; padding: 14px; border-radius: 6px; font-weight: 600; font-size: 15px; 
             cursor: pointer; text-align: center; display: block; margin-top: 16px;
             background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent);
+            transition: opacity 0.2s;
           }
+          .qr-btn:active { opacity: 0.8; }
           .qr-btn-dark {
-            background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+            background: transparent; color: var(--ink); border: 1px solid var(--line);
           }
           
           .qr-canvas-box {
             display: flex; justify-content: center; margin-top: 24px;
+            background: #ffffff; padding: 16px; border-radius: 12px; display: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
           }
           .qr-canvas-box canvas {
-            max-width: 100%; border-radius: 8px; border: 1px solid var(--line); display: none;
+            max-width: 100%; display: block;
           }
           
-          .qr-camera-box {
-            position: relative; width: 100%; aspect-ratio: 1; background: #000; border-radius: 8px; 
-            overflow: hidden; margin-top: 16px; border: 1px solid var(--line);
+          .qr-camera-container {
+            position: relative; width: 100%; aspect-ratio: 1; background: var(--surface); 
+            border-radius: 12px; overflow: hidden; border: 1px dashed var(--line);
+            display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
           }
-          .qr-camera-box video { width: 100%; height: 100%; object-fit: cover; }
+          .qr-camera-container.active { border: 1px solid var(--accent); }
+          
+          .qr-camera-icon { color: var(--muted); opacity: 0.5; }
+          .qr-camera-text { color: var(--muted); font-size: 13px; font-weight: 500; }
+          
+          .qr-camera-container video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+          .qr-camera-container video.active { display: block; }
+          
           .qr-camera-overlay {
-            position: absolute; inset: 15%; border: 2px solid var(--accent); border-radius: 12px; pointer-events: none;
+            position: absolute; inset: 15%; border: 2px solid var(--accent); border-radius: 12px; pointer-events: none; display: none;
           }
+          .qr-camera-overlay.active { display: block; }
           
           .qr-status { 
-            text-align: center; color: var(--muted); font-size: 13px; font-family: monospace; 
-            margin-top: 16px; min-height: 20px;
+            text-align: center; color: var(--muted); font-size: 12px; font-family: monospace; 
+            margin-top: 16px; min-height: 18px; word-break: break-all; line-height: 1.4;
           }
           
-          .qr-separator { text-align: center; color: var(--line); font-size: 12px; margin: 24px 0 16px 0; }
+          .qr-divider { text-align: center; color: var(--line); font-size: 11px; font-weight: 600; margin: 24px 0; letter-spacing: 1px; }
         </style>
 
         <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
@@ -253,39 +269,48 @@
         </div>
 
         <div id="view-gen">
-          <label style="display:block; margin-bottom: 8px; font-size: 13px; color: var(--muted);">Tekst lub link do zakodowania</label>
-          <input type="text" id="q-text" class="qr-input" placeholder="Wpisz coś...">
+          <div class="qr-input-container">
+            <label class="qr-input-label">Tekst lub link do zakodowania</label>
+            <input type="text" id="q-text" class="qr-input" placeholder="Wpisz coś...">
+          </div>
           
           <button id="q-gen-btn" class="qr-btn">Wygeneruj kod QR</button>
           
-          <div class="qr-canvas-box">
+          <div id="q-canvas-container" class="qr-canvas-box">
             <canvas id="q-canvas"></canvas>
           </div>
-          <button id="q-dl" class="qr-btn hidden">Pobierz kod QR</button>
+          <button id="q-dl" class="qr-btn hidden" style="margin-top: 20px;">Pobierz kod QR</button>
         </div>
 
         <div id="view-scan" class="hidden">
-          <div class="qr-camera-box">
+          <div id="q-cam-container" class="qr-camera-container">
             <video id="q-video" autoplay playsinline muted></video>
-            <div class="qr-camera-overlay"></div>
+            <div id="q-cam-overlay" class="qr-camera-overlay"></div>
+            
+            <div id="q-cam-placeholder" style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <svg class="qr-camera-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              <span class="qr-camera-text">Kamera jest wyłączona</span>
+            </div>
           </div>
           
-          <div id="q-scan-status" class="qr-status">Skieruj kamerę na kod QR</div>
+          <div id="q-scan-status" class="qr-status">Gotowy do skanowania</div>
           
           <button id="q-scan-toggle" class="qr-btn">Uruchom kamerę</button>
           
-          <div class="qr-separator">LUB</div>
+          <div class="qr-divider">LUB</div>
           
           <input type="file" id="q-scan-file" accept="image/*" style="display:none;">
           <button id="q-scan-file-btn" class="qr-btn qr-btn-dark">Wybierz zdjęcie z kodem QR</button>
-          <div id="q-scan-file-name" style="font-size:12px; color:var(--muted); margin-top:8px; text-align:center; word-break:break-all;"></div>
+          <div id="q-scan-file-name" style="font-size:12px; color:var(--muted); margin-top:12px; text-align:center; word-break:break-all;"></div>
         </div>
       `;
 
       const $ = id => container.querySelector("#" + id);
       const tabGen = $("tab-gen"), tabScan = $("tab-scan");
       const viewGen = $("view-gen"), viewScan = $("view-scan");
-      const dlBtn = $("q-dl"), canvas = $("q-canvas");
+      const canvasContainer = $("q-canvas-container"), canvas = $("q-canvas");
+      const dlBtn = $("q-dl");
+      const camContainer = $("q-cam-container"), camPlaceholder = $("q-cam-placeholder"), camOverlay = $("q-cam-overlay");
       const scanFileBtn = $("q-scan-file-btn"), scanFileInput = $("q-scan-file"), scanFileName = $("q-scan-file-name");
       
       $("q-back").addEventListener("click", () => history.back(), { signal });
@@ -294,6 +319,10 @@
         tabGen.classList.add("active"); tabScan.classList.remove("active");
         viewGen.classList.remove("hidden"); viewScan.classList.add("hidden");
         stopCamera();
+        camContainer.classList.remove("active");
+        camOverlay.classList.remove("active");
+        $("q-video").classList.remove("active");
+        camPlaceholder.style.display = "flex";
       }, { signal });
 
       tabScan.addEventListener("click", () => {
@@ -306,28 +335,29 @@
         if (!text) return alert("Wpisz tekst do wygenerowania!");
         
         dlBtn.classList.add("hidden");
+        canvasContainer.style.display = "none";
 
         try {
           const mat = QR.encode(text);
           const size = mat.length;
-          const scale = 10;
+          const scale = 8; // Zmniejszony scale, by nie był za duży na mobile
           const margin = 4 * scale; 
           
           canvas.width = (size * scale) + (margin * 2);
           canvas.height = (size * scale) + (margin * 2);
           
           const ctx = canvas.getContext("2d");
-          ctx.fillStyle = "#fff"; 
+          ctx.fillStyle = "#ffffff"; 
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           
-          ctx.fillStyle = "#000";
+          ctx.fillStyle = "#000000";
           for (let r = 0; r < size; r++) {
             for (let c = 0; c < size; c++) {
               if (mat[r][c]) ctx.fillRect(margin + (c * scale), margin + (r * scale), scale, scale);
             }
           }
           
-          canvas.style.display = "block";
+          canvasContainer.style.display = "flex";
           dlBtn.classList.remove("hidden");
 
         } catch (e) {
@@ -350,7 +380,11 @@
         if (stream) {
           stopCamera();
           toggleBtn.textContent = "Uruchom kamerę";
-          status.textContent = "Skieruj kamerę na kod QR";
+          status.textContent = "Kamera zatrzymana";
+          camContainer.classList.remove("active");
+          camOverlay.classList.remove("active");
+          videoEl.classList.remove("active");
+          camPlaceholder.style.display = "flex";
           return;
         }
 
@@ -359,6 +393,11 @@
           videoEl.srcObject = stream;
           toggleBtn.textContent = "Zatrzymaj kamerę";
           status.textContent = "Skanowanie...";
+          
+          camContainer.classList.add("active");
+          camOverlay.classList.add("active");
+          videoEl.classList.add("active");
+          camPlaceholder.style.display = "none";
 
           if ('BarcodeDetector' in window) {
             const detector = new BarcodeDetector({ formats: ['qr_code'] });
@@ -369,6 +408,12 @@
                   stopCamera();
                   toggleBtn.textContent = "Uruchom kamerę";
                   status.innerHTML = `<b>Znaleziono:</b><br>${codes[0].rawValue}`;
+                  
+                  camContainer.classList.remove("active");
+                  camOverlay.classList.remove("active");
+                  videoEl.classList.remove("active");
+                  camPlaceholder.style.display = "flex";
+                  
                   alert("Odczytano: " + codes[0].rawValue);
                 }
               } catch (e) {}
@@ -377,6 +422,10 @@
             status.textContent = "Brak wsparcia. Użyj opcji wgrania zdjęcia.";
             stopCamera();
             toggleBtn.textContent = "Uruchom kamerę";
+            camContainer.classList.remove("active");
+            camOverlay.classList.remove("active");
+            videoEl.classList.remove("active");
+            camPlaceholder.style.display = "flex";
           }
         } catch (e) {
           status.textContent = "Błąd dostępu do kamery.";
