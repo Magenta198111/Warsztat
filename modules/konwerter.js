@@ -51,7 +51,6 @@
             border-radius: 50%;
             background: var(--accent);
             cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
           }
         </style>
 
@@ -64,8 +63,8 @@
           
           <input type="file" id="c-file" accept="image/*" style="display:none;">
           
-          <button id="c-file-btn" style="width:100%; padding:14px; font-weight:600; background:var(--accent); border:1px solid var(--accent); border-radius:6px; color:var(--accent-ink); display:flex; justify-content:center; align-items:center; gap:8px;">
-            📁 Wybierz zdjęcie
+          <button id="c-file-btn" style="width:100%; padding:14px; font-weight:600; background:var(--accent); border:1px solid var(--accent); border-radius:6px; color:var(--accent-ink);">
+            Wybierz zdjęcie
           </button>
           
           <div id="c-file-name" style="color:var(--muted); font-size:13px; margin-top:10px; text-align:center; word-break:break-all;">Nie wybrano pliku</div>
@@ -95,7 +94,7 @@
             </div>
           </div>
 
-          <a class="btn-dl hidden" id="c-dl" style="display:block; text-align:center; margin-top:14px; text-decoration:none; background:var(--accent); border:1px solid var(--accent); padding:14px; border-radius:6px; color:var(--accent-ink); font-weight:600;">⬇️ Pobierz</a>
+          <a class="btn-dl hidden" id="c-dl" style="display:block; text-align:center; margin-top:14px; text-decoration:none; background:var(--accent); border:1px solid var(--accent); padding:14px; border-radius:6px; color:var(--accent-ink); font-weight:600;">Pobierz plik</a>
         </div>
       `;
 
@@ -201,7 +200,7 @@
 
             dlBtn.href = outUrl;
             dlBtn.download = outName;
-            dlBtn.textContent = `⬇️ Pobierz ${outName}`;
+            dlBtn.textContent = `Pobierz ${outName}`;
             dlBtn.classList.remove("hidden");
 
           }, fmtSelect.value, quality);
