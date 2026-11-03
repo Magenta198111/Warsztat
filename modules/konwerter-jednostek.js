@@ -375,3 +375,132 @@
                 </div>
               </div>
             `;
+          });
+        } else {
+          let valFrac = parseStrToFrac(rawStr);
+          let fromFrac = catData.units[currentUnit];
+
+          keys.forEach(k => {
+            if (k === currentUnit) return;
+            let toFrac = catData.units[k];
+            
+            let num = valFrac.n * fromFrac[0] * toFrac[1];
+            let den = valFrac.d * fromFrac[1] * toFrac[0];
+            
+            let resStr = divideBigRounded(num, den, precision);
+            
+            let dispVal = formatToDisplay(resStr, false);
+            let rawVal = formatToDisplay(resStr, true);
+
+            allList.innerHTML += `
+              <div class="uc-row">
+                <span class="uc-row-name">${catData.names[k]}</span>
+                <div class="uc-row-val-container">
+                  <span class="uc-row-val">${dispVal}</span>
+                  <button class="uc-copy-btn" data-copy="${rawVal}" title="Kopiuj">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </button>
+                </div>
+              </div>
+            `;
+          });
+        }
+      }
+
+      allList.addEventListener("click", (e) => {
+        const btn = e.target.closest(".uc-copy-btn");
+        if (!btn) return;
+
+        const textToCopy = btn.dataset.copy;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+          btn.style.color = "var(--accent)";
+          
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.color = "var(--muted)";
+          }, 1500);
+        }).catch(err => {
+          showToast("Błąd kopiowania do schowka");
+        });
+      }, { signal });
+
+      precisionEl.addEventListener("input", () => {
+        let p = parseInt(precisionEl.value) || 0;
+        Hub.db.set("unit_precision", p).catch(()=>{});
+        calculate();
+      }, { signal });
+
+      function updateUnitList() {
+        const catData = data[currentCat];
+        const keys = currentCat === 'temp' ? catData.units : Object.keys(catData.units);
+        
+        currentUnit = keys[0];
+        unitText.textContent = catData.names[currentUnit];
+
+        unitOptionsContainer.innerHTML = keys.map(k => `
+          <div class="uc-modal-item ${k === currentUnit ? 'active' : ''}" data-unit="${k}">
+            <span>${catData.names[k]}</span>
+            <span class="check">✓</span>
+          </div>
+        `).join('');
+
+        unitOptionsContainer.querySelectorAll('.uc-modal-item').forEach(opt => {
+          opt.addEventListener('click', () => {
+            currentUnit = opt.dataset.unit;
+            unitText.textContent = catData.names[currentUnit];
+            
+            unitOptionsContainer.querySelectorAll('.uc-modal-item').forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            
+            unitModal.classList.remove('open');
+            calculate();
+          }, { signal });
+        });
+
+        calculate();
+      }
+
+      $("u-back").addEventListener("click", () => history.back(), { signal });
+
+      unitTrigger.addEventListener("click", () => unitModal.classList.add("open"), { signal });
+      unitModal.addEventListener("click", (e) => { if (e.target === unitModal) unitModal.classList.remove("open"); }, { signal });
+
+      if (menuStyle === "bottom") {
+        catTrigger.addEventListener("click", () => $("u-modal").classList.add("open"), { signal });
+        $("u-modal").addEventListener("click", (e) => { if (e.target === $("u-modal")) $("u-modal").classList.remove("open"); }, { signal });
+      } else {
+        const dropdown = $("u-dropdown");
+        catTrigger.addEventListener("click", (e) => {
+          e.stopPropagation();
+          dropdown.classList.toggle("open");
+        }, { signal });
+        document.addEventListener("click", (e) => {
+          if (!catTrigger.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove("open");
+        }, { signal });
+      }
+
+      options.forEach(opt => {
+        opt.addEventListener("click", () => {
+          currentCat = opt.dataset.cat;
+          catTitle.textContent = data[currentCat].name;
+          catIcon.innerHTML = data[currentCat].icon;
+          
+          options.forEach(o => o.classList.remove("active"));
+          opt.classList.add("active");
+          
+          if (menuStyle === "bottom") $("u-modal").classList.remove("open");
+          else $("u-dropdown").classList.remove("open");
+          
+          inputEl.value = "1";
+          updateUnitList();
+        }, { signal });
+      });
+
+      inputEl.addEventListener("input", calculate, { signal });
+      updateUnitList();
+    },
+    unmount() {}
+  });
+})();
