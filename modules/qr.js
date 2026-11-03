@@ -284,7 +284,6 @@
           .qr-input-wrapper { margin-bottom: 24px; }
           .qr-input-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
           
-          /* Styl inputa z blokadą białej ramki i podpowiedzi */
           .qr-input { 
             width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); 
             color: var(--ink); font-size: 20px; padding: 12px 0; text-align: center; 
@@ -309,11 +308,13 @@
           .qr-btn:disabled { cursor: not-allowed; }
           
           .qr-divider-line { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
-          .qr-canvas-box { display: flex; justify-content: center; align-items: center; min-height: 240px; transition: all 0.3s ease; }
-          .qr-canvas-box.has-canvas { background: #ffffff; padding: 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-height: auto; }
+          
+          /* Zmniejszenie kodu QR o 20% */
+          .qr-canvas-box { display: flex; justify-content: center; align-items: center; min-height: 200px; transition: all 0.3s ease; }
+          .qr-canvas-box.has-canvas { background: #ffffff; padding: 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-height: auto; width: 80%; margin: 0 auto; }
           .qr-placeholder { color: var(--line); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
           .qr-canvas-box.has-canvas .qr-placeholder { display: none; }
-          .qr-canvas-box canvas { display: none; max-width: 100%; }
+          .qr-canvas-box canvas { display: none; max-width: 100%; height: auto; }
           .qr-canvas-box.has-canvas canvas { display: block; }
           
           .qr-cam-wrapper { width: 100%; aspect-ratio: 1; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; margin-top: 8px; position: relative; }
@@ -486,7 +487,7 @@
 
       $("q-gen-btn").addEventListener("click", () => {
         const text = $("q-text").value.trim();
-        if (!text) return showToast("Wpisz tekst do wygenerowania!"); // ZMIENIONO ALERT NA TOAST
+        if (!text) return showToast("Wpisz tekst do wygenerowania!");
         
         canvasContainer.classList.remove("has-canvas");
         dlBtn.disabled = true;
