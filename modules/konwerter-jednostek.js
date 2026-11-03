@@ -11,7 +11,7 @@
       const data = {
         length: {
           name: "Długość",
-          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="12" x2="20" y2="12"></line></svg>`,
+          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="4" y1="12" x2="20" y2="12"></line></svg>`,
           units: { m: 1, cm: 0.01, km: 1000, in: 0.0254, ft: 0.3048, mi: 1609.34 },
           names: { m: 'Metry', cm: 'Centymetry', km: 'Kilometry', in: 'Cale', ft: 'Stopy', mi: 'Mile' }
         },
@@ -58,18 +58,20 @@
       let selectorHtml = "";
       if (menuStyle === "bottom") {
         selectorHtml = `
-          <div id="u-cat-trigger" class="cat-selector" style="margin-bottom: 24px;">
-            <div class="cat-icon-box" id="u-cat-icon">${data[currentCat].icon}</div>
-            <div class="cat-title" id="u-cat-title">${data[currentCat].name}</div>
-            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          <div id="u-cat-trigger" class="uc-top-trigger">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div class="uc-top-icon">${data[currentCat].icon}</div>
+              <span>${data[currentCat].name}</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
-          <div id="u-modal" class="n-modal-overlay bottom-mode">
-            <div class="n-modal-sheet">
-              <div class="n-modal-title">Wybierz kategorię</div>
+          <div id="u-modal" class="uc-modal-overlay bottom-mode">
+            <div class="uc-modal-sheet">
+              <div class="uc-modal-title">Kategoria</div>
               ${Object.keys(data).map(key => `
-                <div class="n-option ${key === currentCat ? 'active' : ''}" data-cat="${key}">
+                <div class="uc-modal-item ${key === currentCat ? 'active' : ''}" data-cat="${key}">
                   <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="width:20px;height:20px;">${data[key].icon}</div>
+                    <div style="width:18px;height:18px;opacity:0.7;">${data[key].icon}</div>
                     <span>${data[key].name}</span>
                   </div>
                   <span class="check">✓</span>
@@ -80,17 +82,21 @@
         `;
       } else {
         selectorHtml = `
-          <div style="position: relative; margin-bottom: 24px;">
-            <div id="u-cat-trigger" class="cat-selector">
-              <div class="cat-icon-box" id="u-cat-icon">${data[currentCat].icon}</div>
-              <div class="cat-title" id="u-cat-title">${data[currentCat].name}</div>
-              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          <div style="position: relative;">
+            <div id="u-cat-trigger" class="uc-top-trigger">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div class="uc-top-icon">${data[currentCat].icon}</div>
+                <span>${data[currentCat].name}</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
-            <div id="u-dropdown" class="n-dropdown">
+            <div id="u-dropdown" class="uc-dropdown">
               ${Object.keys(data).map(key => `
-                <div class="n-dropdown-item ${key === currentCat ? 'active' : ''}" data-cat="${key}">
-                  <div style="width:20px;height:20px;">${data[key].icon}</div>
-                  <span>${data[key].name}</span>
+                <div class="uc-dropdown-item ${key === currentCat ? 'active' : ''}" data-cat="${key}">
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:18px;height:18px;opacity:0.7;">${data[key].icon}</div>
+                    <span>${data[key].name}</span>
+                  </div>
                 </div>
               `).join('')}
             </div>
@@ -100,99 +106,109 @@
 
       container.innerHTML = `
         <style>
-          .n-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 12px; margin-top: 0; }
+          /* Nowy, ultra-minimalistyczny styl */
+          .uc-top-trigger {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 0; border-bottom: 1px solid var(--line);
+            font-size: 14px; font-weight: 600; color: var(--ink);
+            cursor: pointer; margin-bottom: 24px;
+          }
+          .uc-top-icon { width: 20px; height: 20px; color: var(--accent); }
           
-          .cat-selector { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; cursor: pointer; transition: border-color 0.2s; }
-          .cat-selector:active { border-color: var(--muted); }
-          .cat-icon-box { width: 36px; height: 36px; background: var(--bg); border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); color: var(--accent); }
-          .cat-icon-box svg { width: 20px; height: 20px; }
-          .cat-title { flex: 1; font-size: 16px; font-weight: 600; color: var(--ink); }
-          .cat-selector svg.chevron { color: var(--muted); width: 20px; height: 20px; }
-          
-          .n-dropdown { position: absolute; top: calc(100% + 6px); left: 0; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 100; overflow: hidden; opacity: 0; transform: translateY(-10px) scaleY(0.95); transform-origin: top center; pointer-events: none; transition: opacity 0.2s, transform 0.2s; }
-          .n-dropdown.open { opacity: 1; transform: translateY(0) scaleY(1); pointer-events: auto; }
-          .n-dropdown-item { padding: 16px; font-size: 15px; color: var(--ink); cursor: pointer; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; transition: background 0.15s; }
-          .n-dropdown-item:last-child { border-bottom: none; }
-          .n-dropdown-item:active { background: var(--surface-hover); }
-          .n-dropdown-item.active { color: var(--accent); font-weight: 600; background: rgba(129, 140, 248, 0.05); }
-
-          .n-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 1000; display: flex; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-          .n-modal-overlay.open { opacity: 1; pointer-events: auto; }
-          .n-modal-sheet { background: var(--surface); width: 100%; max-width: 600px; border: 1px solid var(--line); padding: 20px 16px 30px; }
-          .n-modal-overlay.bottom-mode { align-items: flex-end; }
-          .n-modal-overlay.bottom-mode .n-modal-sheet { border-top-left-radius: 16px; border-top-right-radius: 16px; border-bottom: none; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); max-height: 80vh; overflow-y: auto; }
-          .n-modal-overlay.bottom-mode.open .n-modal-sheet { transform: translateY(0); }
-          
-          .n-modal-title { font-size: 16px; font-weight: 600; text-align: center; margin-bottom: 16px; color: var(--ink); }
-          .n-option { padding: 16px; border-radius: 8px; margin-bottom: 8px; background: var(--bg); border: 1px solid transparent; font-size: 15px; color: var(--ink); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-          .n-option:active { background: var(--line); }
-          .n-option.active { border-color: var(--accent); color: var(--accent); font-weight: 600; }
-          .n-option .check { opacity: 0; color: var(--accent); }
-          .n-option.active .check { opacity: 1; }
-
-          .section-divider {
-            border-bottom: 1px solid var(--line);
+          .uc-input-container {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 20px 0 32px 0; border-bottom: 1px solid var(--line);
             margin-bottom: 24px;
-            padding-bottom: 24px;
           }
-
-          .conv-row { display: flex; gap: 12px; align-items: flex-start; }
-          .conv-col { flex: 1; display: flex; flex-direction: column; }
           
-          .conv-input { 
-            width: 100%; padding: 16px; border-radius: 6px; border: 1px solid var(--line); 
-            background: var(--bg); color: var(--ink); font-size: 20px; font-family: monospace; 
-            outline: none; text-align: center; 
+          .uc-big-input {
+            width: 100%; background: transparent; border: none;
+            color: var(--ink); font-size: 48px; font-weight: 700;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            text-align: center; outline: none; padding: 0;
+            letter-spacing: -0.03em;
           }
-          .conv-input:focus { border-color: var(--muted); }
+          .uc-big-input::-webkit-outer-spin-button,
+          .uc-big-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
           
-          .conv-select { 
-            width: 100%; padding: 16px; border-radius: 6px; 
-            background: var(--accent); color: var(--accent-ink); 
-            border: 1px solid var(--accent); font-size: 16px; font-weight: 600;
-            outline: none; margin-top: 8px; appearance: none; 
-            text-align: center;
+          .uc-select-trigger {
+            display: flex; align-items: center; gap: 6px;
+            background: transparent; border: none;
+            color: var(--accent); font-size: 16px; font-weight: 600;
+            cursor: pointer; margin-top: 8px; padding: 4px 8px; border-radius: 4px;
           }
-
-          .insta-list { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
-          .unit-row { display: flex; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 16px; align-items: center; }
-          .unit-name { color: var(--ink); font-weight: 500; }
-          .unit-val { font-family: monospace; color: var(--muted); }
+          .uc-select-trigger:active { background: rgba(129, 140, 248, 0.1); }
+          
+          .uc-list { display: flex; flex-direction: column; }
+          .uc-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+          .uc-row:last-child { border-bottom: none; }
+          .uc-row-name { color: var(--muted); font-weight: 500; }
+          .uc-row-val { color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; }
+          
+          /* Modal i dropdown style */
+          .uc-dropdown { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); z-index: 100; overflow: hidden; opacity: 0; transform: translateY(-5px); pointer-events: none; transition: opacity 0.15s, transform 0.15s; }
+          .uc-dropdown.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+          .uc-dropdown-item { padding: 14px 16px; font-size: 14px; color: var(--ink); display: flex; align-items: center; cursor: pointer; border-bottom: 1px solid var(--line); }
+          .uc-dropdown-item:last-child { border-bottom: none; }
+          .uc-dropdown-item.active { color: var(--accent); font-weight: 600; background: rgba(129, 140, 248, 0.05); }
+          
+          .uc-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+          .uc-modal-overlay.open { opacity: 1; pointer-events: auto; }
+          .uc-modal-sheet { background: var(--surface); width: 100%; max-width: 600px; border: 1px solid var(--line); padding: 24px 16px; }
+          .uc-modal-overlay.bottom-mode { align-items: flex-end; }
+          .uc-modal-overlay.bottom-mode .uc-modal-sheet { border-top-left-radius: 16px; border-top-right-radius: 16px; border-bottom: none; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); max-height: 80vh; overflow-y: auto; }
+          .uc-modal-overlay.bottom-mode.open .uc-modal-sheet { transform: translateY(0); }
+          .uc-modal-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 16px; letter-spacing: 0.5px; }
+          .uc-modal-item { padding: 16px; border-radius: 6px; margin-bottom: 4px; font-size: 15px; color: var(--ink); display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: var(--bg); }
+          .uc-modal-item:active { background: var(--line); }
+          .uc-modal-item.active { color: var(--accent); font-weight: 600; }
+          .uc-modal-item .check { opacity: 0; color: var(--accent); }
+          .uc-modal-item.active .check { opacity: 1; }
         </style>
 
         <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
-          <button id="u-back" style="width:auto; padding:10px 12px; border-radius:6px; margin:0; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:flex; align-items:center; justify-content:center;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <button id="u-back" style="width:auto; padding:10px 12px; border-radius:6px; margin:0; border:1px solid var(--line); background:transparent; color:var(--ink); display:flex; align-items:center; justify-content:center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
         </div>
 
         ${selectorHtml}
 
-        <div class="section-divider">
-          <span class="n-label">Wprowadź wartość</span>
-          <div class="conv-row">
-            <div class="conv-col">
-              <input type="number" id="u-input" class="conv-input" placeholder="0" value="1">
-              <select id="u-from" class="conv-select"></select>
-            </div>
+        <div class="uc-input-container">
+          <input type="number" id="u-input" class="uc-big-input" placeholder="0" value="1" inputmode="decimal">
+          <div id="u-unit-trigger" class="uc-select-trigger">
+            <span id="u-unit-text">Metry</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
         </div>
 
         <div>
-          <span class="n-label">Wszystkie jednostki</span>
-          <div id="u-all-list" class="insta-list"></div>
+          <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; letter-spacing: 0.5px;">Przeliczenia</div>
+          <div id="u-all-list" class="uc-list"></div>
+        </div>
+
+        <div id="u-unit-modal" class="uc-modal-overlay ${menuStyle === 'bottom' ? 'bottom-mode' : ''}">
+          <div class="uc-modal-sheet">
+            <div class="uc-modal-title">Wybierz jednostkę</div>
+            <div id="u-unit-options"></div>
+          </div>
         </div>
       `;
 
       const $ = id => container.querySelector("#" + id);
       const inputEl = $("u-input");
-      const fromSel = $("u-from");
       const allList = $("u-all-list");
+      const unitText = $("u-unit-text");
+      const unitTrigger = $("u-unit-trigger");
+      const unitModal = $("u-unit-modal");
+      const unitOptionsContainer = $("u-unit-options");
       
       const catTrigger = $("u-cat-trigger");
-      const catTitle = $("u-cat-title");
-      const catIcon = $("u-cat-icon");
-      const options = container.querySelectorAll(".n-option, .n-dropdown-item");
+      const catTitle = catTrigger.querySelector('span');
+      const catIcon = catTrigger.querySelector('.uc-top-icon');
+      const options = container.querySelectorAll(".uc-modal-item, .uc-dropdown-item");
+
+      let currentUnit = Object.keys(data[currentCat].units)[0];
 
       function convertTemp(val, from, to) {
         let c;
@@ -212,41 +228,54 @@
 
       function calculate() {
         const val = parseFloat(inputEl.value);
-        const from = fromSel.value;
-        
-        if (isNaN(val)) {
-          allList.innerHTML = "";
-          return;
-        }
+        if (isNaN(val)) { allList.innerHTML = ""; return; }
 
         allList.innerHTML = "";
         const catData = data[currentCat];
         const keys = currentCat === 'temp' ? catData.units : Object.keys(catData.units);
 
         keys.forEach(k => {
-          if (k === from) return;
+          if (k === currentUnit) return;
           let r = 0;
           if (currentCat === 'temp') {
-            r = convertTemp(val, from, k);
+            r = convertTemp(val, currentUnit, k);
           } else {
-            r = val * catData.units[from] / catData.units[k];
+            r = val * catData.units[currentUnit] / catData.units[k];
           }
           allList.innerHTML += `
-            <div class="unit-row">
-              <span class="unit-name">${catData.names[k]}</span>
-              <span class="unit-val">${formatNumber(r)}</span>
+            <div class="uc-row">
+              <span class="uc-row-name">${catData.names[k]}</span>
+              <span class="uc-row-val">${formatNumber(r)}</span>
             </div>
           `;
         });
       }
 
-      function updateSelects() {
-        fromSel.innerHTML = "";
+      function updateUnitList() {
         const catData = data[currentCat];
         const keys = currentCat === 'temp' ? catData.units : Object.keys(catData.units);
+        
+        currentUnit = keys[0];
+        unitText.textContent = catData.names[currentUnit];
 
-        keys.forEach(k => {
-          fromSel.innerHTML += `<option value="${k}">${catData.names[k]}</option>`;
+        unitOptionsContainer.innerHTML = keys.map(k => `
+          <div class="uc-modal-item ${k === currentUnit ? 'active' : ''}" data-unit="${k}">
+            <span>${catData.names[k]}</span>
+            <span class="check">✓</span>
+          </div>
+        `).join('');
+
+        unitOptionsContainer.querySelectorAll('.uc-modal-item').forEach(opt => {
+          opt.addEventListener('click', () => {
+            currentUnit = opt.dataset.unit;
+            unitText.textContent = catData.names[currentUnit];
+            
+            unitOptionsContainer.querySelectorAll('.uc-modal-item').forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            
+            unitModal.classList.remove('open');
+            calculate();
+          }, { signal });
         });
 
         calculate();
@@ -254,10 +283,12 @@
 
       $("u-back").addEventListener("click", () => history.back(), { signal });
 
+      unitTrigger.addEventListener("click", () => unitModal.classList.add("open"), { signal });
+      unitModal.addEventListener("click", (e) => { if (e.target === unitModal) unitModal.classList.remove("open"); }, { signal });
+
       if (menuStyle === "bottom") {
-        const modal = $("u-modal");
-        catTrigger.addEventListener("click", () => modal.classList.add("open"), { signal });
-        modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); }, { signal });
+        catTrigger.addEventListener("click", () => $("u-modal").classList.add("open"), { signal });
+        $("u-modal").addEventListener("click", (e) => { if (e.target === $("u-modal")) $("u-modal").classList.remove("open"); }, { signal });
       } else {
         const dropdown = $("u-dropdown");
         catTrigger.addEventListener("click", (e) => {
@@ -282,14 +313,12 @@
           else $("u-dropdown").classList.remove("open");
           
           inputEl.value = "1";
-          updateSelects();
+          updateUnitList();
         }, { signal });
       });
 
       inputEl.addEventListener("input", calculate, { signal });
-      fromSel.addEventListener("change", calculate, { signal });
-
-      updateSelects();
+      updateUnitList();
     },
     unmount() {}
   });
