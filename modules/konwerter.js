@@ -22,6 +22,12 @@
         savedQual = await Hub.db.get("conv_qual", 85);
       } catch (e) {}
 
+      const formatNames = {
+        "image/webp": "WebP (najmniejszy rozmiar)",
+        "image/jpeg": "JPEG (standard)",
+        "image/png": "PNG (bezstratny)"
+      };
+
       container.innerHTML = `
         <style>
           .n-label {
@@ -34,24 +40,53 @@
             margin-bottom: 8px;
             margin-top: 0;
           }
-          .n-select {
-            appearance: none;
-            -webkit-appearance: none;
-            background-color: var(--bg);
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238b8b93%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px top 50%;
-            background-size: 10px auto;
+          
+          .n-custom-select {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg);
             border: 1px solid var(--line);
             border-radius: 6px;
-            padding: 12px 36px 12px 12px;
+            padding: 14px 16px;
             color: var(--ink);
-            font: inherit;
             font-size: 15px;
-            width: 100%;
-            outline: none;
+            cursor: pointer;
           }
-          .n-select:focus { border-color: var(--muted); }
+          .n-custom-select svg { color: var(--muted); }
+          
+          .n-modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            z-index: 1000; display: flex; align-items: flex-end; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+          }
+          .n-modal-overlay.open { opacity: 1; pointer-events: auto; }
+          
+          .n-modal-sheet {
+            background: var(--surface); width: 100%; max-width: 600px;
+            border-top-left-radius: 16px; border-top-right-radius: 16px;
+            border: 1px solid var(--line); border-bottom: none;
+            padding: 20px 16px 30px; transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+          }
+          .n-modal-overlay.open .n-modal-sheet { transform: translateY(0); }
+          
+          .n-modal-title {
+            font-size: 16px; font-weight: 600; text-align: center; margin-bottom: 16px;
+            color: var(--ink);
+          }
+          
+          .n-option {
+            padding: 16px; border-radius: 8px; margin-bottom: 8px;
+            background: var(--bg); border: 1px solid transparent;
+            font-size: 15px; color: var(--ink); display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer;
+          }
+          .n-option:active { background: var(--line); }
+          .n-option.active { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+          .n-option .check { opacity: 0; color: var(--accent); }
+          .n-option.active .check { opacity: 1; }
           
           .n-range {
             -webkit-appearance: none;
@@ -71,40 +106,23 @@
             border-radius: 50%;
             background: var(--accent);
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
           }
           
           .n-btn-purple {
-            width: 100%;
-            padding: 14px;
-            border-radius: 6px;
-            background: var(--accent);
-            color: var(--accent-ink);
-            border: 1px solid var(--accent);
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            display: block;
-            transition: opacity 0.2s;
+            width: 100%; padding: 14px; border-radius: 6px;
+            background: var(--accent); color: var(--accent-ink);
+            border: 1px solid var(--accent); font-weight: 600; font-size: 15px;
+            cursor: pointer; text-align: center; text-decoration: none; display: block;
           }
-          .n-btn-purple:active { opacity: 0.8; }
           
           .n-block {
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 16px;
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 8px; padding: 20px; margin-bottom: 16px;
           }
           
           .n-file-name {
-            font-size: 13px;
-            color: var(--muted);
-            margin-top: 12px;
-            text-align: center;
-            word-break: break-all;
+            font-size: 13px; color: var(--muted); margin-top: 12px;
+            text-align: center; word-break: break-all;
           }
         </style>
 
@@ -127,11 +145,10 @@
           <span class="n-label">Ustawienia konwersji</span>
           
           <div style="margin-bottom: 20px;">
-            <select id="c-fmt" class="n-select">
-              <option value="image/webp">WebP (najmniejszy rozmiar)</option>
-              <option value="image/jpeg">JPEG (standard)</option>
-              <option value="image/png">PNG (bezstratny)</option>
-            </select>
+            <div id="c-select-trigger" class="n-custom-select">
+              <span id="c-select-text">${formatNames[savedFmt]}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
           </div>
 
           <div>
@@ -156,13 +173,36 @@
         </div>
 
         <a class="n-btn-purple hidden" id="c-dl">Pobierz plik</a>
+
+        <div id="c-modal" class="n-modal-overlay">
+          <div class="n-modal-sheet">
+            <div class="n-modal-title">Wybierz format</div>
+            <div class="n-option" data-value="image/webp">
+              <span>WebP (najmniejszy rozmiar)</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="n-option" data-value="image/jpeg">
+              <span>JPEG (standard)</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="n-option" data-value="image/png">
+              <span>PNG (bezstratny)</span>
+              <span class="check">✓</span>
+            </div>
+          </div>
+        </div>
       `;
 
       const $ = id => container.querySelector("#" + id);
       const fileInput = $("c-file");
       const fileBtn = $("c-file-btn");
       const fileName = $("c-file-name");
-      const fmtSelect = $("c-fmt");
+      
+      const selectTrigger = $("c-select-trigger");
+      const selectText = $("c-select-text");
+      const modal = $("c-modal");
+      const options = container.querySelectorAll(".n-option");
+      
       const qualInput = $("c-qual");
       const qualLabel = $("c-qual-label");
       const btnProcess = $("c-btn");
@@ -172,15 +212,40 @@
       const imgBefore = $("c-img-before");
       const imgAfter = $("c-img-after");
 
-      fmtSelect.value = savedFmt;
+      let currentFmt = savedFmt;
       let currentFile = null;
+
+      function updateOptionStyles() {
+        options.forEach(opt => {
+          if (opt.dataset.value === currentFmt) {
+            opt.classList.add("active");
+          } else {
+            opt.classList.remove("active");
+          }
+        });
+        selectText.textContent = formatNames[currentFmt];
+      }
+      updateOptionStyles();
 
       $("c-back").addEventListener("click", () => history.back(), { signal });
       fileBtn.addEventListener("click", () => fileInput.click(), { signal });
 
-      fmtSelect.addEventListener("change", () => {
-        Hub.db.set("conv_fmt", fmtSelect.value).catch(()=>{});
+      selectTrigger.addEventListener("click", () => {
+        modal.classList.add("open");
       }, { signal });
+
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.classList.remove("open");
+      }, { signal });
+
+      options.forEach(opt => {
+        opt.addEventListener("click", () => {
+          currentFmt = opt.dataset.value;
+          updateOptionStyles();
+          Hub.db.set("conv_fmt", currentFmt).catch(()=>{});
+          modal.classList.remove("open");
+        }, { signal });
+      });
 
       qualInput.addEventListener("input", () => {
         qualLabel.textContent = `Jakość: ${qualInput.value}%`;
@@ -226,7 +291,7 @@
           canvas.height = img.naturalHeight;
           const ctx = canvas.getContext("2d");
 
-          if (fmtSelect.value === "image/jpeg") {
+          if (currentFmt === "image/jpeg") {
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
           }
@@ -244,7 +309,7 @@
             const outUrl = URL.createObjectURL(blob);
             activeUrls.push(outUrl);
 
-            const ext = fmtSelect.value.split("/")[1];
+            const ext = currentFmt.split("/")[1];
             const outName = currentFile.name.replace(/\.[^.]+$/, "") + "_conv." + ext;
             const diff = ((blob.size - currentFile.size) / currentFile.size * 100).toFixed(1);
             const sign = diff > 0 ? "+" : "";
@@ -263,7 +328,7 @@
             dlBtn.textContent = `Pobierz ${outName}`;
             dlBtn.classList.remove("hidden");
 
-          }, fmtSelect.value, quality);
+          }, currentFmt, quality);
         };
 
         img.onerror = () => {
