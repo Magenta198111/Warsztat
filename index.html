@@ -14,16 +14,27 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-html {
+/* KLUCZOWA ZMIANA: html i body nie mogą się przewijać */
+html, body {
   height: 100%;
-  overflow-y: scroll;
-  overscroll-behavior-y: contain;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--bg);
+}
+
+/* Cały widok jest przewijany wewnątrz tego kontenera */
+#app-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 body { 
   font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
-  margin: 0; background: var(--bg); color: var(--ink); 
-  min-height: 100%; padding-bottom: 80px; 
+  color: var(--ink); 
   -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
   -webkit-touch-callout: none;
 }
@@ -38,7 +49,7 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 
 .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
 .drawer-overlay.open { opacity: 1; pointer-events: auto; }
-.drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 80%; max-width: 320px; background: var(--surface); border-right: 1px solid var(--line); z-index: 999; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; }
+.drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 80%; max-width: 320px; background: var(--surface); border-right: 1px solid var(--line); z-index: 999; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; overflow-y: auto; }
 .drawer.open { transform: translateX(0); }
 .drawer-header { padding: 24px 20px; border-bottom: 1px solid var(--line); }
 .drawer-title { font-size: 18px; font-weight: 700; margin: 0; }
@@ -49,7 +60,7 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .drawer-item svg { width: 20px; height: 20px; color: var(--muted); stroke-width: 1.5; transition: color 0.2s; }
 .drawer-item.active svg { color: var(--accent); }
 
-.container { max-width: 600px; margin: 0 auto; padding: 20px; }
+.container { max-width: 600px; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
 .list { display: flex; flex-direction: column; gap: 12px; }
 .tile { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; transition: background 0.15s; }
 .tile:active { background: var(--surface-hover); border-color: var(--muted); }
@@ -87,6 +98,8 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 </head>
 <body>
 
+<div id="app-scroll">
+
 <div id="error-bar"></div>
 
 <div class="drawer-overlay" id="drawer-overlay"></div>
@@ -101,9 +114,9 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       <span>Ustawienia</span>
     </div>
-    <div class="drawer-item" onclick="showToast('Kopia zapasowa w budowie.')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-      <span>Kopia zapasowa</span>
+    <div class="drawer-item" onclick="Hub.refreshApp()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+      <span>Odśwież aplikację</span>
     </div>
   </div>
 </div>
@@ -133,6 +146,8 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 
 <button class="fab" id="fab-add">+</button>
 <div id="toast-container"></div>
+
+</div>
 <script>
 window.addEventListener('error', e => { const b = document.getElementById('error-bar'); if(b){ b.style.display='block'; b.textContent = 'BŁĄD: ' + e.message; } });
 window.showToast = m => { const c = document.getElementById('toast-container'); const t = document.createElement('div'); t.className='toast'; t.textContent=m; c.appendChild(t); requestAnimationFrame(()=>t.classList.add('show')); setTimeout(()=>{t.classList.remove('show'); setTimeout(()=>t.remove(),300)}, 3800); };
@@ -143,13 +158,19 @@ document.addEventListener('contextmenu', event => {
   }
 });
 
-// Blokada gestu pull-to-refresh (dla pewności)
-let _lastTouchY = 0;
-document.addEventListener('touchstart', e => { _lastTouchY = e.touches[0].clientY; }, { passive: true });
+// Agresywna blokada pull-to-refresh (fallback dla CSS)
+let _startTouchY = 0;
+document.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) _startTouchY = e.touches[0].clientY;
+}, { passive: true });
+
 document.addEventListener('touchmove', e => {
-  const deltaY = e.touches[0].clientY - _lastTouchY;
-  if (deltaY > 0 && window.scrollY <= 0) {
-    e.preventDefault();
+  if (e.touches.length !== 1) return;
+  const scroll = document.getElementById('app-scroll');
+  if (!scroll) return;
+  if (scroll.scrollTop <= 0) {
+    const deltaY = e.touches[0].clientY - _startTouchY;
+    if (deltaY > 0) e.preventDefault();
   }
 }, { passive: false });
 
@@ -157,6 +178,11 @@ window.Hub = {
   modules: new Map(),
   activeModule: null,
   activeAbort: null,
+
+  refreshApp: function() {
+    showToast("Odświeżanie aplikacji...");
+    setTimeout(() => location.reload(), 300);
+  },
   
   db: {
     open: () => new Promise((res, rej) => { const r = indexedDB.open("WarsztatDB", 1); r.onupgradeneeded = e => { if(!e.target.result.objectStoreNames.contains("kv")) e.target.result.createObjectStore("kv"); }; r.onsuccess = e => res(e.target.result); r.onerror = e => rej(e.target.error); }),
@@ -172,12 +198,10 @@ window.Hub = {
   renderGrid: function() {
     const grid = document.getElementById("modules-grid");
     grid.innerHTML = "";
-
     if (Hub.modules.size === 0) {
       grid.innerHTML = '<div class="empty-state">Brak modułów w systemie.</div>';
       return;
     }
-
     const iconMap = {
       "konwerter": `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
       "qr": `<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`,
@@ -187,16 +211,10 @@ window.Hub = {
       "zdjecie-dokument": `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><circle cx="9" cy="10" r="2"></circle><line x1="15" y1="8" x2="21" y2="8"></line><line x1="15" y1="12" x2="21" y2="12"></line><line x1="7" y1="16" x2="21" y2="16"></line></svg>`,
       "kalkulator-prog": `<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>`
     };
-
-    const sortedModules = Array.from(Hub.modules.values()).sort((a, b) => 
-      a.title.localeCompare(b.title, 'pl', { sensitivity: 'base' })
-    );
-
+    const sortedModules = Array.from(Hub.modules.values()).sort((a, b) => a.title.localeCompare(b.title, 'pl', { sensitivity: 'base' }));
     sortedModules.forEach(mod => {
       const icon = iconMap[mod.id] || `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
-      
-      const tile = document.createElement("div"); 
-      tile.className = "tile";
+      const tile = document.createElement("div"); tile.className = "tile";
       tile.innerHTML = `<div class="tile-icon">${icon}</div><div class="tile-content"><div class="tile-title">${mod.title}</div><div class="tile-desc">${mod.desc||""}</div></div>`;
       tile.onclick = () => Hub.openModule(mod.id, true);
       grid.appendChild(tile);
@@ -218,15 +236,10 @@ window.Hub = {
     document.getElementById("view-home").classList.remove("hidden");
     document.getElementById("app-title").textContent = "Workspace";
     document.getElementById("fab-add").classList.remove("hidden");
-    
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     document.getElementById('drawer-home').classList.add('active');
-    
-    if (push) {
-      if (location.hash !== '' && location.hash !== '#') history.pushState(null, "", "./");
-    } else {
-      history.replaceState(null, "", "./");
-    }
+    if (push) { if (location.hash !== '' && location.hash !== '#') history.pushState(null, "", "./"); }
+    else { history.replaceState(null, "", "./"); }
   },
 
   openModule: function(id, push = true) {
@@ -240,11 +253,10 @@ window.Hub = {
     document.getElementById("app-title").textContent = mod.title.toUpperCase();
     document.getElementById("fab-add").classList.add("hidden");
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
-    
     Hub.activeModule = mod; Hub.activeAbort = new AbortController();
     if (push && location.hash !== `#${id}`) history.pushState(null, "", `#${id}`);
     mod.mount(document.getElementById("view-module"), Hub.activeAbort.signal);
-    window.scrollTo(0, 0);
+    document.getElementById('app-scroll').scrollTo(0, 0);
   },
 
   openSettings: async function(push = true) {
@@ -258,9 +270,7 @@ window.Hub = {
     document.getElementById("fab-add").classList.add("hidden");
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     document.getElementById('drawer-settings').classList.add('active');
-    
     if (push && location.hash !== '#settings') history.pushState(null, "", `#settings`);
-    
     const st = await Hub.db.get("menu_style", "bottom");
     const b1 = document.getElementById("opt-bottom"), b2 = document.getElementById("opt-dropdown");
     if(st === "bottom") { b1.classList.add("active"); b2.classList.remove("active"); }
@@ -272,47 +282,28 @@ window.Hub = {
 
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById('drawer-home').classList.add('active');
-
   document.getElementById("fab-add").onclick = () => showToast("Wgraj plik do folderu modules i dopisz do modules.json");
-  
-  document.getElementById("menu-btn").onclick = () => { 
-    document.getElementById("drawer").classList.add("open"); 
-    document.getElementById("drawer-overlay").classList.add("open"); 
-  };
-  document.getElementById("drawer-overlay").onclick = () => { 
-    document.getElementById("drawer").classList.remove("open"); 
-    document.getElementById("drawer-overlay").classList.remove("open"); 
-  };
-
+  document.getElementById("menu-btn").onclick = () => { document.getElementById("drawer").classList.add("open"); document.getElementById("drawer-overlay").classList.add("open"); };
+  document.getElementById("drawer-overlay").onclick = () => { document.getElementById("drawer").classList.remove("open"); document.getElementById("drawer-overlay").classList.remove("open"); };
   window.onpopstate = () => {
     const isModule = document.getElementById("view-module").classList.contains("active");
     const isSettings = document.getElementById("view-settings").classList.contains("active");
-    
-    if (isModule || isSettings) {
-      Hub.showHome(false); 
-    }
+    if (isModule || isSettings) Hub.showHome(false);
   };
-
-  fetch('./modules.json?t=' + Date.now())
-    .then(r => r.json())
-    .then(list => {
-      const promises = list.map(mod => {
-        return new Promise((resolve) => {
-          const s = document.createElement('script');
-          s.src = mod.file;
-          s.onload = resolve;
-          s.onerror = () => { console.error("Błąd ładowania: " + mod.file); resolve(); };
-          document.body.appendChild(s);
-        });
-      });
-      return Promise.all(promises);
-    })
-    .then(() => {
-      const initHash = location.hash.replace(/^#/, "");
-      if (initHash === "settings") Hub.openSettings(false);
-      else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
-    })
-    .catch(e => { document.getElementById('modules-grid').innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd modules.json</div>'; });
+  fetch('./modules.json?t=' + Date.now()).then(r => r.json()).then(list => {
+    const promises = list.map(mod => new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = mod.file;
+      s.onload = resolve;
+      s.onerror = () => { console.error("Błąd ładowania: " + mod.file); resolve(); };
+      document.body.appendChild(s);
+    }));
+    return Promise.all(promises);
+  }).then(() => {
+    const initHash = location.hash.replace(/^#/, "");
+    if (initHash === "settings") Hub.openSettings(false);
+    else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
+  }).catch(e => { document.getElementById('modules-grid').innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd modules.json</div>'; });
 });
 
 if ("serviceWorker" in navigator) {
