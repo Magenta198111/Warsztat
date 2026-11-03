@@ -24,6 +24,36 @@
       } catch (e) {}
 
       container.innerHTML = `
+        <style>
+          .c-select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238b8b93%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px top 50%;
+            background-size: 12px auto;
+            padding-right: 40px;
+          }
+          .c-range {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: var(--line);
+            border-radius: 2px;
+            outline: none;
+            margin: 16px 0;
+          }
+          .c-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--ink);
+            cursor: pointer;
+          }
+        </style>
+
         <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
           <button id="c-back" style="width:auto; padding:10px 16px; border-radius:6px; margin:0; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-weight:500;">Wróć</button>
         </div>
@@ -37,16 +67,16 @@
           </div>
 
           <label>Format docelowy</label>
-          <select id="c-fmt" style="width:100%; padding:12px; border-radius:6px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font:inherit;">
+          <select id="c-fmt" class="c-select" style="width:100%; padding:12px; border-radius:6px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font:inherit;">
             <option value="image/webp">WebP (najmniejszy rozmiar)</option>
             <option value="image/jpeg">JPEG (standard)</option>
             <option value="image/png">PNG (bezstratny)</option>
           </select>
 
           <label id="c-qual-label">Jakość (JPEG i WebP): ${savedQual}%</label>
-          <input type="range" id="c-qual" min="10" max="100" value="${savedQual}" style="width:100%; accent-color:var(--ink); margin:12px 0;">
+          <input type="range" id="c-qual" min="10" max="100" value="${savedQual}" class="c-range">
 
-          <button class="p" id="c-btn" style="width:100%; padding:12px; border-radius:6px; background:var(--ink); color:var(--bg); border:1px solid var(--ink); font-weight:600; margin-top:14px;">Konwertuj zdjęcie</button>
+          <button class="p" id="c-btn" style="width:100%; padding:14px; border-radius:6px; background:var(--ink); color:var(--bg); border:1px solid var(--ink); font-weight:600; margin-top:16px;">Konwertuj zdjęcie</button>
           
           <div class="i hidden" id="c-stats" style="margin-top:14px; font-family:monospace;"></div>
 
@@ -83,7 +113,6 @@
       let currentFile = null;
 
       $("c-back").addEventListener("click", () => history.back(), { signal });
-
       fileBtn.addEventListener("click", () => fileInput.click(), { signal });
 
       fmtSelect.addEventListener("change", () => {
