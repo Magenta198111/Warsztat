@@ -235,48 +235,89 @@
   Hub.register({
     id: "qr",
     title: "Generator & Skaner QR",
-    icon: "📷",
     desc: "Tworzenie kodów QR oraz skanowanie aparatem i z plików",
 
     async mount(container, signal) {
       container.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-          <button id="q-back" style="width:auto; padding:10px 16px; border-radius:14px;">Wróć</button>
-          <h2 style="margin:0; font-size:18px;">Generator & Skaner QR</h2>
-          <div style="width:68px;"></div>
+        <style>
+          .q-tab {
+            flex: 1;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            transition: 0.2s;
+            cursor: pointer;
+          }
+          .q-tab.active {
+            background: var(--accent);
+            color: var(--accent-ink);
+            border: 1px solid var(--accent);
+          }
+          .q-tab.inactive {
+            background: var(--surface);
+            color: var(--muted);
+            border: 1px solid var(--line);
+          }
+          .q-input {
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--line);
+            background: var(--bg);
+            color: var(--ink);
+            font: inherit;
+            width: 100%;
+            outline: none;
+          }
+        </style>
+
+        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
+          <button id="q-back" style="width:auto; padding:10px 12px; border-radius:6px; margin:0; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:flex; align-items:center; justify-content:center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
         </div>
         
-        <div style="display:flex; gap:10px; margin-bottom:16px;">
-          <button id="q-tab-gen" class="p" style="margin:0; flex:1;">Generator</button>
-          <button id="q-tab-scan" style="margin:0; flex:1;">Skaner</button>
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+          <div id="q-tab-gen" class="q-tab active">Generator</div>
+          <div id="q-tab-scan" class="q-tab inactive">Skaner</div>
         </div>
 
-        <div id="q-view-gen" class="card">
-          <label>Tekst lub link do zakodowania</label>
-          <input type="text" id="q-text" placeholder="Wpisz coś...">
-          <button class="p" id="q-gen-btn">Wygeneruj kod QR</button>
+        <div id="q-view-gen" class="card" style="padding:16px;">
+          <label style="margin-top:0;">Tekst lub link do zakodowania</label>
+          <input type="text" id="q-text" class="q-input" placeholder="Wpisz coś...">
+          
+          <button id="q-gen-btn" style="width:100%; padding:14px; border-radius:6px; background:var(--accent); color:var(--accent-ink); border:1px solid var(--accent); font-weight:600; margin-top:16px;">
+            Wygeneruj kod QR
+          </button>
           
           <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; margin-top:16px; width:100%;">
-            <canvas id="q-canvas" style="display:none; max-width:100%; border-radius:14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"></canvas>
-            <button class="p hidden" id="q-dl" style="width:100%; margin-top:14px;">⬇️ Pobierz kod QR</button>
+            <canvas id="q-canvas" style="display:none; max-width:100%; border-radius:6px;"></canvas>
+            <button id="q-dl" class="hidden" style="width:100%; padding:14px; border-radius:6px; background:var(--accent); color:var(--accent-ink); border:1px solid var(--accent); font-weight:600; margin-top:14px;">
+              Pobierz kod QR
+            </button>
           </div>
         </div>
 
-        <div id="q-view-scan" class="card hidden">
-          <div style="position:relative; width:100%; aspect-ratio:1; background:#000; border-radius:14px; overflow:hidden; margin-bottom:14px;">
+        <div id="q-view-scan" class="card hidden" style="padding:16px;">
+          <div style="position:relative; width:100%; aspect-ratio:1; background:#000; border-radius:6px; overflow:hidden; margin-bottom:14px; border:1px solid var(--line);">
             <video id="q-video" style="width:100%; height:100%; object-fit:cover;" autoplay playsinline muted></video>
-            <div style="position:absolute; inset:15%; border:2px solid var(--accent); border-radius:20px; pointer-events:none;"></div>
+            <div style="position:absolute; inset:15%; border:2px solid var(--accent); border-radius:12px; pointer-events:none;"></div>
           </div>
-          <div class="i" id="q-scan-status" style="text-align:center; margin-bottom:14px;">Skieruj kamerę na kod QR</div>
-          <button id="q-scan-toggle" class="p">Uruchom kamerę</button>
           
-          <div style="text-align:center; margin-top:14px; color:var(--muted); font-size:14px;">lub</div>
+          <div id="q-scan-status" style="text-align:center; color:var(--muted); font-size:13px; margin-bottom:14px; font-family:monospace;">Skieruj kamerę na kod QR</div>
+          
+          <button id="q-scan-toggle" style="width:100%; padding:14px; border-radius:6px; background:var(--accent); color:var(--accent-ink); border:1px solid var(--accent); font-weight:600;">
+            Uruchom kamerę
+          </button>
+          
+          <div style="text-align:center; margin-top:16px; margin-bottom:8px; color:var(--line); font-size:12px;">LUB</div>
           
           <input type="file" id="q-scan-file" accept="image/*" style="display:none;">
-          <button id="q-scan-file-btn" style="width:100%; margin-top:8px; padding:14px; background:var(--bg); border:1.5px dashed var(--line); border-radius:14px; color:var(--ink); font-weight:600; display:flex; justify-content:center; align-items:center; gap:8px;">
-            📁 Wybierz zdjęcie z kodem QR
+          <button id="q-scan-file-btn" style="width:100%; padding:14px; border-radius:6px; background:var(--surface); color:var(--ink); border:1px solid var(--line); font-weight:600;">
+            Wybierz zdjęcie z kodem QR
           </button>
-          <div id="q-scan-file-name" style="font-size:13px; color:var(--muted); margin-top:8px; text-align:center; word-break:break-all;"></div>
+          <div id="q-scan-file-name" style="font-size:12px; color:var(--muted); margin-top:8px; text-align:center; word-break:break-all;"></div>
         </div>
       `;
 
@@ -292,13 +333,15 @@
       $("q-back").addEventListener("click", () => history.back(), { signal });
 
       tabGen.addEventListener("click", () => {
-        tabGen.classList.add("p"); tabScan.classList.remove("p");
+        tabGen.classList.add("active"); tabGen.classList.remove("inactive");
+        tabScan.classList.add("inactive"); tabScan.classList.remove("active");
         viewGen.classList.remove("hidden"); viewScan.classList.add("hidden");
         stopCamera();
       }, { signal });
 
       tabScan.addEventListener("click", () => {
-        tabScan.classList.add("p"); tabGen.classList.remove("p");
+        tabScan.classList.add("active"); tabScan.classList.remove("inactive");
+        tabGen.classList.add("inactive"); tabGen.classList.remove("active");
         viewScan.classList.remove("hidden"); viewGen.classList.add("hidden");
       }, { signal });
 
@@ -312,14 +355,12 @@
           const mat = QR.encode(text);
           const size = mat.length;
           const scale = 10;
-          
           const margin = 4 * scale; 
           
           canvas.width = (size * scale) + (margin * 2);
           canvas.height = (size * scale) + (margin * 2);
           
           const ctx = canvas.getContext("2d");
-          
           ctx.fillStyle = "#fff"; 
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           
