@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#09090b">
+<meta name="theme-color" content="#000000">
 <link rel="manifest" href="./manifest.json">
 <title>Warsztat</title>
 <style>
 :root {
-  --bg: #09090b;
-  --surface: #18181b;
-  --surface-hover: #27272a;
-  --ink: #fafafa;
-  --muted: #a1a1aa;
+  --bg: #000000;
+  --surface: #09090b;
+  --surface-hover: #18181b;
+  --ink: #ededed;
+  --muted: #8b8b93;
   --line: #27272a;
-  --accent: #6366f1;
-  --accent-ink: #ffffff;
+  --accent: #818cf8;
+  --accent-ink: #000000;
   --danger: #ef4444;
 }
 
@@ -28,85 +28,100 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+.mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
 
 .topbar {
   position: sticky; top: 0; z-index: 100;
-  padding: 24px 20px 16px;
-  background: rgba(9, 9, 11, 0.85);
+  padding: 16px 20px;
+  background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .topbar-title { 
-  font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin: 0; 
+  font-size: 14px; font-weight: 600; letter-spacing: 0.05em; margin: 0; text-transform: uppercase; color: var(--ink);
+}
+.topbar-status {
+  font-size: 11px; color: var(--muted); letter-spacing: 0.05em;
 }
 
 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+/* Widok listy zamiast kwadratowych kafelków */
+.list { 
+  display: flex; flex-direction: column; 
+  border: 1px solid var(--line); 
+  border-radius: 6px; 
+  background: var(--surface);
+  overflow: hidden;
+}
 
 .tile {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 16px;
-  display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
-  cursor: pointer; 
-  transition: background 0.2s, transform 0.1s;
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px; cursor: pointer;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.15s;
 }
-.tile:active { transform: scale(0.98); background: var(--surface-hover); }
+.tile:last-child { border-bottom: none; }
+.tile:active { background: var(--surface-hover); }
 
 .tile-icon {
-  width: 44px; height: 44px; border-radius: 12px;
-  background: rgba(255,255,255,0.05);
+  width: 36px; height: 36px; border-radius: 4px;
+  background: var(--bg); border: 1px solid var(--line);
   display: flex; align-items: center; justify-content: center;
-  color: var(--ink);
+  color: var(--ink); flex-shrink: 0;
 }
-.tile-icon svg { width: 24px; height: 24px; stroke-width: 1.5; }
+.tile-icon svg { width: 18px; height: 18px; stroke-width: 1.5; }
 
-.tile-title { font-weight: 600; font-size: 14px; line-height: 1.3; margin-top: 2px; }
-.tile-desc { font-size: 12px; color: var(--muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tile-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.tile-title { font-weight: 500; font-size: 15px; color: var(--ink); }
+.tile-desc { font-size: 13px; color: var(--muted); }
 
+.tile-meta {
+  font-size: 10px; color: var(--muted); padding: 4px 6px;
+  border: 1px solid var(--line); border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+
+/* Przycisk + jako techniczny przycisk */
 .fab {
-  position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px;
-  border-radius: 16px; background: var(--accent); color: var(--accent-ink);
-  font-size: 28px; border: none; display: flex; align-items: center; justify-content: center;
+  position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px;
+  border-radius: 8px; background: var(--ink); color: var(--bg);
+  font-size: 24px; border: none; display: flex; align-items: center; justify-content: center;
   cursor: pointer; z-index: 50; transition: transform 0.1s, opacity 0.2s;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
-.fab:active { transform: scale(0.92); opacity: 0.9; }
+.fab:active { transform: scale(0.92); }
 
 #view-module { display: none; }
-#view-module.active { display: block; animation: fadeIn 0.2s ease-out; }
+#view-module.active { display: block; }
 #view-home.hidden { display: none; }
 
 .empty-state {
-  border: 1px dashed var(--line); border-radius: 16px; padding: 40px 20px;
-  text-align: center; color: var(--muted); grid-column: 1 / -1; margin-top: 20px;
+  border: 1px dashed var(--line); border-radius: 6px; padding: 40px 20px;
+  text-align: center; color: var(--muted); background: var(--surface);
 }
 #error-bar {
   position: fixed; bottom: 0; left: 0; width: 100%; background: var(--danger);
-  color: #fff; padding: 12px; font-size: 12px; z-index: 9999; display: none; font-weight: 500; text-align: center;
+  color: #fff; padding: 10px; font-size: 12px; z-index: 9999; display: none; text-align: center; font-weight: 500;
 }
 
+/* Globals for modules */
 .card { 
-  background: var(--surface);
-  border: 1px solid var(--line); 
-  border-radius: 16px; 
-  padding: 20px; 
-  margin-bottom: 16px;
+  background: var(--surface); border: 1px solid var(--line); 
+  border-radius: 6px; padding: 20px; margin-bottom: 16px;
 }
-h2 { margin: 0 0 16px; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+h2 { margin: 0 0 16px; font-size: 18px; font-weight: 600; }
 label { display: block; margin: 16px 0 8px; color: var(--muted); font-size: 13px; font-weight: 500; }
 input[type=text], input[type=number], select, button, input[type=file], textarea { font: inherit; width: 100%; font-size: 15px; }
-input[type=text], input[type=number], select, textarea { padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); outline: none; transition: border 0.2s; }
-input[type=text]:focus, input[type=number]:focus, textarea:focus { border-color: #52525b; }
-input[type=file] { padding: 8px; border-radius: 12px; border: 1px dashed var(--line); background: transparent; color: var(--muted); }
-input[type=range] { width: 100%; accent-color: var(--accent); margin: 12px 0; }
-button { padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 500; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+input[type=text], input[type=number], select, textarea { padding: 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); outline: none; transition: border 0.2s; }
+input[type=text]:focus, input[type=number]:focus, textarea:focus { border-color: var(--muted); }
+input[type=file] { padding: 8px; border-radius: 6px; border: 1px dashed var(--line); background: transparent; color: var(--muted); }
+input[type=range] { width: 100%; accent-color: var(--ink); margin: 12px 0; }
+button { padding: 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 500; cursor: pointer; transition: background 0.2s, transform 0.1s; }
 button:active { transform: scale(0.98); }
 button.p { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; }
 .hidden { display: none !important; }
@@ -116,11 +131,12 @@ button.p { background: var(--ink); color: var(--bg); border-color: var(--ink); f
 <body>
 
 <div class="topbar">
-  <h1 class="topbar-title" id="app-title">Warsztat</h1>
+  <h1 class="topbar-title" id="app-title">Workspace</h1>
+  <div class="topbar-status mono" id="status-text">SYS.ONLINE</div>
 </div>
 
 <main class="container" id="view-home">
-  <div class="grid" id="modules-grid"></div>
+  <div class="list" id="modules-grid"></div>
 </main>
 
 <main class="container" id="view-module"></main>
@@ -180,6 +196,7 @@ window.Hub = (() => {
   const elModule = document.getElementById("view-module");
   const elGrid = document.getElementById("modules-grid");
   const elTitle = document.getElementById("app-title");
+  const elStatus = document.getElementById("status-text");
 
   function cleanup() {
     if (activeAbort) { activeAbort.abort(); activeAbort = null; }
@@ -194,7 +211,8 @@ window.Hub = (() => {
     cleanup();
     elModule.classList.remove("active");
     elHome.classList.remove("hidden");
-    elTitle.textContent = "Warsztat";
+    elTitle.textContent = "Workspace";
+    elStatus.textContent = "SYS.ONLINE";
     if (push) history.pushState({ view: "home" }, "", "./");
   }
 
@@ -205,7 +223,8 @@ window.Hub = (() => {
     cleanup();
     elHome.classList.add("hidden");
     elModule.classList.add("active");
-    elTitle.textContent = mod.title;
+    elTitle.textContent = mod.title.toUpperCase();
+    elStatus.textContent = "MODULE.ACTIVE";
 
     activeModule = mod;
     activeAbort = new AbortController();
@@ -237,8 +256,11 @@ window.Hub = (() => {
     
     tile.innerHTML = `
       <div class="tile-icon">${iconSvg}</div>
-      <div class="tile-title">${mod.title}</div>
-      <div class="tile-desc">${mod.desc || ""}</div>
+      <div class="tile-content">
+        <div class="tile-title">${mod.title}</div>
+        <div class="tile-desc">${mod.desc || ""}</div>
+      </div>
+      <div class="tile-meta mono">MOD</div>
     `;
     tile.addEventListener("click", () => openModule(mod.id, true));
     elGrid.appendChild(tile);
@@ -268,7 +290,7 @@ async function loadModulesFromManifest() {
     const modulesList = await response.json();
     
     if (!modulesList || modulesList.length === 0) {
-      document.getElementById("modules-grid").innerHTML = `<div class="empty-state">Warsztat jest pusty.</div>`;
+      document.getElementById("modules-grid").innerHTML = `<div class="empty-state">Brak modułów w systemie.</div>`;
       return;
     }
 
@@ -280,7 +302,7 @@ async function loadModulesFromManifest() {
     });
 
   } catch (err) {
-    document.getElementById("modules-grid").innerHTML = `<div class="empty-state">Brak pliku modules.json.</div>`;
+    document.getElementById("modules-grid").innerHTML = `<div class="empty-state">Błąd krytyczny: Brak pliku modules.json.</div>`;
   }
 }
 
@@ -308,7 +330,7 @@ if ("serviceWorker" in navigator) {
 window.addEventListener('error', function(e) {
   const bar = document.getElementById('error-bar');
   bar.style.display = 'block';
-  bar.textContent = 'BŁĄD: ' + e.message;
+  bar.textContent = 'ERR: ' + e.message;
 });
 </script>
 
