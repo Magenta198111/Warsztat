@@ -194,7 +194,9 @@
     async mount(container, signal) {
       container.innerHTML = `
         <style>
-          /* Nowy styl zakładek - czysty i płaski */
+          /* Wymuszamy ukrywanie bezpośrednio w module, żeby uniknąć błędów */
+          .hidden { display: none !important; }
+
           .qr-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
           .qr-tab { 
             padding: 12px 0; font-size: 14px; font-weight: 600; color: var(--muted); 
@@ -206,7 +208,6 @@
             background: var(--accent); border-radius: 2px 2px 0 0;
           }
           
-          /* Czyste pole tekstowe */
           .qr-input-wrapper { margin-bottom: 24px; }
           .qr-input-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
           .qr-input { 
@@ -217,7 +218,6 @@
           .qr-input:focus { border-bottom-color: var(--accent); }
           .qr-input::placeholder { color: var(--line); font-size: 16px; }
           
-          /* Przyciski */
           .qr-btn { 
             width: 100%; padding: 14px; border-radius: 6px; font-weight: 600; font-size: 15px; 
             cursor: pointer; text-align: center; display: block; margin-top: 16px;
@@ -229,7 +229,6 @@
             background: transparent; color: var(--ink); border: 1px solid var(--line);
           }
           
-          /* Podgląd wygenerowanego QR */
           .qr-canvas-box {
             display: flex; justify-content: center; margin-top: 24px;
             background: #ffffff; padding: 16px; border-radius: 8px; display: none;
@@ -237,12 +236,11 @@
           }
           .qr-canvas-box canvas { max-width: 100%; display: block; }
           
-          /* Kamera */
           .qr-cam-wrapper {
             width: 100%; aspect-ratio: 1; background: var(--surface); 
             border-radius: 8px; overflow: hidden; border: 1px solid var(--line);
             display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
-            margin-top: 8px;
+            margin-top: 8px; position: relative;
           }
           .qr-cam-icon { color: var(--line); }
           .qr-cam-text { color: var(--muted); font-size: 13px; font-weight: 500; }
