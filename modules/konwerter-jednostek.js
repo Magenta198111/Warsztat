@@ -274,7 +274,6 @@
         let roundedN = scaledN / d;
         let rem = scaledN % d;
 
-        // Zaokrąglanie w górę, jeśli reszta >= połowa dzielnika
         if (rem * 2n >= d) {
           roundedN += 1n;
         }
@@ -287,7 +286,6 @@
           let intPart = resStr.slice(0, -precision);
           let fracPart = resStr.slice(-precision);
           
-          // Usuwanie końcowych zer
           fracPart = fracPart.replace(/0+$/, '');
           resStr = intPart + (fracPart ? "." + fracPart : "");
         }
@@ -372,4 +370,8 @@
                 <div class="uc-row-val-container">
                   <span class="uc-row-val">${dispVal}</span>
                   <button class="uc-copy-btn" data-copy="${rawVal}" title="Kopiuj">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </button>
+                </div>
+              </div>
+            `;
