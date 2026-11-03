@@ -50,23 +50,21 @@ body {
 
 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
 
-/* Widok listy zamiast kwadratowych kafelków */
+/* Lista z odstępami */
 .list { 
   display: flex; flex-direction: column; 
-  border: 1px solid var(--line); 
-  border-radius: 6px; 
-  background: var(--surface);
-  overflow: hidden;
+  gap: 12px; /* Odstęp między modułami */
 }
 
 .tile {
   display: flex; align-items: center; gap: 16px;
   padding: 16px; cursor: pointer;
-  border-bottom: 1px solid var(--line);
-  transition: background 0.15s;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  transition: background 0.15s, border-color 0.15s;
 }
-.tile:last-child { border-bottom: none; }
-.tile:active { background: var(--surface-hover); }
+.tile:active { background: var(--surface-hover); border-color: var(--muted); }
 
 .tile-icon {
   width: 36px; height: 36px; border-radius: 4px;
@@ -78,13 +76,7 @@ body {
 
 .tile-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .tile-title { font-weight: 500; font-size: 15px; color: var(--ink); }
-.tile-desc { font-size: 13px; color: var(--muted); }
-
-.tile-meta {
-  font-size: 10px; color: var(--muted); padding: 4px 6px;
-  border: 1px solid var(--line); border-radius: 4px;
-  text-transform: uppercase; letter-spacing: 0.05em;
-}
+.tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
 
 /* Przycisk + jako techniczny przycisk */
 .fab {
@@ -260,7 +252,6 @@ window.Hub = (() => {
         <div class="tile-title">${mod.title}</div>
         <div class="tile-desc">${mod.desc || ""}</div>
       </div>
-      <div class="tile-meta mono">MOD</div>
     `;
     tile.addEventListener("click", () => openModule(mod.id, true));
     elGrid.appendChild(tile);
