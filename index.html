@@ -2,156 +2,87 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="./manifest.json">
 <title>Workspace</title>
 <style>
 :root {
-  --bg: #000000;
-  --surface: #09090b;
-  --surface-hover: #18181b;
-  --ink: #ededed;
-  --muted: #8b8b93;
-  --line: #27272a;
-  --accent: #818cf8;
-  --accent-ink: #000000;
-  --danger: #ef4444;
+  --bg: #000000; --surface: #09090b; --surface-hover: #18181b;
+  --ink: #ededed; --muted: #8b8b93; --line: #27272a;
+  --accent: #818cf8; --accent-ink: #000000; --danger: #ef4444;
 }
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  margin: 0; background: var(--bg); color: var(--ink); min-height: 100vh;
-  padding-bottom: 80px; overflow-x: hidden; -webkit-font-smoothing: antialiased;
-}
-.topbar {
-  position: sticky; top: 0; z-index: 100; padding: 16px 20px;
-  background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center;
-}
-.topbar-title { font-size: 14px; font-weight: 600; letter-spacing: 0.05em; margin: 0; text-transform: uppercase; color: var(--ink); }
-.menu-btn {
-  position: absolute; left: 16px; background: none; border: none; color: var(--ink); cursor: pointer;
-  padding: 8px; display: flex; align-items: center; justify-content: center; width: auto; margin: 0; border-radius: 6px;
-}
-.menu-btn:active { background: var(--surface-hover); }
-
-.drawer-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-  z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-}
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; background: var(--bg); color: var(--ink); min-height: 100vh; padding-bottom: 80px; }
+.topbar { position: sticky; top: 0; z-index: 100; padding: 16px 20px; background: rgba(0, 0, 0, 0.85); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
+.topbar-title { font-size: 14px; font-weight: 600; letter-spacing: 0.05em; margin: 0; text-transform: uppercase; }
+.menu-btn { position: absolute; left: 16px; background: none; border: none; color: var(--ink); padding: 8px; }
+.drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
 .drawer-overlay.open { opacity: 1; pointer-events: auto; }
-.drawer {
-  position: fixed; top: 0; left: 0; bottom: 0; width: 80%; max-width: 320px;
-  background: var(--surface); border-right: 1px solid var(--line); z-index: 999;
-  transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  display: flex; flex-direction: column;
-}
+.drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 80%; max-width: 320px; background: var(--surface); border-right: 1px solid var(--line); z-index: 999; transform: translateX(-100%); transition: transform 0.3s; display: flex; flex-direction: column; }
 .drawer.open { transform: translateX(0); }
 .drawer-header { padding: 24px 20px; border-bottom: 1px solid var(--line); }
-.drawer-title { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
-.drawer-menu { padding: 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
-.drawer-item {
-  display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 6px;
-  color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s;
-}
+.drawer-title { font-size: 18px; font-weight: 700; margin: 0; }
+.drawer-menu { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+.drawer-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 6px; color: var(--ink); font-size: 15px; cursor: pointer; }
 .drawer-item:active { background: var(--surface-hover); }
 .drawer-item.active { background: var(--surface-hover); color: var(--accent); }
-.drawer-item svg { width: 20px; height: 20px; stroke-width: 1.5; color: var(--muted); transition: color 0.2s; }
+.drawer-item svg { width: 20px; height: 20px; color: var(--muted); }
 .drawer-item.active svg { color: var(--accent); }
-.drawer-item span { flex: 1; }
-
 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
 .list { display: flex; flex-direction: column; gap: 12px; }
-.tile {
-  display: flex; align-items: center; gap: 16px; padding: 16px; cursor: pointer;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; transition: background 0.15s;
-}
-.tile:active { background: var(--surface-hover); border-color: var(--muted); }
-.tile-icon {
-  width: 36px; height: 36px; border-radius: 4px; background: var(--bg); border: 1px solid var(--line);
-  display: flex; align-items: center; justify-content: center; color: var(--ink); flex-shrink: 0;
-}
-.tile-icon svg { width: 18px; height: 18px; stroke-width: 1.5; }
-.tile-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.tile-title { font-weight: 500; font-size: 15px; color: var(--ink); }
-.tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
-
-.fab {
-  position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px;
-  border-radius: 8px; background: var(--ink); color: var(--bg);
-  font-size: 24px; border: none; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-.fab:active { transform: scale(0.92); }
-
+.tile { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+.tile:active { background: var(--surface-hover); }
+.tile-icon { width: 36px; height: 36px; border-radius: 4px; background: var(--bg); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
+.tile-icon svg { width: 18px; height: 18px; stroke-width: 1.5; stroke: currentColor; fill: none; }
+.tile-title { font-weight: 500; font-size: 15px; }
+.tile-desc { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.fab { position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px; border-radius: 8px; background: var(--ink); color: var(--bg); font-size: 24px; border: none; display: flex; align-items: center; justify-content: center; z-index: 50; }
 #view-module { display: none; }
 #view-module.active { display: block; }
 #view-settings { display: none; }
 #view-settings.active { display: block; }
 #view-home.hidden { display: none; }
 #fab-add.hidden { display: none; }
-
 .empty-state { border: 1px dashed var(--line); border-radius: 6px; padding: 40px 20px; text-align: center; color: var(--muted); background: var(--surface); }
 #error-bar { position: fixed; top: 0; left: 0; width: 100%; background: var(--danger); color: #fff; padding: 10px; font-size: 12px; z-index: 9999; display: none; text-align: center; font-weight: bold; }
-
 .settings-block { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
-.settings-header { padding: 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); border-bottom: 1px solid var(--line); }
-.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--line); }
-.settings-row:last-child { border-bottom: none; }
-.settings-label { font-size: 15px; color: var(--ink); font-weight: 500; }
+.settings-header { padding: 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); }
+.settings-row { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+.settings-label { font-size: 15px; font-weight: 500; }
 .settings-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
 .settings-options { display: flex; gap: 8px; }
-.settings-opt-btn { padding: 8px 16px; font-size: 13px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); cursor: pointer; }
+.settings-opt-btn { padding: 8px 16px; font-size: 13px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); }
 .settings-opt-btn.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
-
 #toast-container { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 10000; pointer-events: none; width: 90%; max-width: 400px; }
-.toast { background: var(--surface-hover); color: var(--ink); padding: 14px 20px; border-radius: 8px; border: 1px solid var(--line); font-size: 14px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.6); opacity: 0; transform: translateY(-20px); transition: all 0.3s; text-align: center; }
+.toast { background: var(--surface-hover); color: var(--ink); padding: 14px 20px; border-radius: 8px; border: 1px solid var(--line); font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); opacity: 0; transform: translateY(-20px); transition: all 0.3s; text-align: center; }
 .toast.show { opacity: 1; transform: translateY(0); }
 </style>
 </head>
 <body>
-
 <div id="error-bar"></div>
-
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-header"><h2 class="drawer-title">Workspace</h2></div>
   <div class="drawer-menu">
     <div class="drawer-item" id="drawer-settings" onclick="Hub.openSettings()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       <span>Ustawienia</span>
     </div>
-    <div class="drawer-item" onclick="showToast('Wkrótce')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-      <span>Kopia zapasowa</span>
-    </div>
   </div>
 </div>
-
 <div class="topbar">
-  <button class="menu-btn" id="menu-btn">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-  </button>
+  <button class="menu-btn" id="menu-btn"><svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
   <h1 class="topbar-title" id="app-title">Workspace</h1>
 </div>
-
 <main class="container" id="view-home"><div class="list" id="modules-grid"></div></main>
 <main class="container" id="view-module"></main>
-
 <main class="container" id="view-settings">
-  <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:20px;">
-    <button id="set-back" style="width:auto; padding:10px 12px; display:flex; align-items:center; border-radius:6px; border:1px solid var(--line); background:var(--surface); color:var(--ink);">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-    </button>
-  </div>
+  <div style="display:flex; margin-bottom:20px;"><button id="set-back" style="padding:10px 12px; border-radius:6px; border:1px solid var(--line); background:var(--surface); color:var(--ink);"><svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg></button></div>
   <div class="settings-block">
     <div class="settings-header">Wygląd</div>
-    <div class="settings-row" style="flex-direction:column; align-items:flex-start; gap:12px;">
-      <div>
-        <div class="settings-label">Animacja menu wyboru</div>
-        <div class="settings-desc">Sposób w jaki pojawiają się listy rozwijane</div>
-      </div>
+    <div class="settings-row">
+      <div><div class="settings-label">Animacja menu wyboru</div><div class="settings-desc">Sposób w jaki pojawiają się listy rozwijane</div></div>
       <div class="settings-options">
         <button class="settings-opt-btn" id="opt-bottom">Z dołu ekranu</button>
         <button class="settings-opt-btn" id="opt-dropdown">Z przycisku</button>
@@ -159,94 +90,43 @@ body {
     </div>
   </div>
 </main>
-
 <button class="fab" id="fab-add">+</button>
 <div id="toast-container"></div>
 
 <script>
-window.addEventListener('error', function(e) {
-  const bar = document.getElementById('error-bar');
-  if (bar) { bar.style.display = 'block'; bar.textContent = 'BŁĄD: ' + e.message; }
-});
-
-window.showToast = function(msg) {
-  const c = document.getElementById('toast-container');
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  c.appendChild(t);
-  requestAnimationFrame(() => t.classList.add('show'));
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3800);
-};
+window.addEventListener('error', e => { const b = document.getElementById('error-bar'); if(b){ b.style.display='block'; b.textContent = 'BŁĄD: ' + e.message; } });
+window.showToast = m => { const c = document.getElementById('toast-container'); const t = document.createElement('div'); t.className='toast'; t.textContent=m; c.appendChild(t); requestAnimationFrame(()=>t.classList.add('show')); setTimeout(()=>{t.classList.remove('show'); setTimeout(()=>t.remove(),300)}, 3800); };
 
 window.Hub = {
-  db: {
-    open: function() {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open("WarsztatDB", 1);
-        req.onupgradeneeded = e => {
-          if (!e.target.result.objectStoreNames.contains("kv")) e.target.result.createObjectStore("kv");
-        };
-        req.onsuccess = e => resolve(e.target.result);
-        req.onerror = e => reject(e.target.error);
-      });
-    },
-    get: async function(key, def = null) {
-      try {
-        const d = await this.open();
-        return new Promise((res, rej) => {
-          const req = d.transaction("kv", "readonly").objectStore("kv").get(key);
-          req.onsuccess = () => res(req.result !== undefined ? req.result : def);
-          req.onerror = () => rej(req.error);
-        });
-      } catch(e) { return def; }
-    },
-    set: async function(key, val) {
-      try {
-        const d = await this.open();
-        return new Promise((res, rej) => {
-          const req = d.transaction("kv", "readwrite").objectStore("kv").put(val, key);
-          req.onsuccess = () => res(true);
-          req.onerror = () => rej(req.error);
-        });
-      } catch(e) { return false; }
-    }
-  },
-
   modules: new Map(),
   activeModule: null,
   activeAbort: null,
+  
+  db: {
+    open: () => new Promise((res, rej) => { const r = indexedDB.open("WarsztatDB", 1); r.onupgradeneeded = e => { if(!e.target.result.objectStoreNames.contains("kv")) e.target.result.createObjectStore("kv"); }; r.onsuccess = e => res(e.target.result); r.onerror = e => rej(e.target.error); }),
+    get: async function(k, d=null) { try { const db = await this.open(); return new Promise((res, rej) => { const r = db.transaction("kv","readonly").objectStore("kv").get(k); r.onsuccess = () => res(r.result !== undefined ? r.result : d); r.onerror = () => rej(r.error); }); } catch(e) { return d; } },
+    set: async function(k, v) { try { const db = await this.open(); return new Promise((res, rej) => { const r = db.transaction("kv","readwrite").objectStore("kv").put(v, k); r.onsuccess = () => res(true); r.onerror = () => rej(r.error); }); } catch(e) { return false; } }
+  },
 
   register: function(mod) {
     Hub.modules.set(mod.id, mod);
-    
     const grid = document.getElementById("modules-grid");
-    const empty = grid.querySelector('.empty-state'); if (empty) empty.remove();
-    
-    const iconMap = {
-      "konwerter": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
-      "qr": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`,
-      "jednostki": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="M3 7h18"></path><path d="M6 7l-3 7h6l-3-7z"></path><path d="M18 7l-3 7h6l-3-7z"></path></svg>`,
-      "skaner-pdf": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
-      "oczyszczacz": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
-      "zdjecie-dokument": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><circle cx="9" cy="10" r="2"></circle><line x1="15" y1="8" x2="21" y2="8"></line><line x1="15" y1="12" x2="21" y2="12"></line><line x1="7" y1="16" x2="21" y2="16"></line></svg>`,
-      "kalkulator-prog": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>`
+    const empty = grid.querySelector('.empty-state'); if(empty) empty.remove();
+    const icons = {
+      "konwerter": `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
+      "qr": `<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`
     };
-
-    const iconSvg = iconMap[mod.id] || `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
-    
-    const tile = document.createElement("div");
-    tile.className = "tile";
-    tile.innerHTML = `<div class="tile-icon">${iconSvg}</div><div class="tile-content"><div class="tile-title">${mod.title}</div><div class="tile-desc">${mod.desc || ""}</div></div>`;
-    tile.addEventListener("click", () => Hub.openModule(mod.id, true));
+    const icon = icons[mod.id] || `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
+    const tile = document.createElement("div"); tile.className = "tile";
+    tile.innerHTML = `<div class="tile-icon">${icon}</div><div><div class="tile-title">${mod.title}</div><div class="tile-desc">${mod.desc||""}</div></div>`;
+    tile.onclick = () => Hub.openModule(mod.id, true);
     grid.appendChild(tile);
   },
 
   cleanup: function() {
     if (Hub.activeAbort) { Hub.activeAbort.abort(); Hub.activeAbort = null; }
-    if (Hub.activeModule && Hub.activeModule.unmount) { try { Hub.activeModule.unmount(); } catch(e) { console.error(e); } }
-    Hub.activeModule = null;
-    document.getElementById("view-module").innerHTML = "";
+    if (Hub.activeModule && Hub.activeModule.unmount) { try { Hub.activeModule.unmount(); } catch(e){} }
+    Hub.activeModule = null; document.getElementById("view-module").innerHTML = "";
   },
 
   showHome: function(push = false) {
@@ -257,15 +137,11 @@ window.Hub = {
     document.getElementById("app-title").textContent = "Workspace";
     document.getElementById("fab-add").classList.remove("hidden");
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
-    
-    if (push && location.hash !== './' && location.hash !== '' && location.hash !== '#') {
-      history.pushState({ view: "home" }, "", "./");
-    }
+    if (push && location.hash !== '' && location.hash !== '#') history.pushState(null, "", "./");
   },
 
   openModule: function(id, push = true) {
-    const mod = Hub.modules.get(id);
-    if (!mod) return Hub.showHome();
+    const mod = Hub.modules.get(id); if(!mod) return Hub.showHome();
     Hub.cleanup();
     document.getElementById("view-home").classList.add("hidden");
     document.getElementById("view-settings").classList.remove("active");
@@ -273,10 +149,8 @@ window.Hub = {
     document.getElementById("app-title").textContent = mod.title.toUpperCase();
     document.getElementById("fab-add").classList.add("hidden");
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
-    
-    Hub.activeModule = mod;
-    Hub.activeAbort = new AbortController();
-    if (push && location.hash !== `#${id}`) history.pushState({ view: "module", id }, "", `#${id}`);
+    Hub.activeModule = mod; Hub.activeAbort = new AbortController();
+    if (push && location.hash !== `#${id}`) history.pushState(null, "", `#${id}`);
     mod.mount(document.getElementById("view-module"), Hub.activeAbort.signal);
     window.scrollTo(0, 0);
   },
@@ -290,62 +164,43 @@ window.Hub = {
     document.getElementById("view-settings").classList.add("active");
     document.getElementById("app-title").textContent = "USTAWIENIA";
     document.getElementById("fab-add").classList.add("hidden");
-    
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     document.getElementById('drawer-settings').classList.add('active');
-
-    if (push && location.hash !== '#settings') {
-      history.pushState({ view: "settings" }, "", `#settings`);
-    }
+    if (push && location.hash !== '#settings') history.pushState(null, "", `#settings`);
     
-    const style = await Hub.db.get("menu_style", "bottom");
-    const btnBottom = document.getElementById("opt-bottom");
-    const btnDropdown = document.getElementById("opt-dropdown");
-    
-    if (style === "bottom") { btnBottom.classList.add("active"); btnDropdown.classList.remove("active"); }
-    else { btnDropdown.classList.add("active"); btnBottom.classList.remove("active"); }
-    
-    btnBottom.onclick = () => { Hub.db.set("menu_style", "bottom"); btnBottom.classList.add("active"); btnDropdown.classList.remove("active"); };
-    btnDropdown.onclick = () => { Hub.db.set("menu_style", "dropdown"); btnDropdown.classList.add("active"); btnBottom.classList.remove("active"); };
+    const st = await Hub.db.get("menu_style", "bottom");
+    const b1 = document.getElementById("opt-bottom"), b2 = document.getElementById("opt-dropdown");
+    if(st === "bottom") { b1.classList.add("active"); b2.classList.remove("active"); }
+    else { b2.classList.add("active"); b1.classList.remove("active"); }
+    b1.onclick = () => { Hub.db.set("menu_style", "bottom"); b1.classList.add("active"); b2.classList.remove("active"); };
+    b2.onclick = () => { Hub.db.set("menu_style", "dropdown"); b2.classList.add("active"); b1.classList.remove("active"); };
   }
 };
 
-document.getElementById("set-back").addEventListener("click", () => history.back());
-document.getElementById("fab-add").addEventListener("click", () => showToast("Wgraj plik do folderu modules i dopisz go do modules.json"));
-document.getElementById("menu-btn").addEventListener("click", () => {
-  document.getElementById("drawer").classList.add("open");
-  document.getElementById("drawer-overlay").classList.add("open");
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("set-back").onclick = () => history.back();
+  document.getElementById("fab-add").onclick = () => showToast("Wgraj plik do folderu modules i dopisz do modules.json");
+  document.getElementById("menu-btn").onclick = () => { document.getElementById("drawer").classList.add("open"); document.getElementById("drawer-overlay").classList.add("open"); };
+  document.getElementById("drawer-overlay").onclick = () => { document.getElementById("drawer").classList.remove("open"); document.getElementById("drawer-overlay").classList.remove("open"); };
+
+  window.onpopstate = () => {
+    const hash = location.hash.replace(/^#/, "");
+    if (hash === "settings") Hub.openSettings(false);
+    else if (hash && Hub.modules.has(hash)) Hub.openModule(hash, false);
+    else Hub.showHome(false);
+  };
+
+  fetch('./modules.json?t=' + Date.now())
+    .then(r => r.json())
+    .then(list => {
+      list.forEach(mod => { const s = document.createElement('script'); s.src = mod.file; document.body.appendChild(s); });
+    })
+    .catch(e => { document.getElementById('modules-grid').innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd modules.json</div>'; });
+
+  const initHash = location.hash.replace(/^#/, "");
+  if (initHash === "settings") Hub.openSettings(false);
+  else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
 });
-document.getElementById("drawer-overlay").addEventListener("click", () => {
-  document.getElementById("drawer").classList.remove("open");
-  document.getElementById("drawer-overlay").classList.remove("open");
-});
-
-window.addEventListener("popstate", () => {
-  const hash = location.hash.replace(/^#/, "");
-  if (hash === "settings") Hub.openSettings(false);
-  else if (hash && Hub.modules.has(hash)) Hub.openModule(hash, false);
-  else Hub.showHome(false);
-});
-
-fetch('./modules.json?t=' + Date.now())
-  .then(res => res.json())
-  .then(list => {
-    list.forEach(mod => {
-      const script = document.createElement('script');
-      script.src = mod.file;
-      document.body.appendChild(script);
-    });
-  })
-  .catch(err => {
-    document.getElementById('modules-grid').innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd wczytywania modules.json</div>';
-  });
-
-const initHash = location.hash.replace(/^#/, "");
-if (initHash === "settings") Hub.openSettings(false);
-else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").then(reg => {
-      reg.addEventListener("updatefound", () 
+</script>
+</body>
+</html>
