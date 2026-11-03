@@ -30,31 +30,78 @@ body {
 
 .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
 
+/* Górny pasek */
 .topbar {
   position: sticky; top: 0; z-index: 100;
   padding: 16px 20px;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
 }
 .topbar-title { 
   font-size: 14px; font-weight: 600; letter-spacing: 0.05em; margin: 0; text-transform: uppercase; color: var(--ink);
 }
-.topbar-status {
-  font-size: 11px; color: var(--muted); letter-spacing: 0.05em;
+.menu-btn {
+  position: absolute; left: 16px;
+  background: none; border: none; color: var(--ink); cursor: pointer;
+  padding: 8px; display: flex; align-items: center; justify-content: center;
+  width: auto; margin: 0; border-radius: 6px;
 }
+.menu-btn:active { background: var(--surface-hover); }
 
+/* Wysuwane Menu Boczne (Drawer) */
+.drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 998;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+.drawer {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: 80%; max-width: 320px;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  z-index: 999;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: flex; flex-direction: column;
+}
+.drawer.open { transform: translateX(0); }
+
+.drawer-header {
+  padding: 24px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 12px;
+}
+.drawer-title { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
+
+.drawer-menu {
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 4px;
+  flex: 1; overflow-y: auto;
+}
+.drawer-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-radius: 6px;
+  color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 500;
+  cursor: pointer; transition: background 0.2s;
+}
+.drawer-item:active { background: var(--surface-hover); }
+.drawer-item svg { width: 20px; height: 20px; stroke-width: 1.5; color: var(--muted); }
+.drawer-item span { flex: 1; }
+
+/* Główna zawartość */
 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-
-/* Lista z odstępami */
-.list { 
-  display: flex; flex-direction: column; 
-  gap: 12px; /* Odstęp między modułami */
-}
+.list { display: flex; flex-direction: column; gap: 12px; }
 
 .tile {
   display: flex; align-items: center; gap: 16px;
@@ -78,7 +125,6 @@ body {
 .tile-title { font-weight: 500; font-size: 15px; color: var(--ink); }
 .tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
 
-/* Przycisk + jako techniczny przycisk */
 .fab {
   position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px;
   border-radius: 8px; background: var(--ink); color: var(--bg);
@@ -101,11 +147,7 @@ body {
   color: #fff; padding: 10px; font-size: 12px; z-index: 9999; display: none; text-align: center; font-weight: 500;
 }
 
-/* Globals for modules */
-.card { 
-  background: var(--surface); border: 1px solid var(--line); 
-  border-radius: 6px; padding: 20px; margin-bottom: 16px;
-}
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 20px; margin-bottom: 16px; }
 h2 { margin: 0 0 16px; font-size: 18px; font-weight: 600; }
 label { display: block; margin: 16px 0 8px; color: var(--muted); font-size: 13px; font-weight: 500; }
 input[type=text], input[type=number], select, button, input[type=file], textarea { font: inherit; width: 100%; font-size: 15px; }
@@ -122,9 +164,38 @@ button.p { background: var(--ink); color: var(--bg); border-color: var(--ink); f
 </head>
 <body>
 
+<!-- Menu Boczne -->
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <h2 class="drawer-title">Warsztat</h2>
+  </div>
+  <div class="drawer-menu">
+    <div class="drawer-item" onclick="alert('Wkrótce: Ustawienia')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      <span>Ustawienia</span>
+    </div>
+    <div class="drawer-item" onclick="alert('Wkrótce: Kopia zapasowa')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      <span>Kopia zapasowa</span>
+    </div>
+    <div class="drawer-item" onclick="alert('Wkrótce: Zarządzanie modułami')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      <span>Moduły</span>
+    </div>
+    <div class="drawer-item" onclick="alert('Warsztat v1.0.0\nTwój osobisty hub offline.')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+      <span>O aplikacji</span>
+    </div>
+  </div>
+</div>
+
+<!-- Górny pasek -->
 <div class="topbar">
+  <button class="menu-btn" id="menu-btn">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+  </button>
   <h1 class="topbar-title" id="app-title">Workspace</h1>
-  <div class="topbar-status mono" id="status-text">SYS.ONLINE</div>
 </div>
 
 <main class="container" id="view-home">
@@ -188,7 +259,6 @@ window.Hub = (() => {
   const elModule = document.getElementById("view-module");
   const elGrid = document.getElementById("modules-grid");
   const elTitle = document.getElementById("app-title");
-  const elStatus = document.getElementById("status-text");
 
   function cleanup() {
     if (activeAbort) { activeAbort.abort(); activeAbort = null; }
@@ -204,7 +274,6 @@ window.Hub = (() => {
     elModule.classList.remove("active");
     elHome.classList.remove("hidden");
     elTitle.textContent = "Workspace";
-    elStatus.textContent = "SYS.ONLINE";
     if (push) history.pushState({ view: "home" }, "", "./");
   }
 
@@ -216,7 +285,6 @@ window.Hub = (() => {
     elHome.classList.add("hidden");
     elModule.classList.add("active");
     elTitle.textContent = mod.title.toUpperCase();
-    elStatus.textContent = "MODULE.ACTIVE";
 
     activeModule = mod;
     activeAbort = new AbortController();
@@ -272,6 +340,21 @@ window.Hub = (() => {
 
   return { db, register, openModule, showHome };
 })();
+
+// Obsługa menu bocznego
+document.addEventListener("DOMContentLoaded", () => {
+  const drawer = document.getElementById("drawer");
+  const overlay = document.getElementById("drawer-overlay");
+  const menuBtn = document.getElementById("menu-btn");
+
+  function toggleMenu() {
+    drawer.classList.toggle("open");
+    overlay.classList.toggle("open");
+  }
+
+  menuBtn.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", toggleMenu);
+});
 
 async function loadModulesFromManifest() {
   try {
