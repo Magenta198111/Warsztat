@@ -2,7 +2,7 @@
   Hub.register({
     id: "jednostki",
     title: "Konwerter Jednostek",
-    desc: "Błyskawiczne przeliczanie jednostek",
+    desc: "Błyskawiczne przeliczanie długości, masy, temperatury, objętości, prędkości, czasu i powierzchni",
 
     async mount(container, signal) {
       let menuStyle = "bottom";
@@ -16,13 +16,13 @@
         length: {
           name: "Długość",
           icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="4" y1="12" x2="20" y2="12"></line></svg>`,
-          units: { m: [1n, 1n], cm: [1n, 100n], km: [1000n, 1n], in: [254n, 10000n], ft: [3048n, 10000n], mi: [160934n, 100n] },
+          units: { m: [1n, 1n], cm: [1n, 100n], km: [1000n, 1n], in: [254n, 10000n], ft: [3048n, 10000n], mi: [1609344n, 1000n] },
           names: { m: 'Metry', cm: 'Centymetry', km: 'Kilometry', in: 'Cale', ft: 'Stopy', mi: 'Mile' }
         },
         mass: {
           name: "Masa",
           icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="M3 7h18"></path><path d="M6 7l-3 7h6l-3-7z"></path><path d="M18 7l-3 7h6l-3-7z"></path></svg>`,
-          units: { kg: [1n, 1n], g: [1n, 1000n], t: [1000n, 1n], lb: [453592n, 1000000n], oz: [283495n, 10000000n] },
+          units: { kg: [1n, 1n], g: [1n, 1000n], t: [1000n, 1n], lb: [45359237n, 100000000n], oz: [45359237n, 1600000000n] },
           names: { kg: 'Kilogramy', g: 'Gramy', t: 'Tony', lb: 'Funty', oz: 'Uncje' }
         },
         temp: {
@@ -34,13 +34,13 @@
         volume: {
           name: "Objętość",
           icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12"></path><path d="M6 22h12"></path><path d="M6 2l1.5 18h9L18 2"></path><path d="M7 14h10"></path></svg>`,
-          units: { l: [1n, 1n], ml: [1n, 1000n], gal: [378541n, 100000n], pt: [473176n, 1000000n] },
+          units: { l: [1n, 1n], ml: [1n, 1000n], gal: [3785411784n, 1000000000n], pt: [473176473n, 1000000000n] },
           names: { l: 'Litry', ml: 'Mililitry', gal: 'Galony (US)', pt: 'Pinty (US)' }
         },
         speed: {
           name: "Prędkość",
           icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>`,
-          units: { ms: [1n, 1n], kmh: [1000n, 3600n], mph: [44704n, 100000n], knot: [514444n, 1000000n] },
+          units: { ms: [1n, 1n], kmh: [5n, 18n], mph: [44704n, 100000n], knot: [463n, 900n] },
           names: { ms: 'Metry na sekundę', kmh: 'Kilometry na godzinę', mph: 'Mile na godzinę', knot: 'Węzły' }
         },
         time: {
@@ -52,7 +52,7 @@
         area: {
           name: "Powierzchnia",
           icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>`,
-          units: { m2: [1n, 1n], km2: [1000000n, 1n], cm2: [1n, 10000n], ha: [10000n, 1n], a: [100n, 1n], ft2: [92903n, 1000000n], in2: [64516n, 100000000n] },
+          units: { m2: [1n, 1n], km2: [1000000n, 1n], cm2: [1n, 10000n], ha: [10000n, 1n], a: [100n, 1n], ft2: [9290304n, 100000000n], in2: [64516n, 100000000n] },
           names: { m2: 'Metry kwadratowe', km2: 'Kilometry kwadratowe', cm2: 'Centymetry kwadratowe', ha: 'Hektary', a: 'Ary', ft2: 'Stopy kwadratowe', in2: 'Cale kwadratowe' }
         }
       };
@@ -109,75 +109,28 @@
 
       container.innerHTML = `
         <style>
-          .uc-top-trigger {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 16px 0; border-bottom: 1px solid var(--line);
-            font-size: 14px; font-weight: 600; color: var(--ink);
-            cursor: pointer; margin-bottom: 24px;
-          }
+          .uc-top-trigger { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--ink); cursor: pointer; margin-bottom: 24px; }
           .uc-top-icon { width: 20px; height: 20px; color: var(--accent); }
-          
-          .uc-input-container {
-            display: flex; flex-direction: column; align-items: center;
-            padding: 20px 0 32px 0; border-bottom: 1px solid var(--line);
-            margin-bottom: 24px; overflow: hidden;
-          }
-          
-          .uc-big-input {
-            width: 100%; background: transparent; border: none;
-            color: var(--ink); font-size: 48px; font-weight: 700;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-            text-align: center; outline: none; padding: 0;
-            letter-spacing: -0.03em;
-            overflow-x: auto; white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
-          }
+          .uc-input-container { display: flex; flex-direction: column; align-items: center; padding: 20px 0 32px 0; border-bottom: 1px solid var(--line); margin-bottom: 24px; overflow: hidden; }
+          .uc-big-input { width: 100%; background: transparent; border: none; color: var(--ink); font-size: 48px; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; text-align: center; outline: none; padding: 0; letter-spacing: -0.03em; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
           .uc-big-input::-webkit-scrollbar { display: none; }
-          
-          .uc-select-trigger {
-            display: flex; align-items: center; gap: 6px;
-            background: transparent; border: none;
-            color: var(--accent); font-size: 16px; font-weight: 600;
-            cursor: pointer; margin-top: 8px; padding: 4px 8px; border-radius: 4px;
-          }
+          .uc-select-trigger { display: flex; align-items: center; gap: 6px; background: transparent; border: none; color: var(--accent); font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; padding: 4px 8px; border-radius: 4px; }
           .uc-select-trigger:active { background: rgba(129, 140, 248, 0.1); }
-          
           .uc-list { display: flex; flex-direction: column; }
-          .uc-row { 
-            display: flex; justify-content: space-between; align-items: flex-start; 
-            gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); 
-            font-size: 15px; 
-          }
+          .uc-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
           .uc-row:last-child { border-bottom: none; }
-          
           .uc-row-name { color: var(--muted); font-weight: 500; flex-shrink: 0; }
-          
-          .uc-row-val-container { 
-            display: flex; align-items: flex-start; justify-content: flex-end; 
-            gap: 8px; flex: 1; overflow: hidden;
-          }
-          
-          .uc-row-val { 
-            color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; 
-            text-align: right; white-space: nowrap; overflow-x: auto;
-            max-width: 100%; padding-bottom: 2px;
-          }
+          .uc-row-val-container { display: flex; align-items: flex-start; justify-content: flex-end; gap: 8px; flex: 1; overflow: hidden; }
+          .uc-row-val { color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; text-align: right; white-space: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 2px; }
           .uc-row-val::-webkit-scrollbar { display: none; }
-          
-          .uc-copy-btn {
-            background: transparent; border: none; padding: 2px 0 0 0; margin: 0;
-            color: var(--muted); cursor: pointer; display: flex; align-items: flex-start; justify-content: center;
-            transition: color 0.2s, transform 0.1s; flex-shrink: 0;
-          }
+          .uc-copy-btn { background: transparent; border: none; padding: 2px 0 0 0; margin: 0; color: var(--muted); cursor: pointer; display: flex; align-items: flex-start; justify-content: center; transition: color 0.2s, transform 0.1s; flex-shrink: 0; }
           .uc-copy-btn:active { transform: scale(0.9); }
           .uc-copy-btn svg { width: 16px; height: 16px; }
-          
           .uc-dropdown { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); z-index: 100; overflow: hidden; opacity: 0; transform: translateY(-5px); pointer-events: none; transition: opacity 0.15s, transform 0.15s; }
           .uc-dropdown.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
           .uc-dropdown-item { padding: 14px 16px; font-size: 14px; color: var(--ink); display: flex; align-items: center; cursor: pointer; border-bottom: 1px solid var(--line); }
           .uc-dropdown-item:last-child { border-bottom: none; }
           .uc-dropdown-item.active { color: var(--accent); font-weight: 600; background: rgba(129, 140, 248, 0.05); }
-          
           .uc-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
           .uc-modal-overlay.open { opacity: 1; pointer-events: auto; }
           .uc-modal-sheet { background: var(--surface); width: 100%; max-width: 600px; border: 1px solid var(--line); padding: 24px 16px; }
