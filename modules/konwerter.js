@@ -94,10 +94,8 @@
           .n-range { -webkit-appearance: none; appearance: none; height: 4px; background: var(--line); border-radius: 2px; outline: none; margin: 16px 0; width: 100%; }
           .n-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; }
           
-          .n-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; text-align: center; display: block; margin-top: 16px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); transition: background 0.2s, border-color 0.2s; outline: none; -webkit-tap-highlight-color: transparent; }
+          .n-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 500; font-size: 15px; cursor: pointer; text-align: center; display: block; margin-top: 16px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); transition: background 0.2s; outline: none; -webkit-tap-highlight-color: transparent; }
           .n-btn:active { background: var(--surface-hover); }
-          .n-btn-primary { background: rgba(129, 140, 248, 0.1); color: var(--accent); border: 1px solid rgba(129, 140, 248, 0.3); }
-          .n-btn-primary:active { background: rgba(129, 140, 248, 0.2); }
           .n-btn:disabled { opacity: 0.5; cursor: not-allowed; }
           
           .n-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
@@ -118,7 +116,7 @@
         <div style="margin-bottom: 24px;">
           <label class="n-label">Plik źródłowy</label>
           <input type="file" id="c-file" accept="image/*" style="display:none;">
-          <button id="c-file-btn" class="n-btn n-btn-primary" style="margin-top: 0;">Wybierz zdjęcie</button>
+          <button id="c-file-btn" class="n-btn" style="margin-top: 0;">Wybierz zdjęcie</button>
           <div id="c-file-name" class="n-file-name">Nie wybrano pliku</div>
         </div>
 
@@ -135,7 +133,7 @@
           </div>
         </div>
 
-        <button id="c-btn" class="n-btn n-btn-primary" style="margin-bottom: 24px;">Konwertuj zdjęcie</button>
+        <button id="c-btn" class="n-btn" style="margin-bottom: 24px;">Konwertuj zdjęcie</button>
         
         <div id="c-result-section" class="hidden">
           <div class="n-divider"></div>
@@ -150,7 +148,7 @@
               <img id="c-img-after" class="n-preview-img">
             </div>
           </div>
-          <a class="n-btn n-btn-primary" id="c-dl" style="text-decoration: none;">Pobierz plik</a>
+          <a class="n-btn" id="c-dl" style="text-decoration: none;">Pobierz plik</a>
         </div>
       `;
       const $ = id => container.querySelector("#" + id);
