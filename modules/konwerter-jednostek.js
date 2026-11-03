@@ -144,7 +144,6 @@
           .uc-row-name { color: var(--muted); font-weight: 500; }
           .uc-row-val { color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; }
           
-          /* Modal i dropdown style */
           .uc-dropdown { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); z-index: 100; overflow: hidden; opacity: 0; transform: translateY(-5px); pointer-events: none; transition: opacity 0.15s, transform 0.15s; }
           .uc-dropdown.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
           .uc-dropdown-item { padding: 14px 16px; font-size: 14px; color: var(--ink); display: flex; align-items: center; cursor: pointer; border-bottom: 1px solid var(--line); }
@@ -222,7 +221,8 @@
       function formatNumber(num) {
         if (num === 0) return "0";
         if (isNaN(num)) return "";
-        return Number(num.toPrecision(7)).toLocaleString('pl-PL', { maximumFractionDigits: 6 });
+        let str = Number(num.toPrecision(7)).toLocaleString('pl-PL', { maximumFractionDigits: 6 });
+        return str.replace(/,/g, '<span style="color: var(--accent);">,</span>');
       }
 
       function calculate() {
