@@ -194,68 +194,67 @@
     async mount(container, signal) {
       let menuStyle = "bottom";
       try { menuStyle = await Hub.db.get("menu_style", "bottom"); } catch(e) {}
-
-      let selectorHtml = "";
-      if (menuStyle === "bottom") {
-        selectorHtml = `
-          <div id="qr-mode-trigger" class="uc-top-trigger">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <div class="uc-top-icon" id="qr-mode-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-              </div>
-              <span id="qr-mode-text">Generator</span>
-            </div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+let selectorHtml = "";
+if (menuStyle === "bottom") {
+  selectorHtml = `
+    <div id="qr-mode-trigger" class="uc-top-trigger">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="uc-top-icon" id="qr-mode-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </div>
+        <span id="qr-mode-text">Generator</span>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+    <div id="qr-mode-modal" class="uc-modal-overlay bottom-mode">
+      <div class="uc-modal-sheet">
+        <div class="uc-modal-title">Tryb pracy</div>
+        <div class="uc-modal-item active" data-mode="gen">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:18px;height:18px;opacity:0.7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div>
+            <span>Generator</span>
           </div>
-          <div id="qr-mode-modal" class="uc-modal-overlay bottom-mode">
-            <div class="uc-modal-sheet">
-              <div class="uc-modal-title">Tryb pracy</div>
-              <div class="uc-modal-item active" data-mode="gen">
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:18px;height:18px;opacity:0.7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div>
-                  <span>Generator</span>
-                </div>
-                <span class="check">✓</span>
-              </div>
-              <div class="uc-modal-item" data-mode="scan">
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:18px;height:18px;opacity:0.7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></div>
-                  <span>Skaner</span>
-                </div>
-                <span class="check">✓</span>
-              </div>
-            </div>
+          <span class="check">✓</span>
+        </div>
+        <div class="uc-modal-item" data-mode="scan">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:18px;height:18px;opacity:0.7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></div>
+            <span>Skaner</span>
           </div>
-        `;
-      } else {
-        selectorHtml = `
-          <div style="position: relative;">
-            <div id="qr-mode-trigger" class="uc-top-trigger">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <div class="uc-top-icon" id="qr-mode-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                </div>
-                <span id="qr-mode-text">Generator</span>
-              </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </div>
-            <div id="qr-mode-dropdown" class="uc-dropdown">
-              <div class="uc-dropdown-item active" data-mode="gen">
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:18px;height:18px;opacity:0.7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div>
-                  <span>Generator</span>
-                </div>
-              </div>
-              <div class="uc-dropdown-item" data-mode="scan">
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:18px;height:18px;opacity:0.7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></div>
-                  <span>Skaner</span>
-                </div>
-              </div>
-            </div>
+          <span class="check">✓</span>
+        </div>
+      </div>
+    </div>
+  `;
+} else {
+  selectorHtml = `
+    <div style="position: relative;">
+      <div id="qr-mode-trigger" class="uc-top-trigger">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="uc-top-icon" id="qr-mode-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           </div>
-        `;
-      }
+          <span id="qr-mode-text">Generator</span>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+      <div id="qr-mode-dropdown" class="uc-dropdown">
+        <div class="uc-dropdown-item active" data-mode="gen">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:18px;height:18px;opacity:0.7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div>
+            <span>Generator</span>
+          </div>
+        </div>
+        <div class="uc-dropdown-item" data-mode="scan">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:18px;height:18px;opacity:0.7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></div>
+            <span>Skaner</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 container.innerHTML = `
   <style>
     .hidden { display: none !important; }
@@ -284,21 +283,8 @@ container.innerHTML = `
     .qr-input-wrapper { margin-bottom: 24px; }
     .qr-input-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
     
-    .qr-input { 
-      width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); 
-      color: var(--ink); font-size: 20px; padding: 12px 0; text-align: center; 
-      transition: border-color 0.2s;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
-      outline: none !important;
-      box-shadow: none !important;
-    }
-    .qr-input:focus { 
-      border-bottom-color: var(--accent); 
-      outline: none !important; 
-      box-shadow: none !important; 
-    }
+    .qr-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 20px; padding: 12px 0; text-align: center; transition: border-color 0.2s; -webkit-appearance: none; -moz-appearance: none; appearance: none; outline: none !important; box-shadow: none !important; }
+    .qr-input:focus { border-bottom-color: var(--accent); outline: none !important; box-shadow: none !important; }
     .qr-input::placeholder { color: var(--line); font-size: 16px; }
     
     .qr-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; text-align: center; display: block; margin-top: 16px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); transition: background 0.2s, border-color 0.2s, opacity 0.2s; outline: none; -webkit-tap-highlight-color: transparent; }
@@ -310,38 +296,15 @@ container.innerHTML = `
     .qr-divider-line { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
     
     .qr-canvas-box { display: flex; justify-content: center; align-items: center; min-height: 150px; transition: all 0.3s ease; position: relative; }
-    .qr-canvas-box.has-canvas { 
-      background: #ffffff; 
-      padding: 8px; 
-      border-radius: 8px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
-      min-height: auto; 
-      width: 40%; 
-      margin: 0 auto; 
-      cursor: pointer; 
-    }
-    .qr-canvas-box.fullscreen {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      width: 100%; height: 100vh; max-height: 100vh;
-      background: #ffffff; z-index: 9999;
-      padding: 24px; margin: 0; border-radius: 0;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: none;
-    }
-    .qr-canvas-box.fullscreen canvas {
-      max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;
-    }
+    .qr-canvas-box.has-canvas { background: #ffffff; padding: 8px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-height: auto; width: 40%; margin: 0 auto; cursor: pointer; }
+    .qr-canvas-box.fullscreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100vh; max-height: 100vh; background: #ffffff; z-index: 9999; padding: 24px; margin: 0; border-radius: 0; display: flex; align-items: center; justify-content: center; box-shadow: none; }
+    .qr-canvas-box.fullscreen canvas { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
     .qr-placeholder { color: var(--line); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
     .qr-canvas-box.has-canvas .qr-placeholder { display: none; }
     .qr-canvas-box canvas { display: none; max-width: 100%; height: auto; }
     .qr-canvas-box.has-canvas canvas { display: block; }
     
-    .qr-close-fullscreen-btn {
-      display: none; position: absolute; top: 20px; right: 20px;
-      background: rgba(0,0,0,0.1); border: none; border-radius: 50%;
-      width: 48px; height: 48px; align-items: center; justify-content: center;
-      color: #333; cursor: pointer; z-index: 10000;
-    }
+    .qr-close-fullscreen-btn { display: none; position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.1); border: none; border-radius: 50%; width: 48px; height: 48px; align-items: center; justify-content: center; color: #333; cursor: pointer; z-index: 10000; }
     .qr-canvas-box.fullscreen .qr-close-fullscreen-btn { display: flex; }
     
     .qr-cam-wrapper { width: 100%; aspect-ratio: 1; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; margin-top: 8px; position: relative; }
