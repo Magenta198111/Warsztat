@@ -13,10 +13,31 @@
   --accent: #818cf8; --accent-ink: #000000; --danger: #ef4444;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; background: var(--bg); color: var(--ink); min-height: 100vh; padding-bottom: 80px; }
+
+body { 
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+  margin: 0; background: var(--bg); color: var(--ink); 
+  min-height: 100vh; padding-bottom: 80px; 
+  
+  /* BLOKADA ZAZNACZANIA TEKSTU I PODPOWIEDZI Z PRZEGLĄDARKI */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Przywracamy możliwość zaznaczania i kopiowania w polach, gdzie to niezbędne */
+input, textarea {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
 .topbar { position: sticky; top: 0; z-index: 100; padding: 16px 20px; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
 .topbar-title { font-size: 14px; font-weight: 600; letter-spacing: 0.05em; margin: 0; text-transform: uppercase; }
-.menu-btn { position: absolute; left: 16px; background: none; border: none; color: var(--ink); padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+.menu-btn { position: absolute; left: 16px; background: none; border: none; color: var(--ink); padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; }
 .menu-btn:active { background: var(--surface-hover); }
 
 .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
@@ -42,7 +63,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; ba
 .tile-title { font-weight: 500; font-size: 15px; }
 .tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
 
-.fab { position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px; border-radius: 8px; background: var(--ink); color: var(--bg); font-size: 24px; border: none; display: flex; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+.fab { position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px; border-radius: 8px; background: var(--ink); color: var(--bg); font-size: 24px; border: none; display: flex; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; }
 .fab:active { transform: scale(0.92); }
 
 #view-module { display: none; }
@@ -120,6 +141,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; ba
 <script>
 window.addEventListener('error', e => { const b = document.getElementById('error-bar'); if(b){ b.style.display='block'; b.textContent = 'BŁĄD: ' + e.message; } });
 window.showToast = m => { const c = document.getElementById('toast-container'); const t = document.createElement('div'); t.className='toast'; t.textContent=m; c.appendChild(t); requestAnimationFrame(()=>t.classList.add('show')); setTimeout(()=>{t.classList.remove('show'); setTimeout(()=>t.remove(),300)}, 3800); };
+
+// Blokada domyślnego menu kontekstowego (długie przytrzymanie)
+document.addEventListener('contextmenu', event => {
+  if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
+    event.preventDefault();
+  }
+});
 
 window.Hub = {
   modules: new Map(),
@@ -236,7 +264,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("drawer-overlay").classList.remove("open"); 
   };
 
-  // Fizyczny przycisk Wstecz zawsze wraca do Głównego huba (jeśli jesteśmy w module lub ustawieniach)
   window.onpopstate = () => {
     const isModule = document.getElementById("view-module").classList.contains("active");
     const isSettings = document.getElementById("view-settings").classList.contains("active");
