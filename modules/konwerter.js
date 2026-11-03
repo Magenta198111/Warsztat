@@ -37,20 +37,21 @@
           .c-range {
             -webkit-appearance: none;
             appearance: none;
-            height: 4px;
+            height: 6px;
             background: var(--line);
-            border-radius: 2px;
+            border-radius: 3px;
             outline: none;
             margin: 16px 0;
           }
           .c-range::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
-            background: var(--ink);
+            background: var(--accent);
             cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
           }
         </style>
 
@@ -60,11 +61,14 @@
 
         <div class="card" style="padding:16px;">
           <label style="margin-top:0;">Zdjęcie źródłowe</label>
-          <div style="display:flex; align-items:center; gap:10px; border:1px dashed var(--line); padding:10px; border-radius:6px; background:var(--bg);">
-            <input type="file" id="c-file" accept="image/*" style="display:none;">
-            <button id="c-file-btn" style="width:auto; padding:10px 16px; font-weight:500; background:var(--surface); border:1px solid var(--line); border-radius:6px; color:var(--ink);">Wybierz plik</button>
-            <span id="c-file-name" style="color:var(--muted); font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Nie wybrano pliku</span>
-          </div>
+          
+          <input type="file" id="c-file" accept="image/*" style="display:none;">
+          
+          <button id="c-file-btn" style="width:100%; padding:14px; font-weight:600; background:var(--accent); border:1px solid var(--accent); border-radius:6px; color:var(--accent-ink); display:flex; justify-content:center; align-items:center; gap:8px;">
+            📁 Wybierz zdjęcie
+          </button>
+          
+          <div id="c-file-name" style="color:var(--muted); font-size:13px; margin-top:10px; text-align:center; word-break:break-all;">Nie wybrano pliku</div>
 
           <label>Format docelowy</label>
           <select id="c-fmt" class="c-select" style="width:100%; padding:12px; border-radius:6px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font:inherit;">
@@ -76,9 +80,9 @@
           <label id="c-qual-label">Jakość (JPEG i WebP): ${savedQual}%</label>
           <input type="range" id="c-qual" min="10" max="100" value="${savedQual}" class="c-range">
 
-          <button class="p" id="c-btn" style="width:100%; padding:14px; border-radius:6px; background:var(--ink); color:var(--bg); border:1px solid var(--ink); font-weight:600; margin-top:16px;">Konwertuj zdjęcie</button>
+          <button class="p" id="c-btn" style="width:100%; padding:14px; border-radius:6px; background:var(--accent); color:var(--accent-ink); border:1px solid var(--accent); font-weight:600; margin-top:8px;">Konwertuj zdjęcie</button>
           
-          <div class="i hidden" id="c-stats" style="margin-top:14px; font-family:monospace;"></div>
+          <div class="i hidden" id="c-stats" style="margin-top:14px; font-family:monospace; text-align:center;"></div>
 
           <div id="c-preview-container" class="hidden" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;">
             <div>
