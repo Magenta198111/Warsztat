@@ -39,12 +39,10 @@
           
           .n-modal-sheet { background: var(--surface); width: 100%; max-width: 600px; border: 1px solid var(--line); padding: 20px 16px 30px; }
           
-          /* Domyślny styl (z dołu) */
           .n-modal-overlay.bottom-mode { align-items: flex-end; }
           .n-modal-overlay.bottom-mode .n-modal-sheet { border-top-left-radius: 16px; border-top-right-radius: 16px; border-bottom: none; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
           .n-modal-overlay.bottom-mode.open .n-modal-sheet { transform: translateY(0); }
           
-          /* Styl z przycisku (dropdown) */
           .n-modal-overlay.dropdown-mode { align-items: flex-start; }
           .n-modal-overlay.dropdown-mode .n-modal-sheet { margin-top: 200px; border-radius: 8px; transform: scale(0.95); opacity: 0; transition: transform 0.2s, opacity 0.2s; }
           .n-modal-overlay.dropdown-mode.open .n-modal-sheet { transform: scale(1); opacity: 1; }
