@@ -14,7 +14,7 @@
     async mount(container, signal) {
       let savedFmt = "image/jpeg";
       let savedQual = 85;
-      let menuStyle = "bottom"; 
+      let menuStyle = "bottom";
       
       try {
         savedFmt = await Hub.db.get("conv_fmt", "image/jpeg");
@@ -28,7 +28,6 @@
         "image/png": "PNG (bezstratny)"
       };
 
-      // Generowanie odpowiedniego HTML dla wybranej animacji
       let selectorHtml = "";
       if (menuStyle === "bottom") {
         selectorHtml = `
@@ -47,109 +46,120 @@
         `;
       } else {
         selectorHtml = `
-          <div id="c-select-trigger" class="n-custom-select">
-            <span id="c-select-text">${formatNames[savedFmt]}</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div id="c-dropdown" class="n-dropdown">
-            <div class="n-dropdown-item" data-value="image/webp">WebP (najmniejszy rozmiar)</div>
-            <div class="n-dropdown-item" data-value="image/jpeg">JPEG (standard)</div>
-            <div class="n-dropdown-item" data-value="image/png">PNG (bezstratny)</div>
+          <div style="position: relative;">
+            <div id="c-select-trigger" class="n-custom-select">
+              <span id="c-select-text">${formatNames[savedFmt]}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div id="c-dropdown" class="n-dropdown">
+              <div class="n-dropdown-item" data-value="image/webp">WebP (najmniejszy rozmiar)</div>
+              <div class="n-dropdown-item" data-value="image/jpeg">JPEG (standard)</div>
+              <div class="n-dropdown-item" data-value="image/png">PNG (bezstratny)</div>
+            </div>
           </div>
         `;
       }
 
       container.innerHTML = `
         <style>
+          .hidden { display: none !important; }
+          
           .n-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 0; }
-          .n-select-wrapper { position: relative; width: 100%; margin-bottom: 20px; }
-          .n-custom-select { display: flex; justify-content: space-between; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; color: var(--ink); font-size: 15px; cursor: pointer; user-select: none; }
+          
+          .n-custom-select { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; color: var(--ink); font-size: 15px; cursor: pointer; user-select: none; }
           .n-custom-select:active { background: var(--surface-hover); }
           .n-custom-select svg { color: var(--muted); transition: transform 0.2s; }
           .n-custom-select.open svg { transform: rotate(180deg); }
           
-          .n-dropdown { position: absolute; top: calc(100% + 6px); left: 0; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 100; overflow: hidden; opacity: 0; transform: translateY(-10px) scaleY(0.95); transform-origin: top center; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; }
-          .n-dropdown.open { opacity: 1; transform: translateY(0) scaleY(1); pointer-events: auto; }
-          .n-dropdown-item { padding: 14px 16px; font-size: 15px; color: var(--ink); cursor: pointer; border-bottom: 1px solid var(--line); transition: background 0.15s; }
+          .n-dropdown { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); z-index: 100; overflow: hidden; opacity: 0; transform: translateY(-5px); pointer-events: none; transition: opacity 0.15s, transform 0.15s; }
+          .n-dropdown.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+          .n-dropdown-item { padding: 14px 16px; font-size: 14px; color: var(--ink); display: flex; align-items: center; cursor: pointer; border-bottom: 1px solid var(--line); }
           .n-dropdown-item:last-child { border-bottom: none; }
           .n-dropdown-item:active { background: var(--surface-hover); }
-          .n-dropdown-item.active { color: var(--accent); font-weight: 600; }
-
-          .n-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 1000; display: flex; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-          .n-modal-overlay.open { opacity: 1; pointer-events: auto; }
-          .n-modal-sheet { background: var(--surface); width: 100%; max-width: 600px; border: 1px solid var(--line); padding: 20px 16px 30px; }
-          .n-modal-overlay.bottom-mode { align-items: flex-end; }
-          .n-modal-overlay.bottom-mode .n-modal-sheet { border-top-left-radius: 16px; border-top-right-radius: 16px; border-bottom: none; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
-          .n-modal-overlay.bottom-mode.open .n-modal-sheet { transform: translateY(0); }
+          .n-dropdown-item.active { color: var(--accent); font-weight: 600; background: rgba(129, 140, 248, 0.05); }
           
-          .n-modal-title { font-size: 16px; font-weight: 600; text-align: center; margin-bottom: 16px; color: var(--ink); }
-          .n-option { padding: 16px; border-radius: 8px; margin-bottom: 8px; background: var(--bg); border: 1px solid transparent; font-size: 15px; color: var(--ink); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+          .n-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+          .n-modal-overlay.open { opacity: 1; pointer-events: auto; }
+          .n-modal-sheet { background: var(--surface); width: 100%; max-width: 600px; border: 1px solid var(--line); padding: 24px 16px; }
+          .n-modal-overlay.bottom-mode { align-items: flex-end; }
+          .n-modal-overlay.bottom-mode .n-modal-sheet { border-top-left-radius: 16px; border-top-right-radius: 16px; border-bottom: none; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); max-height: 80vh; overflow-y: auto; }
+          .n-modal-overlay.bottom-mode.open .n-modal-sheet { transform: translateY(0); }
+          .n-modal-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 16px; letter-spacing: 0.5px; }
+          .n-option { padding: 16px; border-radius: 6px; margin-bottom: 4px; font-size: 15px; color: var(--ink); display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: var(--bg); }
           .n-option:active { background: var(--line); }
-          .n-option.active { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+          .n-option.active { color: var(--accent); font-weight: 600; }
           .n-option .check { opacity: 0; color: var(--accent); }
           .n-option.active .check { opacity: 1; }
 
           .n-range { -webkit-appearance: none; appearance: none; height: 4px; background: var(--line); border-radius: 2px; outline: none; margin: 16px 0; width: 100%; }
           .n-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; }
           
-          .n-btn-purple { width: 100%; padding: 14px; border-radius: 6px; background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); font-weight: 600; font-size: 15px; cursor: pointer; text-align: center; text-decoration: none; display: block; }
+          .n-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; text-align: center; display: block; margin-top: 16px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); transition: background 0.2s, border-color 0.2s; outline: none; -webkit-tap-highlight-color: transparent; }
+          .n-btn:active { background: var(--surface-hover); }
+          .n-btn-primary { background: rgba(129, 140, 248, 0.1); color: var(--accent); border: 1px solid rgba(129, 140, 248, 0.3); }
+          .n-btn-primary:active { background: rgba(129, 140, 248, 0.2); }
+          .n-btn:disabled { opacity: 0.5; cursor: not-allowed; }
           
-          .n-block { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px; margin-bottom: 16px; }
-          .n-file-name { font-size: 13px; color: var(--muted); margin-top: 12px; text-align: center; word-break: break-all; }
+          .n-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
+          
+          .n-file-name { font-size: 13px; color: var(--muted); margin-top: 8px; text-align: center; word-break: break-all; }
+          .n-stats { font-family: monospace; text-align: center; font-size: 13px; line-height: 1.6; margin-bottom: 24px; }
+          .n-preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+          .n-preview-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; text-align: center; }
+          .n-preview-img { width: 100%; border-radius: 6px; border: 1px solid var(--line); display: block; object-fit: cover; }
         </style>
 
-        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:20px;">
-          <button id="c-back" style="width:auto; padding:10px 12px; border-radius:6px; margin:0; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:flex; align-items:center; justify-content:center;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
+          <button id="c-back" style="width:auto; padding:8px 12px 8px 0; border:none; background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center; outline: none;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
         </div>
 
-        <div class="n-block">
-          <span class="n-label">Plik źródłowy</span>
+        <div style="margin-bottom: 24px;">
+          <label class="n-label">Plik źródłowy</label>
           <input type="file" id="c-file" accept="image/*" style="display:none;">
-          <button id="c-file-btn" class="n-btn-purple">Wybierz zdjęcie</button>
+          <button id="c-file-btn" class="n-btn n-btn-primary" style="margin-top: 0;">Wybierz zdjęcie</button>
           <div id="c-file-name" class="n-file-name">Nie wybrano pliku</div>
         </div>
 
-        <div class="n-block" style="overflow: visible;">
-          <span class="n-label">Ustawienia konwersji</span>
-          
-          <div class="n-select-wrapper">
+        <div class="n-divider"></div>
+
+        <div style="margin-bottom: 24px;">
+          <label class="n-label">Ustawienia konwersji</label>
+          <div style="margin-bottom: 20px;">
             ${selectorHtml}
           </div>
-
           <div>
             <span id="c-qual-label" class="n-label" style="margin-bottom:0;">Jakość: ${savedQual}%</span>
             <input type="range" id="c-qual" min="10" max="100" value="${savedQual}" class="n-range">
           </div>
         </div>
 
-        <button id="c-btn" class="n-btn-purple" style="margin-bottom: 24px;">Konwertuj zdjęcie</button>
+        <button id="c-btn" class="n-btn n-btn-primary" style="margin-bottom: 24px;">Konwertuj zdjęcie</button>
         
-        <div class="i hidden" id="c-stats" style="font-family:monospace; text-align:center; font-size:13px; line-height:1.6; margin-bottom: 24px;"></div>
-
-        <div id="c-preview-container" class="hidden" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom: 20px;">
-          <div>
-            <div class="n-label" style="text-align:center; margin-bottom:6px;">Przed</div>
-            <img id="c-img-before" style="width:100%; border-radius:6px; border:1px solid var(--line); display:block; object-fit:cover;">
+        <div id="c-result-section" class="hidden">
+          <div class="n-divider"></div>
+          <div id="c-stats" class="n-stats"></div>
+          <div class="n-preview-grid">
+            <div>
+              <div class="n-preview-label">Przed</div>
+              <img id="c-img-before" class="n-preview-img">
+            </div>
+            <div>
+              <div class="n-preview-label">Po</div>
+              <img id="c-img-after" class="n-preview-img">
+            </div>
           </div>
-          <div>
-            <div class="n-label" style="text-align:center; margin-bottom:6px;">Po</div>
-            <img id="c-img-after" style="width:100%; border-radius:6px; border:1px solid var(--line); display:block; object-fit:cover;">
-          </div>
+          <a class="n-btn n-btn-primary" id="c-dl" style="text-decoration: none;">Pobierz plik</a>
         </div>
-
-        <a class="n-btn-purple hidden" id="c-dl">Pobierz plik</a>
       `;
-
       const $ = id => container.querySelector("#" + id);
       const fileInput = $("c-file"), fileBtn = $("c-file-btn"), fileName = $("c-file-name");
       const selectTrigger = $("c-select-trigger"), selectText = $("c-select-text");
       const options = container.querySelectorAll(".n-option, .n-dropdown-item");
-      
       const qualInput = $("c-qual"), qualLabel = $("c-qual-label"), btnProcess = $("c-btn");
-      const statsDiv = $("c-stats"), dlBtn = $("c-dl");
-      const previewContainer = $("c-preview-container"), imgBefore = $("c-img-before"), imgAfter = $("c-img-after");
+      const resultSection = $("c-result-section"), statsDiv = $("c-stats"), dlBtn = $("c-dl");
+      const imgBefore = $("c-img-before"), imgAfter = $("c-img-after");
 
       let currentFmt = savedFmt, currentFile = null;
 
@@ -165,7 +175,6 @@
       $("c-back").addEventListener("click", () => history.back(), { signal });
       fileBtn.addEventListener("click", () => fileInput.click(), { signal });
 
-      // Obsługa w zależności od wybranego stylu
       if (menuStyle === "bottom") {
         const modal = $("c-modal");
         selectTrigger.addEventListener("click", () => modal.classList.add("open"), { signal });
@@ -212,25 +221,29 @@
 
       fileInput.addEventListener("change", (e) => {
         currentFile = e.target.files[0] || null;
-        dlBtn.classList.add("hidden"); previewContainer.classList.add("hidden"); statsDiv.classList.add("hidden"); imgAfter.src = "";
+        resultSection.classList.add("hidden");
         
         if (currentFile) {
-          fileName.textContent = currentFile.name; fileName.style.color = "var(--ink)";
+          fileName.textContent = currentFile.name;
+          fileName.style.color = "var(--ink)";
           cleanupUrls();
           const beforeUrl = URL.createObjectURL(currentFile);
           activeUrls.push(beforeUrl);
           imgBefore.src = beforeUrl;
-          previewContainer.classList.remove("hidden");
         } else {
-          fileName.textContent = "Nie wybrano pliku"; fileName.style.color = "var(--muted)";
+          fileName.textContent = "Nie wybrano pliku";
+          fileName.style.color = "var(--muted)";
         }
       }, { signal });
 
       btnProcess.addEventListener("click", () => {
-        if (!currentFile) return alert("Najpierw wybierz zdjęcie!");
-        statsDiv.classList.remove("hidden"); statsDiv.textContent = "Przetwarzanie..."; btnProcess.disabled = true;
+        if (!currentFile) return showToast("Najpierw wybierz zdjęcie!");
+        
+        btnProcess.disabled = true;
+        btnProcess.textContent = "Przetwarzanie...";
 
-        const img = new Image(); const srcUrl = URL.createObjectURL(currentFile);
+        const img = new Image();
+        const srcUrl = URL.createObjectURL(currentFile);
 
         img.onload = () => {
           const canvas = document.createElement("canvas");
@@ -244,7 +257,8 @@
           
           canvas.toBlob((blob) => {
             btnProcess.disabled = false;
-            if (!blob) { statsDiv.textContent = "Błąd: Nie udało się przetworzyć zdjęcia."; return; }
+            btnProcess.textContent = "Konwertuj zdjęcie";
+            if (!blob) { showToast("Błąd: Nie udało się przetworzyć zdjęcia."); return; }
 
             const outUrl = URL.createObjectURL(blob); activeUrls.push(outUrl);
             const ext = currentFmt.split("/")[1];
@@ -254,13 +268,17 @@
             
             statsDiv.innerHTML = `<b>Gotowe!</b><br>Przed: ${(currentFile.size / 1024).toFixed(1)} KB<br>Po: <b>${(blob.size / 1024).toFixed(1)} KB</b> (${sign}${diff}%)`;
 
-            imgAfter.src = outUrl; previewContainer.classList.remove("hidden");
-            dlBtn.href = outUrl; dlBtn.download = outName; dlBtn.textContent = `Pobierz ${outName}`; dlBtn.classList.remove("hidden");
+            imgAfter.src = outUrl;
+            resultSection.classList.remove("hidden");
+
+            dlBtn.href = outUrl;
+            dlBtn.download = outName;
+            dlBtn.textContent = `Pobierz ${outName}`;
 
           }, currentFmt, quality);
         };
 
-        img.onerror = () => { btnProcess.disabled = false; statsDiv.textContent = "Błąd: To nie jest prawidłowy plik graficzny."; };
+        img.onerror = () => { btnProcess.disabled = false; btnProcess.textContent = "Konwertuj zdjęcie"; showToast("Błąd: To nie jest prawidłowy plik graficzny."); };
         img.src = srcUrl;
       }, { signal });
     },
