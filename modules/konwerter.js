@@ -11,7 +11,6 @@
   Hub.register({
     id: "konwerter",
     title: "Konwerter Zdjęć",
-    icon: "🖼️",
     desc: "Kompresja i zmiana formatu na WebP, JPEG lub PNG",
 
     async mount(container, signal) {
@@ -55,7 +54,9 @@
         </style>
 
         <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
-          <button id="c-back" style="width:auto; padding:10px 16px; border-radius:6px; margin:0; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-weight:500;">Wróć</button>
+          <button id="c-back" style="width:auto; padding:10px 14px; border-radius:6px; margin:0; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:flex; align-items:center; justify-content:center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          </button>
         </div>
 
         <div class="card" style="padding:16px;">
