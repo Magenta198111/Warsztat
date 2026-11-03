@@ -137,11 +137,26 @@
         }
       }
 
-      set(size - 8, 8, 1);
-      for (let i = 0; i < 9; i++) {
-        if (i !== 6) { func[8][i] = 1; func[i][8] = 1; }
-        if (i < 8) { func[8][size - 1 - i] = 1; func[size - 1 - i][8] = 1; }
+      // POPRAWKA: Format info musi być poddane masce XOR (0x5412)
+      const fmt = 0x77C4 ^ 0x5412; 
+      const fmtBits = [];
+      for (let i = 14; i >= 0; i--) fmtBits.push((fmt >> i) & 1);
+
+      // Rysowanie informacji o formacie (zgodnie ze standardem)
+      const setFmt = (r, c, bit) => { mat[r][c] = bit; func[r][c] = 1; };
+      
+      const f1 = [[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
+      for(let i=0; i<15; i++) {
+        setFmt(f1[i][0], f1[i][1], fmtBits[14-i]);
       }
+
+      const f2 = [[size-1,8],[size-2,8],[size-3,8],[size-4,8],[size-5,8],[size-6,8],[size-7,8],[8,size-8],[8,size-7],[8,size-6],[8,size-5],[8,size-4],[8,size-3],[8,size-2],[8,size-1]];
+      for(let i=0; i<15; i++) {
+        setFmt(f2[i][0], f2[i][1], fmtBits[14-i]);
+      }
+
+      // Ciemny moduł (Dark module)
+      set(size - 8, 8, 1);
 
       let bitIdx = 0;
       const totalBits = finalCW.length * 8;
@@ -159,6 +174,7 @@
                 bit = (finalCW[bitIdx >> 3] >> (7 - (bitIdx & 7))) & 1;
                 bitIdx++;
               }
+              // Maska 0 ( (r+c) % 2 == 0 )
               if ((r + c) % 2 === 0) bit ^= 1;
               mat[r][c] = bit;
             }
@@ -166,17 +182,6 @@
         }
         upward = !upward;
       }
-
-      const fmt = 0x77c4;
-      for (let i = 0; i <= 5; i++) mat[8][i] = (fmt >> i) & 1;
-      mat[8][7] = (fmt >> 6) & 1;
-      mat[8][8] = (fmt >> 7) & 1;
-      mat[7][8] = (fmt >> 8) & 1;
-      for (let i = 9; i < 15; i++) mat[14 - i][8] = (fmt >> i) & 1;
-      
-      for (let i = 0; i < 8; i++) mat[size - 1 - i][8] = (fmt >> i) & 1;
-      for (let i = 8; i < 15; i++) mat[8][size - 15 + i] = (fmt >> i) & 1;
-      mat[size - 8][8] = 1;
 
       return mat;
     }
