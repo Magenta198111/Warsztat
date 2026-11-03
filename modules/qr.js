@@ -283,31 +283,35 @@
 
           .qr-input-wrapper { margin-bottom: 24px; }
           .qr-input-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
-          .qr-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 20px; padding: 12px 0; outline: none; text-align: center; transition: border-color 0.2s; }
-          .qr-input:focus { border-bottom-color: var(--accent); }
+          
+          /* Styl inputa z blokadą białej ramki i podpowiedzi */
+          .qr-input { 
+            width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); 
+            color: var(--ink); font-size: 20px; padding: 12px 0; text-align: center; 
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            outline: none !important;
+            box-shadow: none !important;
+          }
+          .qr-input:focus { 
+            border-bottom-color: var(--accent); 
+            outline: none !important; 
+            box-shadow: none !important; 
+          }
           .qr-input::placeholder { color: var(--line); font-size: 16px; }
           
-          .qr-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; text-align: center; display: block; margin-top: 16px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); transition: background 0.2s, border-color 0.2s, opacity 0.2s; }
+          .qr-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; text-align: center; display: block; margin-top: 16px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); transition: background 0.2s, border-color 0.2s, opacity 0.2s; outline: none; -webkit-tap-highlight-color: transparent; }
           .qr-btn:active { background: var(--surface-hover); }
           .qr-btn-primary { background: rgba(129, 140, 248, 0.1); color: var(--accent); border: 1px solid rgba(129, 140, 248, 0.3); }
           .qr-btn-primary:active { background: rgba(129, 140, 248, 0.2); }
           .qr-btn:disabled { cursor: not-allowed; }
           
-          /* Nowy styl dla miejsca na kod QR */
           .qr-divider-line { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
-          .qr-canvas-box { 
-            display: flex; justify-content: center; align-items: center; 
-            min-height: 240px; /* Rezerwacja miejsca, aby nic nie skakało */
-            transition: all 0.3s ease;
-          }
-          .qr-canvas-box.has-canvas { 
-            background: #ffffff; padding: 16px; border-radius: 8px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-height: auto; 
-          }
-          .qr-placeholder { 
-            color: var(--line); font-size: 12px; font-weight: 600; 
-            text-transform: uppercase; letter-spacing: 1px; text-align: center;
-          }
+          .qr-canvas-box { display: flex; justify-content: center; align-items: center; min-height: 240px; transition: all 0.3s ease; }
+          .qr-canvas-box.has-canvas { background: #ffffff; padding: 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-height: auto; }
+          .qr-placeholder { color: var(--line); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
           .qr-canvas-box.has-canvas .qr-placeholder { display: none; }
           .qr-canvas-box canvas { display: none; max-width: 100%; }
           .qr-canvas-box.has-canvas canvas { display: block; }
@@ -324,7 +328,7 @@
           .qr-result-header { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; letter-spacing: 0.5px; }
           .qr-result-body { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
           .qr-result-text { font-family: monospace; font-size: 14px; color: var(--ink); word-break: break-all; line-height: 1.5; flex: 1; }
-          .qr-copy-btn { background: transparent; border: none; padding: 4px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color 0.2s; }
+          .qr-copy-btn { background: transparent; border: none; padding: 4px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color 0.2s; outline: none; }
           .qr-copy-btn:active { transform: scale(0.9); }
           .qr-copy-btn svg { width: 18px; height: 18px; }
 
@@ -333,7 +337,7 @@
         </style>
 
         <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
-          <button id="q-back" style="width:auto; padding:8px 12px 8px 0; border:none; background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center;">
+          <button id="q-back" style="width:auto; padding:8px 12px 8px 0; border:none; background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center; outline: none;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
         </div>
@@ -343,7 +347,7 @@
         <div id="view-gen">
           <div class="qr-input-wrapper">
             <label class="qr-input-label">Tekst lub link do zakodowania</label>
-            <input type="text" id="q-text" class="qr-input" placeholder="Wpisz coś...">
+            <input type="text" id="q-text" class="qr-input" placeholder="Wpisz coś..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
           </div>
           
           <button id="q-gen-btn" class="qr-btn qr-btn-primary">Wygeneruj kod QR</button>
@@ -482,9 +486,8 @@
 
       $("q-gen-btn").addEventListener("click", () => {
         const text = $("q-text").value.trim();
-        if (!text) return alert("Wpisz tekst do wygenerowania!");
+        if (!text) return showToast("Wpisz tekst do wygenerowania!"); // ZMIENIONO ALERT NA TOAST
         
-        // Resetowanie stanu przycisku i kontenera przed nowym generowaniem
         canvasContainer.classList.remove("has-canvas");
         dlBtn.disabled = true;
         dlBtn.style.opacity = "0.5";
@@ -509,13 +512,12 @@
             }
           }
           
-          // Aktywacja widoku kodu i przycisku pobierania
           canvasContainer.classList.add("has-canvas");
           dlBtn.disabled = false;
           dlBtn.style.opacity = "1";
 
         } catch (e) {
-          alert(e.message);
+          showToast("Błąd generowania kodu QR");
         }
       }, { signal });
 
@@ -582,7 +584,7 @@
         scanFileName.textContent = file.name;
 
         if (!('BarcodeDetector' in window)) {
-          return alert("Twoja przeglądarka nie obsługuje odczytu kodów ze zdjęć.");
+          return showToast("Twoja przeglądarka nie obsługuje odczytu kodów ze zdjęć.");
         }
 
         try {
