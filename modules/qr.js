@@ -34,6 +34,31 @@
     const BLOCKS = [0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 4];
     const ALIGN = [[], [], [6, 18], [6, 22], [6, 26], [6, 30], [6, 34], [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50]];
 
+    function getBCHDigit(data) {
+      let digit = 0;
+      while (data !== 0) {
+        digit += 1;
+        data >>>= 1;
+      }
+      return digit;
+    }
+
+    function getBCHTypeInfo(data) {
+      let d = data << 10;
+      while (getBCHDigit(d) - getBCHDigit(0x537) >= 0) {
+        d ^= (0x537 << (getBCHDigit(d) - getBCHDigit(0x537)));
+      }
+      return ((data << 10) | d) ^ 0x5412;
+    }
+
+    function getBCHTypeNumber(data) {
+      let d = data << 12;
+      while (getBCHDigit(d) - getBCHDigit(0x1F25) >= 0) {
+        d ^= (0x1F25 << (getBCHDigit(d) - getBCHDigit(0x1F25)));
+      }
+      return (data << 12) | d;
+    }
+
     function encode(text) {
       const bytes = new TextEncoder().encode(text);
       let ver = 1;
@@ -121,62 +146,68 @@
       
       finder(0, 0); finder(0, size - 7); finder(size - 7, 0);
 
-      for (let i = 8; i < size - 8; i++) { 
-        set(6, i, i % 2 === 0); 
-        set(i, 6, i % 2 === 0); 
-      }
-
       const al = ALIGN[ver];
       for (let i = 0; i < al.length; i++) {
         for (let j = 0; j < al.length; j++) {
-          if ((i === 0 && j === 0) || (i === 0 && j === al.length - 1) || (i === al.length - 1 && j === 0)) continue;
           const R = al[i], C = al[j];
+          if (func[R][C]) continue;
           for (let r = -2; r <= 2; r++) 
             for (let c = -2; c <= 2; c++) 
               set(R + r, C + c, Math.max(Math.abs(r), Math.abs(c)) !== 1);
         }
       }
 
-      // POPRAWKA: Format info musi być poddane masce XOR (0x5412)
-      const fmt = 0x77C4 ^ 0x5412; 
-      const fmtBits = [];
-      for (let i = 14; i >= 0; i--) fmtBits.push((fmt >> i) & 1);
-
-      // Rysowanie informacji o formacie (zgodnie ze standardem)
-      const setFmt = (r, c, bit) => { mat[r][c] = bit; func[r][c] = 1; };
-      
-      const f1 = [[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
-      for(let i=0; i<15; i++) {
-        setFmt(f1[i][0], f1[i][1], fmtBits[14-i]);
+      for (let i = 8; i < size - 8; i++) { 
+        if (!func[i][6]) set(i, 6, i % 2 === 0); 
+        if (!func[6][i]) set(6, i, i % 2 === 0); 
       }
 
-      const f2 = [[size-1,8],[size-2,8],[size-3,8],[size-4,8],[size-5,8],[size-6,8],[size-7,8],[8,size-8],[8,size-7],[8,size-6],[8,size-5],[8,size-4],[8,size-3],[8,size-2],[8,size-1]];
-      for(let i=0; i<15; i++) {
-        setFmt(f2[i][0], f2[i][1], fmtBits[14-i]);
+      const data = 1 << 3 | 0;
+      const fmt = getBCHTypeInfo(data);
+      for (let i = 0; i < 15; i++) {
+        const mod = (fmt >> i) & 1;
+        if (i < 6) set(i, 8, mod);
+        else if (i < 8) set(i + 1, 8, mod);
+        else set(size - 15 + i, 8, mod);
+        
+        if (i < 8) set(8, size - 1 - i, mod);
+        else if (i < 9) set(8, 15 - i - 1 + 1, mod);
+        else set(8, 15 - i - 1, mod);
       }
-
-      // Ciemny moduł (Dark module)
       set(size - 8, 8, 1);
 
-      let bitIdx = 0;
-      const totalBits = finalCW.length * 8;
+      if (ver >= 7) {
+        const verBits = getBCHTypeNumber(ver);
+        for (let i = 0; i < 18; i++) {
+          const mod = (verBits >> i) & 1;
+          set(Math.floor(i / 3), i % 3 + size - 8 - 3, mod);
+          set(i % 3 + size - 8 - 3, Math.floor(i / 3), mod);
+        }
+      }
+
+      let byteIndex = 0;
+      let bitIndex = 7;
       let upward = true;
 
-      for (let right = size - 1; right >= 1; right -= 2) {
-        if (right === 6) right = 5;
+      for (let col = size - 1; col > 0; col -= 2) {
+        if (col === 6) col--;
         for (let vert = 0; vert < size; vert++) {
-          for (let j = 0; j < 2; j++) {
-            const c = right - j;
-            const r = upward ? size - 1 - vert : vert;
-            if (!func[r][c]) {
-              let bit = 0;
-              if (bitIdx < totalBits) {
-                bit = (finalCW[bitIdx >> 3] >> (7 - (bitIdx & 7))) & 1;
-                bitIdx++;
+          const row = upward ? size - 1 - vert : vert;
+          for (let c = 0; c < 2; c++) {
+            const cc = col - c;
+            if (!func[row][cc]) {
+              let dark = false;
+              if (byteIndex < finalCW.length) {
+                dark = ((finalCW[byteIndex] >> bitIndex) & 1) === 1;
               }
-              // Maska 0 ( (r+c) % 2 == 0 )
-              if ((r + c) % 2 === 0) bit ^= 1;
-              mat[r][c] = bit;
+              if ((row + cc) % 2 === 0) dark = !dark;
+              mat[row][cc] = dark ? 1 : 0;
+              
+              bitIndex--;
+              if (bitIndex === -1) {
+                byteIndex++;
+                bitIndex = 7;
+              }
             }
           }
         }
