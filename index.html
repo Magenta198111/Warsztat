@@ -102,11 +102,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; ba
 <main class="container" id="view-module"></main>
 
 <main class="container" id="view-settings">
-  <div style="display:flex; margin-bottom:20px;">
-    <button id="set-back" style="padding:10px 12px; border-radius:6px; border:1px solid var(--line); background:var(--surface); color:var(--ink);">
-      <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-    </button>
-  </div>
   <div class="settings-block">
     <div class="settings-header">Wygląd</div>
     <div class="settings-row">
@@ -179,7 +174,11 @@ window.Hub = {
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     document.getElementById('drawer-home').classList.add('active');
     
-    if (push && location.hash !== '' && location.hash !== '#') history.pushState(null, "", "./");
+    if (push) {
+      if (location.hash !== '' && location.hash !== '#') history.pushState(null, "", "./");
+    } else {
+      history.replaceState(null, "", "./");
+    }
   },
 
   openModule: function(id, push = true) {
@@ -224,10 +223,8 @@ window.Hub = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Ustawienie domyślnego podświetlenia przy starcie
   document.getElementById('drawer-home').classList.add('active');
 
-  document.getElementById("set-back").onclick = () => history.back();
   document.getElementById("fab-add").onclick = () => showToast("Wgraj plik do folderu modules i dopisz do modules.json");
   
   document.getElementById("menu-btn").onclick = () => { 
@@ -239,11 +236,14 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("drawer-overlay").classList.remove("open"); 
   };
 
+  // Fizyczny przycisk Wstecz zawsze wraca do Głównego huba (jeśli jesteśmy w module lub ustawieniach)
   window.onpopstate = () => {
-    const hash = location.hash.replace(/^#/, "");
-    if (hash === "settings") Hub.openSettings(false);
-    else if (hash && Hub.modules.has(hash)) Hub.openModule(hash, false);
-    else Hub.showHome(false);
+    const isModule = document.getElementById("view-module").classList.contains("active");
+    const isSettings = document.getElementById("view-settings").classList.contains("active");
+    
+    if (isModule || isSettings) {
+      Hub.showHome(false); 
+    }
   };
 
   fetch('./modules.json?t=' + Date.now())
