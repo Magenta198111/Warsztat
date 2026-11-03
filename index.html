@@ -30,7 +30,6 @@ body {
 
 .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
 
-/* Górny pasek */
 .topbar {
   position: sticky; top: 0; z-index: 100;
   padding: 16px 20px;
@@ -53,7 +52,7 @@ body {
 }
 .menu-btn:active { background: var(--surface-hover); }
 
-/* Wysuwane Menu Boczne (Drawer) */
+/* Wysuwane Menu Boczne */
 .drawer-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.6);
@@ -99,7 +98,6 @@ body {
 .drawer-item svg { width: 20px; height: 20px; stroke-width: 1.5; color: var(--muted); }
 .drawer-item span { flex: 1; }
 
-/* Główna zawartość */
 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
 .list { display: flex; flex-direction: column; gap: 12px; }
 
@@ -160,37 +158,50 @@ button:active { transform: scale(0.98); }
 button.p { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; }
 .hidden { display: none !important; }
 .i { font-size: 13px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+
+/* System powiadomień Toast */
+#toast-container {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 8px; z-index: 10000;
+  pointer-events: none; width: 90%; max-width: 400px;
+}
+.toast {
+  background: var(--surface-hover); color: var(--ink);
+  padding: 14px 20px; border-radius: 8px; border: 1px solid var(--line);
+  font-size: 14px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  text-align: center;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
 </style>
 </head>
 <body>
 
-<!-- Menu Boczne -->
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-header">
     <h2 class="drawer-title">Warsztat</h2>
   </div>
   <div class="drawer-menu">
-    <div class="drawer-item" onclick="alert('Wkrótce: Ustawienia')">
+    <div class="drawer-item" onclick="showToast('Ustawienia pojawią się w kolejnej aktualizacji.')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       <span>Ustawienia</span>
     </div>
-    <div class="drawer-item" onclick="alert('Wkrótce: Kopia zapasowa')">
+    <div class="drawer-item" onclick="showToast('Funkcja tworzenia kopii zapasowej jest w budowie.')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
       <span>Kopia zapasowa</span>
     </div>
-    <div class="drawer-item" onclick="alert('Wkrótce: Zarządzanie modułami')">
+    <div class="drawer-item" onclick="showToast('Zarządzanie modułami pojawi się wkrótce.')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
       <span>Moduły</span>
     </div>
-    <div class="drawer-item" onclick="alert('Warsztat v1.0.0\nTwój osobisty hub offline.')">
+    <div class="drawer-item" onclick="showToast('Warsztat v1.0.0 | Offline Hub')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
       <span>O aplikacji</span>
     </div>
   </div>
 </div>
 
-<!-- Górny pasek -->
 <div class="topbar">
   <button class="menu-btn" id="menu-btn">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
@@ -205,10 +216,26 @@ button.p { background: var(--ink); color: var(--bg); border-color: var(--ink); f
 <main class="container" id="view-module"></main>
 
 <button class="fab" id="fab-add">+</button>
-
+<div id="toast-container"></div>
 <div id="error-bar"></div>
 
 <script>
+// Funkcja wyświetlająca ładne powiadomienie
+window.showToast = function(message) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  container.appendChild(toast);
+  
+  requestAnimationFrame(() => toast.classList.add('show'));
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 2800);
+};
+
 window.Hub = (() => {
   const DB_NAME = "WarsztatDB";
   const DB_VER = 1;
@@ -332,7 +359,7 @@ window.Hub = (() => {
   });
 
   window.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("fab-add").addEventListener("click", () => alert("Aby dodać moduł, wgraj plik do folderu 'modules' i dopisz go do 'modules.json'."));
+    document.getElementById("fab-add").addEventListener("click", () => showToast("Aby dodać moduł, wgraj plik do folderu 'modules' i dopisz go do 'modules.json'."));
     
     const initHash = location.hash.replace(/^#/, "");
     if (initHash && modules.has(initHash)) openModule(initHash, false);
