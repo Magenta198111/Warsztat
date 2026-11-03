@@ -2,82 +2,109 @@
   Hub.register({
     id: "kalkulator-prog",
     title: "Kalkulator Programistyczny",
-    icon: "💻",
     desc: "Konwersja systemów, operacje bitowe i siatka 32-bitowa",
 
     async mount(container, signal) {
       container.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
-          <button id="cp-back" style="width:auto; padding:10px 16px; border-radius:6px; margin:0; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-weight:500;">Wróć</button>
-        </div>
-
-        <div class="card" style="padding:16px;">
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <div>
-              <label style="margin-top:0; font-size:12px;">HEX (szesnastkowy)</label>
-              <input type="text" id="cp-in-hex" style="font-family:monospace; font-size:18px; padding:12px; background:#000; border:1px solid var(--line); color:var(--ink); border-radius:6px; width:100%; text-transform:uppercase;">
-            </div>
-            <div>
-              <label style="margin-top:0; font-size:12px;">DEC (dziesiętny)</label>
-              <input type="text" id="cp-in-dec" style="font-family:monospace; font-size:18px; padding:12px; background:#000; border:1px solid var(--line); color:var(--ink); border-radius:6px; width:100%;">
-            </div>
-            <div>
-              <label style="margin-top:0; font-size:12px;">OCT (ósemkowy)</label>
-              <input type="text" id="cp-in-oct" style="font-family:monospace; font-size:18px; padding:12px; background:#000; border:1px solid var(--line); color:var(--ink); border-radius:6px; width:100%;">
-            </div>
-            <div>
-              <label style="margin-top:0; font-size:12px;">BIN (binarny)</label>
-              <input type="text" id="cp-in-bin" style="font-family:monospace; font-size:13px; padding:12px; background:#000; border:1px solid var(--line); color:var(--ink); border-radius:6px; width:100%; overflow-x:auto; white-space:nowrap;">
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="padding:16px 10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 6px;">
-            <label style="margin:0; font-size:12px;">Siatka bitów</label>
-            <span style="font-size:11px; color:var(--muted); font-family:monospace;">31 &rarr; 0</span>
-          </div>
-          <div style="display:grid; grid-template-columns:repeat(8, 1fr); gap:4px; justify-items:center;" id="cp-bit-grid"></div>
-        </div>
-
-        <div class="card" style="padding:16px;">
-          <label style="margin-top:0; font-size:12px;">Operacje bitowe (wpisz liczby dziesiętne)</label>
-          <div style="display:flex; gap:8px; margin-bottom:12px;">
-            <div style="flex:1;">
-              <span style="font-size:11px; color:var(--muted); margin-bottom:4px; display:block;">Wartość A</span>
-              <input type="number" id="cp-op-a" value="10" style="width:100%; font-family:monospace; padding:12px; background:#000; border:1px solid var(--line); color:var(--ink); border-radius:6px; text-align:center;">
-            </div>
-            <div style="flex:1;">
-              <span style="font-size:11px; color:var(--muted); margin-bottom:4px; display:block;">Wartość B</span>
-              <input type="number" id="cp-op-b" value="3" style="width:100%; font-family:monospace; padding:12px; background:#000; border:1px solid var(--line); color:var(--ink); border-radius:6px; text-align:center;">
-            </div>
-          </div>
+        <style>
+          .hidden { display: none !important; }
           
-          <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-bottom:12px;">
-            <button class="cp-op-btn" data-op="AND" style="padding:12px; margin:0; font-family:monospace; background:var(--bg); border:1px solid var(--line); border-radius:6px; color:var(--ink);">A AND B</button>
-            <button class="cp-op-btn" data-op="OR" style="padding:12px; margin:0; font-family:monospace; background:var(--bg); border:1px solid var(--line); border-radius:6px; color:var(--ink);">A OR B</button>
-            <button class="cp-op-btn" data-op="XOR" style="padding:12px; margin:0; font-family:monospace; background:var(--bg); border:1px solid var(--line); border-radius:6px; color:var(--ink);">A XOR B</button>
-            <button class="cp-op-btn" data-op="NOT" style="padding:12px; margin:0; font-family:monospace; background:var(--bg); border:1px solid var(--line); border-radius:6px; color:var(--ink);">NOT A</button>
-            <button class="cp-op-btn" data-op="SHL" style="padding:12px; margin:0; font-family:monospace; background:var(--bg); border:1px solid var(--line); border-radius:6px; color:var(--ink);">A << B</button>
-            <button class="cp-op-btn" data-op="SHR" style="padding:12px; margin:0; font-family:monospace; background:var(--bg); border:1px solid var(--line); border-radius:6px; color:var(--ink);">A >> B</button>
-          </div>
+          .cp-back-btn { width:auto; padding:8px 12px 8px 0; border:none; background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center; outline: none; margin-bottom: 16px; }
+          .cp-back-btn:active { opacity: 0.7; }
+          
+          .cp-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          
+          .cp-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+          .cp-input-group { display: flex; flex-direction: column; }
+          .cp-input { 
+            width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); 
+            color: var(--ink); font-size: 18px; font-family: monospace; padding: 8px 0; 
+            outline: none; transition: border-color 0.2s;
+          }
+          .cp-input:focus { border-bottom-color: var(--accent); }
+          .cp-input::placeholder { color: var(--line); font-size: 14px; }
+          
+          .cp-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
+          
+          .cp-bit-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; margin-bottom: 24px; }
+          .cp-bit-cell {
+            aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+            border-radius: 4px; border: 1px solid var(--line); background: var(--surface);
+            font-family: monospace; font-size: 14px; font-weight: 600; color: var(--muted);
+            cursor: pointer; transition: all 0.1s; user-select: none;
+          }
+          .cp-bit-cell.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+          .cp-bit-cell:active { transform: scale(0.9); }
+          
+          .cp-op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+          .cp-op-inputs { display: flex; gap: 12px; margin-bottom: 16px; }
+          .cp-op-inputs .cp-input { text-align: center; }
+          
+          .cp-btn {
+            width: 100%; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 14px;
+            cursor: pointer; text-align: center; background: var(--surface); color: var(--ink);
+            border: 1px solid var(--line); transition: background 0.2s, border-color 0.2s;
+            outline: none; -webkit-tap-highlight-color: transparent; font-family: monospace;
+          }
+          .cp-btn:active { background: var(--surface-hover); }
+          
+          .cp-result { text-align: center; font-family: monospace; font-size: 24px; font-weight: 700; color: var(--accent); margin-top: 8px; }
+        </style>
 
-          <div style="text-align:center; background:var(--bg); padding:12px; border-radius:6px; border:1px solid var(--line);">
-            <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">Wynik (DEC)</span>
-            <span id="cp-op-result" style="font-family:monospace; font-size:20px; font-weight:bold; color:var(--accent);">0</span>
+        <button id="cp-back" class="cp-back-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+
+        <div class="cp-inputs-grid">
+          <div class="cp-input-group">
+            <label class="cp-label">HEX</label>
+            <input type="text" id="cp-in-hex" class="cp-input" autocomplete="off" autocorrect="off" spellcheck="false">
           </div>
+          <div class="cp-input-group">
+            <label class="cp-label">DEC</label>
+            <input type="text" id="cp-in-dec" class="cp-input" autocomplete="off" autocorrect="off" spellcheck="false">
+          </div>
+          <div class="cp-input-group">
+            <label class="cp-label">OCT</label>
+            <input type="text" id="cp-in-oct" class="cp-input" autocomplete="off" autocorrect="off" spellcheck="false">
+          </div>
+          <div class="cp-input-group">
+            <label class="cp-label">BIN</label>
+            <input type="text" id="cp-in-bin" class="cp-input" autocomplete="off" autocorrect="off" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="cp-divider"></div>
+
+        <label class="cp-label">Siatka bitów (kliknij, aby przełączyć)</label>
+        <div id="cp-bit-grid" class="cp-bit-grid"></div>
+
+        <div class="cp-divider"></div>
+
+        <label class="cp-label">Operacje bitowe</label>
+        <div class="cp-op-inputs">
+          <input type="text" id="cp-op-a" class="cp-input" placeholder="A" autocomplete="off" autocorrect="off" spellcheck="false">
+          <input type="text" id="cp-op-b" class="cp-input" placeholder="B" autocomplete="off" autocorrect="off" spellcheck="false">
+        </div>
+        
+        <div class="cp-op-grid">
+          <button class="cp-btn" data-op="AND">A AND B</button>
+          <button class="cp-btn" data-op="OR">A OR B</button>
+          <button class="cp-btn" data-op="XOR">A XOR B</button>
+          <button class="cp-btn" data-op="NOT">NOT A</button>
+          <button class="cp-btn" data-op="SHL">A &lt;&lt; B</button>
+          <button class="cp-btn" data-op="SHR">A &gt;&gt; B</button>
+        </div>
+
+        <div style="text-align: center; margin-top: 16px;">
+          <div class="cp-label" style="margin-bottom: 4px;">Wynik operacji (DEC)</div>
+          <div id="cp-op-result" class="cp-result">0</div>
         </div>
       `;
-
       const $ = id => container.querySelector("#" + id);
-      const inHex = $("cp-in-hex");
-      const inDec = $("cp-in-dec");
-      const inOct = $("cp-in-oct");
-      const inBin = $("cp-in-bin");
+      const inHex = $("cp-in-hex"), inDec = $("cp-in-dec"), inOct = $("cp-in-oct"), inBin = $("cp-in-bin");
       const bitGrid = $("cp-bit-grid");
-      const opA = $("cp-op-a");
-      const opB = $("cp-op-b");
-      const opResult = $("cp-op-result");
+      const opA = $("cp-op-a"), opB = $("cp-op-b"), opResult = $("cp-op-result");
 
       let currentValue = 0n;
 
@@ -89,66 +116,31 @@
         if (skipInput !== 'oct') inOct.value = currentValue.toString(8);
         if (skipInput !== 'bin') inBin.value = currentValue.toString(2);
 
-        const bits = bitGrid.querySelectorAll('.cp-bit');
+        const bits = bitGrid.querySelectorAll('.cp-bit-cell');
         for (let i = 0; i < 32; i++) {
           const bitIndex = 31 - i;
           const isSet = (currentValue & (1n << BigInt(bitIndex))) !== 0n;
           
           if (isSet) {
+            bits[i].classList.add("active");
             bits[i].textContent = "1";
-            bits[i].style.background = "var(--accent)";
-            bits[i].style.color = "var(--accent-ink)";
-            bits[i].style.borderColor = "var(--accent)";
           } else {
+            bits[i].classList.remove("active");
             bits[i].textContent = "0";
-            bits[i].style.background = "var(--bg)";
-            bits[i].style.color = "var(--muted)";
-            bits[i].style.borderColor = "var(--line)";
           }
         }
       }
 
       for (let i = 0; i < 32; i++) {
         const bitIndex = 31 - i;
-        
-        const wrapper = document.createElement("div");
-        wrapper.style.display = "flex";
-        wrapper.style.flexDirection = "column";
-        wrapper.style.alignItems = "center";
-        wrapper.style.gap = "2px";
-        wrapper.style.width = "100%";
-
-        const span = document.createElement("span");
-        span.className = "cp-bit";
-        span.style.display = "flex";
-        span.style.alignItems = "center";
-        span.style.justifyContent = "center";
-        span.style.width = "100%";
-        span.style.aspectRatio = "1";
-        span.style.borderRadius = "6px";
-        span.style.border = "1px solid var(--line)";
-        span.style.fontSize = "20px";
-        span.style.fontWeight = "600";
-        span.style.fontFamily = "monospace";
-        span.style.cursor = "pointer";
-        span.style.transition = "all 0.1s";
-        span.style.userSelect = "none";
-        
-        span.addEventListener("click", () => {
+        const cell = document.createElement("div");
+        cell.className = "cp-bit-cell";
+        cell.textContent = "0";
+        cell.addEventListener("click", () => {
           currentValue ^= (1n << BigInt(bitIndex));
           updateAll(currentValue);
         }, { signal });
-
-        const label = document.createElement("span");
-        label.textContent = bitIndex;
-        label.style.fontSize = "10px";
-        label.style.color = "var(--muted)";
-        label.style.fontFamily = "monospace";
-        label.style.marginTop = "2px";
-        
-        wrapper.appendChild(span);
-        wrapper.appendChild(label);
-        bitGrid.appendChild(wrapper);
+        bitGrid.appendChild(cell);
       }
 
       inHex.addEventListener("input", (e) => {
@@ -179,13 +171,11 @@
         try { updateAll(BigInt("0b" + raw), 'bin'); } catch(err) {}
       }, { signal });
 
-      container.querySelectorAll(".cp-op-btn").forEach(btn => {
+      container.querySelectorAll(".cp-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           const op = btn.dataset.op;
-          
           let valA = BigInt(parseInt(opA.value) || 0);
           let valB = BigInt(parseInt(opB.value) || 0);
-
           let result = 0n;
 
           if (op === "AND") result = valA & valB;
