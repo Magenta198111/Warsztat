@@ -120,13 +120,9 @@ body {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       <span>Ustawienia</span>
     </div>
-    <div class="drawer-item" onclick="showToast('Kopia zapasowa w budowie.')">
+    <div class="drawer-item" onclick="showToast('Wkrótce')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
       <span>Kopia zapasowa</span>
-    </div>
-    <div class="drawer-item" onclick="showToast('Warsztat v1.0.0 | Offline Hub')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-      <span>O aplikacji</span>
     </div>
   </div>
 </div>
@@ -183,7 +179,7 @@ window.showToast = function(msg) {
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3800);
 };
 
-// Główny obiekt
+// Główny obiekt aplikacji
 window.Hub = {
   db: {
     open: function() {
@@ -223,7 +219,7 @@ window.Hub = {
   activeAbort: null,
 
   register: function(mod) {
-    this.modules.set(mod.id, mod);
+    Hub.modules.set(mod.id, mod);
     
     const grid = document.getElementById("modules-grid");
     const empty = grid.querySelector('.empty-state'); if (empty) empty.remove();
@@ -243,19 +239,19 @@ window.Hub = {
     const tile = document.createElement("div");
     tile.className = "tile";
     tile.innerHTML = `<div class="tile-icon">${iconSvg}</div><div class="tile-content"><div class="tile-title">${mod.title}</div><div class="tile-desc">${mod.desc || ""}</div></div>`;
-    tile.addEventListener("click", () => this.openModule(mod.id, true));
+    tile.addEventListener("click", () => Hub.openModule(mod.id, true));
     grid.appendChild(tile);
   },
 
   cleanup: function() {
-    if (this.activeAbort) { this.activeAbort.abort(); this.activeAbort = null; }
-    if (this.activeModule && this.activeModule.unmount) { try { this.activeModule.unmount(); } catch(e) { console.error(e); } }
-    this.activeModule = null;
+    if (Hub.activeAbort) { Hub.activeAbort.abort(); Hub.activeAbort = null; }
+    if (Hub.activeModule && Hub.activeModule.unmount) { try { Hub.activeModule.unmount(); } catch(e) { console.error(e); } }
+    Hub.activeModule = null;
     document.getElementById("view-module").innerHTML = "";
   },
 
   showHome: function(push = false) {
-    this.cleanup();
+    Hub.cleanup();
     document.getElementById("view-module").classList.remove("active");
     document.getElementById("view-settings").classList.remove("active");
     document.getElementById("view-home").classList.remove("hidden");
@@ -265,24 +261,24 @@ window.Hub = {
   },
 
   openModule: function(id, push = true) {
-    const mod = this.modules.get(id);
-    if (!mod) return this.showHome();
-    this.cleanup();
+    const mod = Hub.modules.get(id);
+    if (!mod) return Hub.showHome();
+    Hub.cleanup();
     document.getElementById("view-home").classList.add("hidden");
     document.getElementById("view-settings").classList.remove("active");
     document.getElementById("view-module").classList.add("active");
     document.getElementById("app-title").textContent = mod.title.toUpperCase();
     document.getElementById("fab-add").classList.add("hidden");
     
-    this.activeModule = mod;
-    this.activeAbort = new AbortController();
+    Hub.activeModule = mod;
+    Hub.activeAbort = new AbortController();
     if (push) history.pushState({ view: "module", id }, "", `#${id}`);
-    mod.mount(document.getElementById("view-module"), this.activeAbort.signal);
+    mod.mount(document.getElementById("view-module"), Hub.activeAbort.signal);
     window.scrollTo(0, 0);
   },
 
   openSettings: async function(push = true) {
-    this.cleanup();
+    Hub.cleanup();
     document.getElementById("drawer").classList.remove("open");
     document.getElementById("drawer-overlay").classList.remove("open");
     document.getElementById("view-home").classList.add("hidden");
@@ -292,59 +288,67 @@ window.Hub = {
     document.getElementById("fab-add").classList.add("hidden");
     if (push) history.pushState({ view: "settings" }, "", `#settings`);
     
-    const style = await this.db.get("menu_style", "bottom");
+    const style = await Hub.db.get("menu_style", "bottom");
     const btnBottom = document.getElementById("opt-bottom");
     const btnDropdown = document.getElementById("opt-dropdown");
     
     if (style === "bottom") { btnBottom.classList.add("active"); btnDropdown.classList.remove("active"); }
     else { btnDropdown.classList.add("active"); btnBottom.classList.remove("active"); }
     
-    btnBottom.onclick = () => { this.db.set("menu_style", "bottom"); btnBottom.classList.add("active"); btnDropdown.classList.remove("active"); };
-    btnDropdown.onclick = () => { this.db.set("menu_style", "dropdown"); btnDropdown.classList.add("active"); btnBottom.classList.remove("active"); };
+    btnBottom.onclick = () => { Hub.db.set("menu_style", "bottom"); btnBottom.classList.add("active"); btnDropdown.classList.remove("active"); };
+    btnDropdown.onclick = () => { Hub.db.set("menu_style", "dropdown"); btnDropdown.classList.add("active"); btnBottom.classList.remove("active"); };
   }
 };
 
-async function loadModulesFromManifest() {
-  try {
-    const response = await fetch('./modules.json?t=' + Date.now());
-    if (!response.ok) throw new Error("Brak manifestu");
-    const modulesList = await response.json();
-    if (!modulesList || modulesList.length === 0) { document.getElementById("modules-grid").innerHTML = `<div class="empty-state">Brak modułów.</div>`; return; }
-    
-    modulesList.forEach(mod => {
-      const script = document.createElement("script");
+// Podpinanie zdarzeń do interfejsu
+document.getElementById("set-back").addEventListener("click", () => history.back());
+document.getElementById("fab-add").addEventListener("click", () => showToast("Wgraj plik do folderu modules i dopisz go do modules.json"));
+document.getElementById("menu-btn").addEventListener("click", () => {
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("drawer-overlay").classList.add("open");
+});
+document.getElementById("drawer-overlay").addEventListener("click", () => {
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("drawer-overlay").classList.remove("open");
+});
+
+window.addEventListener("popstate", () => {
+  const hash = location.hash.replace(/^#/, "");
+  if (hash === "settings") Hub.openSettings(false);
+  else if (hash && Hub.modules.has(hash)) Hub.openModule(hash, false);
+  else Hub.showHome(false);
+});
+
+// Ładowanie modułów (identyczne jak w wersji 40-liniowej, która zadziałała)
+fetch('./modules.json?t=' + Date.now())
+  .then(res => res.json())
+  .then(list => {
+    list.forEach(mod => {
+      const script = document.createElement('script');
       script.src = mod.file;
-      script.onerror = () => console.error("Nie załadowano: " + mod.file);
       document.body.appendChild(script);
     });
-  } catch (err) {
-    document.getElementById("modules-grid").innerHTML = `<div class="empty-state">Błąd: Brak pliku modules.json.</div>`;
-  }
+  })
+  .catch(err => {
+    document.getElementById('modules-grid').innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd wczytywania modules.json</div>';
+  });
+
+const initHash = location.hash.replace(/^#/, "");
+if (initHash === "settings") Hub.openSettings(false);
+else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").then(reg => {
+      reg.addEventListener("updatefound", () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener("statechange", () => { if (newWorker.state === "installed" && navigator.serviceWorker.controller) { newWorker.postMessage({ type: "SKIP_WAITING" }); } });
+      });
+    });
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (!refreshing) { refreshing = true; window.location.reload(); } });
+  });
 }
-
-// Uruchomienie po pełnym załadowaniu DOM
-window.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("set-back").addEventListener("click", () => history.back());
-  document.getElementById("fab-add").addEventListener("click", () => showToast("Wgraj plik do folderu modules i dopisz go do modules.json"));
-  
-  document.getElementById("menu-btn").addEventListener("click", () => {
-    document.getElementById("drawer").classList.add("open");
-    document.getElementById("drawer-overlay").classList.add("open");
-  });
-  
-  document.getElementById("drawer-overlay").addEventListener("click", () => {
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
-  });
-
-  window.addEventListener("popstate", () => {
-    const hash = location.hash.replace(/^#/, "");
-    if (hash === "settings") Hub.openSettings(false);
-    else if (hash && Hub.modules.has(hash)) Hub.openModule(hash, false);
-    else Hub.showHome(false);
-  });
-
-  loadModulesFromManifest();
-  
-  const initHash = location.hash.replace(/^#/, "");
-  if (initHash === "settings") Hub.o
+</script>
+</body>
+</html>
