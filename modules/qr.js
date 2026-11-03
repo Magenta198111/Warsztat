@@ -309,14 +309,14 @@
           
           .qr-divider-line { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
-          .qr-canvas-box { display: flex; justify-content: center; align-items: center; min-height: 150px; transition: all 0.3s ease; }
+          .qr-canvas-box { display: flex; justify-content: center; align-items: center; min-height: 150px; transition: all 0.3s ease; position: relative; }
           .qr-canvas-box.has-canvas { 
             background: #ffffff; 
-            padding: 8px; /* Zmniejszony biały margines o 50% */
+            padding: 8px; 
             border-radius: 8px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
             min-height: auto; 
-            width: 40%; /* Zmniejszony rozmiar o 50% */
+            width: 40%; 
             margin: 0 auto; 
             cursor: pointer; 
           }
@@ -326,7 +326,7 @@
             background: #ffffff; z-index: 9999;
             padding: 24px; margin: 0; border-radius: 0;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: none; cursor: pointer;
+            box-shadow: none;
           }
           .qr-canvas-box.fullscreen canvas {
             max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;
@@ -335,6 +335,14 @@
           .qr-canvas-box.has-canvas .qr-placeholder { display: none; }
           .qr-canvas-box canvas { display: none; max-width: 100%; height: auto; }
           .qr-canvas-box.has-canvas canvas { display: block; }
+          
+          .qr-close-fullscreen-btn {
+            display: none; position: absolute; top: 20px; right: 20px;
+            background: rgba(0,0,0,0.1); border: none; border-radius: 50%;
+            width: 48px; height: 48px; align-items: center; justify-content: center;
+            color: #333; cursor: pointer; z-index: 10000;
+          }
+          .qr-canvas-box.fullscreen .qr-close-fullscreen-btn { display: flex; }
           
           .qr-cam-wrapper { width: 100%; aspect-ratio: 1; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; margin-top: 8px; position: relative; }
           .qr-cam-icon { color: var(--line); }
@@ -377,6 +385,9 @@
           <div id="q-canvas-container" class="qr-canvas-box">
             <canvas id="q-canvas"></canvas>
             <div id="q-placeholder" class="qr-placeholder">Miejsce na kod QR</div>
+            <button id="q-close-fullscreen-btn" class="qr-close-fullscreen-btn">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
           </div>
           
           <div class="qr-divider-line"></div>
@@ -431,13 +442,19 @@
       const resultBox = $("q-scan-result");
       const resultText = $("q-scan-result-text");
       const copyBtn = $("q-scan-copy-btn");
+      const closeFullscreenBtn = $("q-close-fullscreen-btn");
       
       $("q-back").addEventListener("click", () => history.back(), { signal });
 
-      canvasContainer.addEventListener("click", () => {
-        if (canvasContainer.classList.contains("has-canvas")) {
+      canvasContainer.addEventListener("click", (e) => {
+        if (canvasContainer.classList.contains("has-canvas") && !e.target.closest('.qr-close-fullscreen-btn')) {
           canvasContainer.classList.toggle("fullscreen");
         }
+      }, { signal });
+
+      closeFullscreenBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        canvasContainer.classList.remove("fullscreen");
       }, { signal });
 
       function resetScanUI() {
@@ -580,37 +597,7 @@
           videoEl.classList.add("active");
           camPlaceholder.style.display = "none";
 
-          if ('BarcodeDetector' in window) {
-            const detector = new BarcodeDetector({ formats: ['qr_code'] });
-            scanInterval = setInterval(async () => {
-              try {
-                const codes = await detector.detect(videoEl);
-                if (codes.length > 0 && codes[0].rawValue) {
-                  showResult(codes[0].rawValue);
-                }
-              } catch (e) {}
-            }, 500);
-          } else {
-            status.textContent = "Brak wsparcia. Użyj opcji wgrania zdjęcia.";
-            stopCamera();
-            toggleBtn.textContent = "Uruchom kamerę";
-            resetScanUI();
-          }
-        } catch (e) {
-          status.textContent = "Błąd dostępu do kamery.";
-          toggleBtn.textContent = "Uruchom kamerę";
-        }
-      }, { signal });
-
-      scanFileBtn.addEventListener("click", () => scanFileInput.click(), { signal });
-
-      scanFileInput.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        scanFileName.textContent = file.name;
-
-        if (!('BarcodeDetector' in window)) {
+          if (!('BarcodeDetector' in window)) {
           return showToast("Twoja przeglądarka nie obsługuje odczytu kodów ze zdjęć.");
         }
 
