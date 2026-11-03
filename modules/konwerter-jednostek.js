@@ -117,7 +117,7 @@
           .uc-input-container {
             display: flex; flex-direction: column; align-items: center;
             padding: 20px 0 32px 0; border-bottom: 1px solid var(--line);
-            margin-bottom: 24px;
+            margin-bottom: 24px; overflow: hidden; /* Zapobiega rozpychaniu */
           }
           
           .uc-big-input {
@@ -126,7 +126,10 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
             text-align: center; outline: none; padding: 0;
             letter-spacing: -0.03em;
+            overflow-x: auto; white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
           }
+          .uc-big-input::-webkit-scrollbar { display: none; }
           .uc-big-input::-webkit-outer-spin-button,
           .uc-big-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
           
@@ -139,16 +142,28 @@
           .uc-select-trigger:active { background: rgba(129, 140, 248, 0.1); }
           
           .uc-list { display: flex; flex-direction: column; }
-          .uc-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+          .uc-row { 
+            display: flex; justify-content: space-between; align-items: flex-start; 
+            gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); 
+            font-size: 15px; 
+          }
           .uc-row:last-child { border-bottom: none; }
-          .uc-row-name { color: var(--muted); font-weight: 500; }
           
-          .uc-row-val-container { display: flex; align-items: center; gap: 12px; }
-          .uc-row-val { color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; }
+          .uc-row-name { color: var(--muted); font-weight: 500; flex-shrink: 0; }
+          
+          .uc-row-val-container { 
+            display: flex; align-items: flex-start; justify-content: flex-end; 
+            gap: 8px; flex: 1; 
+          }
+          
+          .uc-row-val { 
+            color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; 
+            text-align: right; word-break: break-all; 
+          }
           
           .uc-copy-btn {
-            background: transparent; border: none; padding: 4px; margin: 0;
-            color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+            background: transparent; border: none; padding: 2px 0 0 0; margin: 0;
+            color: var(--muted); cursor: pointer; display: flex; align-items: flex-start; justify-content: center;
             transition: color 0.2s, transform 0.1s;
           }
           .uc-copy-btn:active { transform: scale(0.9); }
@@ -231,7 +246,16 @@
       function formatNumber(num, raw = false) {
         if (num === 0) return "0";
         if (isNaN(num)) return "";
-        let str = Number(num.toPrecision(7)).toLocaleString('pl-PL', { maximumFractionDigits: 6 });
+        
+        let str;
+        if (Math.abs(num) >= 1e15) {
+          str = num.toExponential(4);
+        } else {
+          str = num.toLocaleString('pl-PL', { maximumFractionDigits: 6 });
+        }
+        
+        str = str.replace(/\u00A0/g, ' '); // Zamiana twardej spacji na zwykłą
+        
         if (raw) return str;
         return str.replace(/,/g, '<span style="color: var(--accent);">,</span>');
       }
@@ -270,7 +294,6 @@
         });
       }
 
-      // Obsługa kopiowania (delegacja zdarzeń)
       allList.addEventListener("click", (e) => {
         const btn = e.target.closest(".uc-copy-btn");
         if (!btn) return;
