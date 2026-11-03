@@ -16,5 +16,8 @@
   },
   {
     "file": "./modules/zdjecie-dokument.js"
+  },
+  {
+    "file": "./modules/kalkulator-prog.js"
   }
 ]
