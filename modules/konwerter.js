@@ -24,46 +24,44 @@
       } catch (e) {}
 
       container.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-          <button id="c-back" style="width:auto; padding:10px 16px; border-radius:14px;">Wróć</button>
-          <h2 style="margin:0; font-size:18px;">Konwerter Zdjęć</h2>
-          <div style="width:68px;"></div>
+        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
+          <button id="c-back" style="width:auto; padding:10px 16px; border-radius:6px; margin:0; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-weight:500;">Wróć</button>
         </div>
 
-        <div class="card">
-          <label>Zdjęcie źródłowe</label>
-          <div style="display:flex; align-items:center; gap:10px; border:1.5px dashed var(--line); padding:10px; border-radius:14px; background:var(--bg);">
+        <div class="card" style="padding:16px;">
+          <label style="margin-top:0;">Zdjęcie źródłowe</label>
+          <div style="display:flex; align-items:center; gap:10px; border:1px dashed var(--line); padding:10px; border-radius:6px; background:var(--bg);">
             <input type="file" id="c-file" accept="image/*" style="display:none;">
-            <button id="c-file-btn" style="width:auto; padding:10px 16px; font-weight:600;">Wybierz plik</button>
+            <button id="c-file-btn" style="width:auto; padding:10px 16px; font-weight:500; background:var(--surface); border:1px solid var(--line); border-radius:6px; color:var(--ink);">Wybierz plik</button>
             <span id="c-file-name" style="color:var(--muted); font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Nie wybrano pliku</span>
           </div>
 
           <label>Format docelowy</label>
-          <select id="c-fmt">
+          <select id="c-fmt" style="width:100%; padding:12px; border-radius:6px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font:inherit;">
             <option value="image/webp">WebP (najmniejszy rozmiar)</option>
             <option value="image/jpeg">JPEG (standard)</option>
             <option value="image/png">PNG (bezstratny)</option>
           </select>
 
           <label id="c-qual-label">Jakość (JPEG i WebP): ${savedQual}%</label>
-          <input type="range" id="c-qual" min="10" max="100" value="${savedQual}">
+          <input type="range" id="c-qual" min="10" max="100" value="${savedQual}" style="width:100%; accent-color:var(--ink); margin:12px 0;">
 
-          <button class="p" id="c-btn">Konwertuj zdjęcie</button>
+          <button class="p" id="c-btn" style="width:100%; padding:12px; border-radius:6px; background:var(--ink); color:var(--bg); border:1px solid var(--ink); font-weight:600; margin-top:14px;">Konwertuj zdjęcie</button>
           
-          <div class="i hidden" id="c-stats" style="margin-top:14px;"></div>
+          <div class="i hidden" id="c-stats" style="margin-top:14px; font-family:monospace;"></div>
 
           <div id="c-preview-container" class="hidden" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;">
             <div>
               <div style="font-size:12px; color:var(--muted); margin-bottom:6px; text-align:center;">Przed</div>
-              <img id="c-img-before" style="width:100%; border-radius:12px; border:1.5px solid var(--line); display:block; object-fit:cover;">
+              <img id="c-img-before" style="width:100%; border-radius:6px; border:1px solid var(--line); display:block; object-fit:cover;">
             </div>
             <div>
               <div style="font-size:12px; color:var(--muted); margin-bottom:6px; text-align:center;">Po</div>
-              <img id="c-img-after" style="width:100%; border-radius:12px; border:1.5px solid var(--line); display:block; object-fit:cover;">
+              <img id="c-img-after" style="width:100%; border-radius:6px; border:1px solid var(--line); display:block; object-fit:cover;">
             </div>
           </div>
 
-          <a class="btn-dl hidden" id="c-dl" style="display:block; text-align:center; margin-top:14px; text-decoration:none; background:var(--accent); border:1.5px solid var(--accent); padding:14px; border-radius:14px; color:var(--accent-ink); font-weight:600;">⬇️ Pobierz</a>
+          <a class="btn-dl hidden" id="c-dl" style="display:block; text-align:center; margin-top:14px; text-decoration:none; background:var(--accent); border:1px solid var(--accent); padding:14px; border-radius:6px; color:var(--accent-ink); font-weight:600;">⬇️ Pobierz</a>
         </div>
       `;
 
@@ -84,9 +82,7 @@
       fmtSelect.value = savedFmt;
       let currentFile = null;
 
-      $("c-back").addEventListener("click", () => {
-        history.back();
-      }, { signal });
+      $("c-back").addEventListener("click", () => history.back(), { signal });
 
       fileBtn.addEventListener("click", () => fileInput.click(), { signal });
 
