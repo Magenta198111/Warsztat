@@ -194,70 +194,29 @@
     async mount(container, signal) {
       container.innerHTML = `
         <style>
-          /* Wymuszamy ukrywanie bezpośrednio w module, żeby uniknąć błędów */
           .hidden { display: none !important; }
-
-          .qr-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
-          .qr-tab { 
-            padding: 12px 0; font-size: 14px; font-weight: 600; color: var(--muted); 
-            cursor: pointer; position: relative; transition: color 0.2s;
-          }
-          .qr-tab.active { color: var(--ink); }
-          .qr-tab.active::after { 
-            content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; 
-            background: var(--accent); border-radius: 2px 2px 0 0;
-          }
-          
+          .qr-tabs-container { display: flex; gap: 8px; margin-bottom: 24px; }
+          .qr-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 6px; font-size: 14px; font-weight: 500; background: var(--surface); border: 1px solid var(--line); color: var(--muted); cursor: pointer; transition: all 0.2s; }
+          .qr-tab svg { width: 18px; height: 18px; }
+          .qr-tab.active { background: var(--bg); border-color: var(--accent); color: var(--accent); font-weight: 600; }
           .qr-input-wrapper { margin-bottom: 24px; }
           .qr-input-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
-          .qr-input { 
-            width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); 
-            color: var(--ink); font-size: 20px; padding: 12px 0; outline: none; 
-            text-align: center; transition: border-color 0.2s;
-          }
+          .qr-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 20px; padding: 12px 0; outline: none; text-align: center; transition: border-color 0.2s; }
           .qr-input:focus { border-bottom-color: var(--accent); }
           .qr-input::placeholder { color: var(--line); font-size: 16px; }
-          
-          .qr-btn { 
-            width: 100%; padding: 14px; border-radius: 6px; font-weight: 600; font-size: 15px; 
-            cursor: pointer; text-align: center; display: block; margin-top: 16px;
-            background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent);
-            transition: opacity 0.2s;
-          }
+          .qr-btn { width: 100%; padding: 12px; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer; text-align: center; display: block; margin-top: 16px; background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); transition: opacity 0.2s; }
           .qr-btn:active { opacity: 0.8; }
-          .qr-btn-dark {
-            background: transparent; color: var(--ink); border: 1px solid var(--line);
-          }
-          
-          .qr-canvas-box {
-            display: flex; justify-content: center; margin-top: 24px;
-            background: #ffffff; padding: 16px; border-radius: 8px; display: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-          }
+          .qr-btn-dark { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+          .qr-canvas-box { display: flex; justify-content: center; margin-top: 24px; background: #ffffff; padding: 16px; border-radius: 8px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
           .qr-canvas-box canvas { max-width: 100%; display: block; }
-          
-          .qr-cam-wrapper {
-            width: 100%; aspect-ratio: 1; background: var(--surface); 
-            border-radius: 8px; overflow: hidden; border: 1px solid var(--line);
-            display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
-            margin-top: 8px; position: relative;
-          }
+          .qr-cam-wrapper { width: 100%; aspect-ratio: 1; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; margin-top: 8px; position: relative; }
           .qr-cam-icon { color: var(--line); }
           .qr-cam-text { color: var(--muted); font-size: 13px; font-weight: 500; }
-          
           .qr-cam-wrapper video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
           .qr-cam-wrapper video.active { display: block; }
-          
-          .qr-cam-overlay {
-            position: absolute; inset: 15%; border: 2px solid var(--accent); border-radius: 12px; pointer-events: none; display: none;
-          }
+          .qr-cam-overlay { position: absolute; inset: 15%; border: 2px solid var(--accent); border-radius: 12px; pointer-events: none; display: none; }
           .qr-cam-overlay.active { display: block; }
-          
-          .qr-status { 
-            text-align: center; color: var(--muted); font-size: 12px; font-family: monospace; 
-            margin-top: 16px; min-height: 18px; word-break: break-all; line-height: 1.4;
-          }
-          
+          .qr-status { text-align: center; color: var(--muted); font-size: 12px; font-family: monospace; margin-top: 16px; min-height: 18px; word-break: break-all; line-height: 1.4; }
           .qr-divider { text-align: center; color: var(--line); font-size: 11px; font-weight: 600; margin: 24px 0; letter-spacing: 1px; }
         </style>
 
@@ -267,9 +226,15 @@
           </button>
         </div>
 
-        <div class="qr-tabs">
-          <div id="tab-gen" class="qr-tab active">Generator</div>
-          <div id="tab-scan" class="qr-tab">Skaner</div>
+        <div class="qr-tabs-container">
+          <div id="tab-gen" class="qr-tab active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            Generator
+          </div>
+          <div id="tab-scan" class="qr-tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            Skaner
+          </div>
         </div>
 
         <div id="view-gen">
@@ -283,7 +248,7 @@
           <div id="q-canvas-container" class="qr-canvas-box">
             <canvas id="q-canvas"></canvas>
           </div>
-          <button id="q-dl" class="qr-btn hidden" style="margin-top: 20px;">Pobierz kod QR</button>
+          <button id="q-dl" class="qr-btn qr-btn-dark hidden" style="margin-top: 20px;">Pobierz kod QR</button>
         </div>
 
         <div id="view-scan" class="hidden">
@@ -308,7 +273,6 @@
           <div id="q-scan-file-name" style="font-size:12px; color:var(--muted); margin-top:12px; text-align:center; word-break:break-all;"></div>
         </div>
       `;
-
       const $ = id => container.querySelector("#" + id);
       const tabGen = $("tab-gen"), tabScan = $("tab-scan");
       const viewGen = $("view-gen"), viewScan = $("view-scan");
