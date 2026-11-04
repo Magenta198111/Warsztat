@@ -9,312 +9,281 @@
   Hub.register({
     id: "konwerter",
     title: "Konwerter Zdjęć",
-    desc: "Kompresja i zmiana formatu na WebP, JPEG lub PNG",
+    desc: "Kompresja, zmiana formatu i rozmiaru zdjęć",
 
     async mount(container, signal) {
       let savedFmt = "image/jpeg";
       let savedQual = 85;
-      let menuStyle = "bottom";
+      let savedResizeMode = "orig";
       
       try {
         savedFmt = await Hub.db.get("conv_fmt", "image/jpeg");
         savedQual = await Hub.db.get("conv_qual", 85);
-        menuStyle = await Hub.db.get("menu_style", "bottom");
+        savedResizeMode = await Hub.db.get("conv_resize", "orig");
       } catch (e) {}
 
       const formatNames = {
-        "image/webp": "WebP (najmniejszy rozmiar)",
+        "image/webp": "WebP (najmniejszy)",
         "image/jpeg": "JPEG (standard)",
         "image/png": "PNG (bezstratny)"
       };
 
-      let selectorHtml = "";
-      if (menuStyle === "bottom") {
-        selectorHtml = `
-          <div id="c-select-trigger" class="n-custom-select">
-            <span id="c-select-text">${formatNames[savedFmt]}</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div id="c-modal" class="n-modal-overlay bottom-mode">
-            <div class="n-modal-sheet">
-              <div class="n-modal-title">Wybierz format</div>
-              <div class="n-option" data-value="image/webp"><span>WebP (najmniejszy rozmiar)</span><span class="check">✓</span></div>
-              <div class="n-option" data-value="image/jpeg"><span>JPEG (standard)</span><span class="check">✓</span></div>
-              <div class="n-option" data-value="image/png"><span>PNG (bezstratny)</span><span class="check">✓</span></div>
-            </div>
-          </div>
-        `;
-      } else {
-        selectorHtml = `
-          <div style="position: relative;">
-            <div id="c-select-trigger" class="n-custom-select">
-              <span id="c-select-text">${formatNames[savedFmt]}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </div>
-            <div id="c-dropdown" class="n-dropdown">
-              <div class="n-dropdown-item" data-value="image/webp">WebP (najmniejszy rozmiar)</div>
-              <div class="n-dropdown-item" data-value="image/jpeg">JPEG (standard)</div>
-              <div class="n-dropdown-item" data-value="image/png">PNG (bezstratny)</div>
-            </div>
-          </div>
-        `;
-      }
+      const resizeNames = {
+        "orig": "Oryginalny rozmiar",
+        "1080p": "Maks. 1920 px (Full HD)",
+        "720p": "Maks. 1280 px (HD)",
+        "50%": "50% szerokości",
+        "25%": "25% szerokości"
+      };
 
       container.innerHTML = `
         <style>
           .hidden { display: none !important; }
+          .c-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 0; }
+          .c-trigger { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; color: var(--ink); font-size: 15px; cursor: pointer; user-select: none; margin-bottom: 20px; }
+          .c-trigger:active { background: var(--surface-hover); }
+          .c-trigger svg { color: var(--muted); }
           
-          .n-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 0; }
+          .c-range { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; outline: none; margin: 20px 0 10px 0; width: 100%; background: linear-gradient(to right, var(--accent) var(--percent, 85%), var(--line) var(--percent, 85%)); touch-action: pan-y; }
+          .c-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.4); margin-top: -2px; transition: transform 0.1s, box-shadow 0.1s; }
+          .c-range:active::-webkit-slider-thumb { transform: scale(1.15); box-shadow: 0 6px 12px rgba(0,0,0,0.6); }
           
-          .n-custom-select { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; color: var(--ink); font-size: 15px; cursor: pointer; user-select: none; }
-          .n-custom-select:active { background: var(--surface-hover); }
-          .n-custom-select svg { color: var(--muted); transition: transform 0.2s; }
-          .n-custom-select.open svg { transform: rotate(180deg); }
+          .c-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
+          .c-file-name { font-size: 13px; color: var(--muted); margin-top: 8px; text-align: center; word-break: break-all; min-height: 18px; }
+          .c-stats { font-family: monospace; text-align: center; font-size: 13px; line-height: 1.6; margin-bottom: 20px; color: var(--ink); }
+          .c-stats span { color: var(--accent); font-weight: bold; }
           
-          .n-dropdown { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); z-index: 100; overflow: hidden; opacity: 0; transform: translateY(-5px); pointer-events: none; transition: opacity 0.15s, transform 0.15s; }
-          .n-dropdown.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
-          .n-dropdown-item { padding: 14px 16px; font-size: 14px; color: var(--ink); display: flex; align-items: center; cursor: pointer; border-bottom: 1px solid var(--line); }
-          .n-dropdown-item:last-child { border-bottom: none; }
-          .n-dropdown-item:active { background: var(--surface-hover); }
-          .n-dropdown-item.active { color: var(--accent); font-weight: 600; background: rgba(129, 140, 248, 0.05); }
+          .c-preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+          .c-preview-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; text-align: center; }
+          .c-preview-img { width: 100%; border-radius: 6px; border: 1px solid var(--line); display: block; object-fit: cover; max-height: 200px; background: var(--surface); }
           
-          .n-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-          .n-modal-overlay.open { opacity: 1; pointer-events: auto; }
-          .n-modal-sheet { background: var(--surface); width: 100%; max-width: 600px; border: 1px solid var(--line); padding: 24px 16px; }
-          .n-modal-overlay.bottom-mode { align-items: flex-end; }
-          .n-modal-overlay.bottom-mode .n-modal-sheet { border-top-left-radius: 16px; border-top-right-radius: 16px; border-bottom: none; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); max-height: 80vh; overflow-y: auto; }
-          .n-modal-overlay.bottom-mode.open .n-modal-sheet { transform: translateY(0); }
-          .n-modal-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 16px; letter-spacing: 0.5px; }
-          .n-option { padding: 16px; border-radius: 6px; margin-bottom: 4px; font-size: 15px; color: var(--ink); display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: var(--bg); }
-          .n-option:active { background: var(--line); }
-          .n-option.active { color: var(--accent); font-weight: 600; }
-          .n-option .check { opacity: 0; color: var(--accent); }
-          .n-option.active .check { opacity: 1; }
-
-          /* Ulepszony suwak z wypełnieniem i pionowym offsetem */
-          .n-range { 
-            -webkit-appearance: none; 
-            appearance: none; 
-            height: 6px; 
-            border-radius: 3px; 
-            outline: none; 
-            margin: 20px 0; 
-            width: 100%; 
-            background: linear-gradient(to right, var(--accent) var(--percent, 50%), var(--line) var(--percent, 50%));
-            touch-action: pan-y; /* Zapobiega przewijaniu strony podczas przesuwania w poziomie */
-          }
-          .n-range::-webkit-slider-thumb { 
-            -webkit-appearance: none; 
-            appearance: none; 
-            width: 22px; 
-            height: 22px; 
-            border-radius: 50%; 
-            background: var(--accent); 
-            cursor: pointer; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-            margin-top: -2px; /* Lekki offset pionowy (uniesienie) */
-            transition: transform 0.1s, box-shadow 0.1s;
-          }
-          .n-range:active::-webkit-slider-thumb {
-            transform: scale(1.15);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.6);
-          }
-          
-          .n-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 500; font-size: 15px; cursor: pointer; text-align: center; display: block; margin-top: 16px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); transition: background 0.2s; outline: none; -webkit-tap-highlight-color: transparent; }
-          .n-btn:active { background: var(--surface-hover); }
-          .n-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-          
-          .n-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
-          
-          .n-file-name { font-size: 13px; color: var(--muted); margin-top: 8px; text-align: center; word-break: break-all; }
-          .n-stats { font-family: monospace; text-align: center; font-size: 13px; line-height: 1.6; margin-bottom: 24px; }
-          .n-preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-          .n-preview-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; text-align: center; }
-          .n-preview-img { width: 100%; border-radius: 6px; border: 1px solid var(--line); display: block; object-fit: cover; }
+          .c-drop-zone { border: 2px dashed var(--line); border-radius: 8px; padding: 30px 20px; text-align: center; color: var(--muted); cursor: pointer; transition: border-color 0.2s; margin-bottom: 16px; }
+          .c-drop-zone:active { border-color: var(--accent); }
         </style>
 
-        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
-          <button id="c-back" style="width:auto; padding:8px 12px 8px 0; border:none; background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center; outline: none;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </button>
-        </div>
+        ${Hub.backButtonHtml}
 
         <div style="margin-bottom: 24px;">
-          <label class="n-label">Plik źródłowy</label>
+          <label class="c-label">Plik źródłowy</label>
           <input type="file" id="c-file" accept="image/*" style="display:none;">
-          <button id="c-file-btn" class="n-btn" style="margin-top: 0;">Wybierz zdjęcie</button>
-          <div id="c-file-name" class="n-file-name">Nie wybrano pliku</div>
+          <div id="c-drop-zone" class="c-drop-zone">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px; opacity:0.5;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            <div style="font-size: 14px; font-weight: 500;">Kliknij, aby wybrać zdjęcie</div>
+            <div style="font-size: 12px; margin-top: 4px; opacity: 0.7;">lub wklej ze schowka (Ctrl+V)</div>
+          </div>
+          <div id="c-file-name" class="c-file-name">Nie wybrano pliku</div>
         </div>
 
-        <div class="n-divider"></div>
+        <div class="c-divider"></div>
 
-        <div style="margin-bottom: 24px;">
-          <label class="n-label">Ustawienia konwersji</label>
-          <div style="margin-bottom: 20px;">
-            ${selectorHtml}
+        <div>
+          <label class="c-label">Format docelowy</label>
+          <div id="c-fmt-trigger" class="c-trigger">
+            <span id="c-fmt-text">${formatNames[savedFmt]}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
-          <div>
-            <span id="c-qual-label" class="n-label" style="margin-bottom:0;">Jakość: ${savedQual}%</span>
-            <input type="range" id="c-qual" min="10" max="100" value="${savedQual}" class="n-range">
+
+          <label class="c-label">Rozmiar (wymiary)</label>
+          <div id="c-resize-trigger" class="c-trigger">
+            <span id="c-resize-text">${resizeNames[savedResizeMode]}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+
+          <div id="c-qual-wrapper">
+            <span id="c-qual-label" class="c-label" style="margin-bottom:0;">Jakość: ${savedQual}%</span>
+            <input type="range" id="c-qual" min="10" max="100" value="${savedQual}" class="c-range">
           </div>
         </div>
 
-        <button id="c-btn" class="n-btn" style="margin-bottom: 24px;">Konwertuj zdjęcie</button>
+        <button id="c-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; font-size: 15px; margin-top: 16px; margin-bottom: 24px;">Konwertuj zdjęcie</button>
         
         <div id="c-result-section" class="hidden">
-          <div class="n-divider"></div>
-          <div id="c-stats" class="n-stats"></div>
-          <div class="n-preview-grid">
+          <div class="c-divider"></div>
+          <div id="c-stats" class="c-stats"></div>
+          <div class="c-preview-grid">
             <div>
-              <div class="n-preview-label">Przed</div>
-              <img id="c-img-before" class="n-preview-img">
+              <div class="c-preview-label">Przed</div>
+              <img id="c-img-before" class="c-preview-img">
             </div>
             <div>
-              <div class="n-preview-label">Po</div>
-              <img id="c-img-after" class="n-preview-img">
+              <div class="c-preview-label">Po</div>
+              <img id="c-img-after" class="c-preview-img">
             </div>
           </div>
-          <a class="n-btn" id="c-dl" style="text-decoration: none;">Pobierz plik</a>
+          <a class="n-btn n-btn-outline" id="c-dl" style="text-decoration: none; display: flex; width: 100%; padding: 14px; font-size: 15px;">Pobierz plik</a>
         </div>
       `;
+
       const $ = id => container.querySelector("#" + id);
-      const fileInput = $("c-file"), fileBtn = $("c-file-btn"), fileName = $("c-file-name");
-      const selectTrigger = $("c-select-trigger"), selectText = $("c-select-text");
-      const options = container.querySelectorAll(".n-option, .n-dropdown-item");
-      const qualInput = $("c-qual"), qualLabel = $("c-qual-label"), btnProcess = $("c-btn");
+      const fileInput = $("c-file"), dropZone = $("c-drop-zone"), fileName = $("c-file-name");
+      const fmtTrigger = $("c-fmt-trigger"), fmtText = $("c-fmt-text");
+      const resizeTrigger = $("c-resize-trigger"), resizeText = $("c-resize-text");
+      const qualWrapper = $("c-qual-wrapper"), qualInput = $("c-qual"), qualLabel = $("c-qual-label");
+      const btnProcess = $("c-btn");
       const resultSection = $("c-result-section"), statsDiv = $("c-stats"), dlBtn = $("c-dl");
       const imgBefore = $("c-img-before"), imgAfter = $("c-img-after");
 
-      let currentFmt = savedFmt, currentFile = null;
+      let currentFmt = savedFmt;
+      let currentResize = savedResizeMode;
+      let currentFile = null;
+      let currentBitmap = null;
+      let originalWidth = 0, originalHeight = 0;
 
-      // Funkcja aktualizująca wypełnienie suwaka
       function updateSliderFill(el) {
         const percent = ((el.value - el.min) / (el.max - el.min)) * 100;
         el.style.setProperty('--percent', `${percent}%`);
       }
 
-      // Inicjalizacja i nasłuchiwanie suwaka
       updateSliderFill(qualInput);
+
+      function updateQualVisibility() {
+        if (currentFmt === "image/png") qualWrapper.classList.add("hidden");
+        else qualWrapper.classList.remove("hidden");
+      }
+      updateQualVisibility();
+
       qualInput.addEventListener("input", () => {
         qualLabel.textContent = `Jakość: ${qualInput.value}%`;
         updateSliderFill(qualInput);
         Hub.db.set("conv_qual", Number(qualInput.value)).catch(()=>{});
       }, { signal });
 
-      function updateOptionStyles() {
-        options.forEach(opt => { 
-          if (opt.dataset.value === currentFmt) opt.classList.add("active"); 
-          else opt.classList.remove("active"); 
-        });
-        selectText.textContent = formatNames[currentFmt];
-      }
-      updateOptionStyles();
-
-      $("c-back").addEventListener("click", () => history.back(), { signal });
-      fileBtn.addEventListener("click", () => fileInput.click(), { signal });
-
-      if (menuStyle === "bottom") {
-        const modal = $("c-modal");
-        selectTrigger.addEventListener("click", () => modal.classList.add("open"), { signal });
-        modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); }, { signal });
+      async function handleFile(file) {
+        if (!file || !file.type.startsWith('image/')) return showToast("Wybierz prawidłowy plik graficzny.");
         
-        options.forEach(opt => {
-          opt.addEventListener("click", () => {
-            currentFmt = opt.dataset.value; 
-            updateOptionStyles();
-            Hub.db.set("conv_fmt", currentFmt).catch(()=>{});
-            modal.classList.remove("open");
-          }, { signal });
-        });
-      } else {
-        const dropdown = $("c-dropdown");
-        selectTrigger.addEventListener("click", (e) => {
-          e.stopPropagation();
-          dropdown.classList.toggle("open");
-          selectTrigger.classList.toggle("open");
-        }, { signal });
-
-        document.addEventListener("click", (e) => {
-          if (!selectTrigger.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.remove("open");
-            selectTrigger.classList.remove("open");
-          }
-        }, { signal });
-
-        options.forEach(opt => {
-          opt.addEventListener("click", () => {
-            currentFmt = opt.dataset.value; 
-            updateOptionStyles();
-            Hub.db.set("conv_fmt", currentFmt).catch(()=>{});
-            dropdown.classList.remove("open");
-            selectTrigger.classList.remove("open");
-          }, { signal });
-        });
-      }
-
-      fileInput.addEventListener("change", (e) => {
-        currentFile = e.target.files[0] || null;
+        currentFile = file;
         resultSection.classList.add("hidden");
-        
-        if (currentFile) {
-          fileName.textContent = currentFile.name;
-          fileName.style.color = "var(--ink)";
+        fileName.textContent = file.name;
+        fileName.style.color = "var(--ink)";
+
+        try {
+          currentBitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+          originalWidth = currentBitmap.width;
+          originalHeight = currentBitmap.height;
+          fileName.textContent = `${file.name} (${originalWidth}x${originalHeight} px)`;
+
           cleanupUrls();
-          const beforeUrl = URL.createObjectURL(currentFile);
+          const beforeUrl = URL.createObjectURL(file);
           activeUrls.push(beforeUrl);
           imgBefore.src = beforeUrl;
-        } else {
-          fileName.textContent = "Nie wybrano pliku";
-          fileName.style.color = "var(--muted)";
+
+          if (originalWidth > 6000 || originalHeight > 6000) {
+             showToast("Uwaga: Bardzo duże zdjęcie. Konwersja może chwilę potrwać.");
+          }
+        } catch (e) {
+          showToast("Błąd podczas odczytu zdjęcia.");
+          currentFile = null; currentBitmap = null;
+          fileName.textContent = "Błąd odczytu";
+        }
+      }
+
+      dropZone.addEventListener("click", () => fileInput.click(), { signal });
+      fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]), { signal });
+
+      document.addEventListener('paste', (e) => {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (let index in items) {
+          const item = items[index];
+          if (item.kind === 'file' && item.type.startsWith('image/')) {
+            const blob = item.getAsFile();
+            handleFile(blob);
+            break;
+          }
+        }
+      }, { signal });
+
+      fmtTrigger.addEventListener("click", async () => {
+        const opts = Object.keys(formatNames).map(k => ({ id: k, label: formatNames[k] }));
+        const choice = await Hub.showSelect({ title: "Format docelowy", options: opts, current: currentFmt, anchor: fmtTrigger, signal });
+        if (choice) {
+          currentFmt = choice;
+          fmtText.textContent = formatNames[currentFmt];
+          Hub.db.set("conv_fmt", currentFmt).catch(()=>{});
+          updateQualVisibility();
+        }
+      }, { signal });
+
+      resizeTrigger.addEventListener("click", async () => {
+        const opts = Object.keys(resizeNames).map(k => ({ id: k, label: resizeNames[k] }));
+        const choice = await Hub.showSelect({ title: "Rozmiar wyjściowy", options: opts, current: currentResize, anchor: resizeTrigger, signal });
+        if (choice) {
+          currentResize = choice;
+          resizeText.textContent = resizeNames[currentResize];
+          Hub.db.set("conv_resize", currentResize).catch(()=>{});
         }
       }, { signal });
 
       btnProcess.addEventListener("click", () => {
-        if (!currentFile) return showToast("Najpierw wybierz zdjęcie!");
+        if (!currentBitmap) return showToast("Najpierw wybierz zdjęcie!");
         
         btnProcess.disabled = true;
         btnProcess.textContent = "Przetwarzanie...";
 
-        const img = new Image();
-        const srcUrl = URL.createObjectURL(currentFile);
+        setTimeout(() => {
+          try {
+            let tWidth = originalWidth, tHeight = originalHeight;
+            
+            if (currentResize === "1080p" && originalWidth > 1920) {
+              tWidth = 1920; tHeight = Math.round((tWidth / originalWidth) * originalHeight);
+            } else if (currentResize === "720p" && originalWidth > 1280) {
+              tWidth = 1280; tHeight = Math.round((tWidth / originalWidth) * originalHeight);
+            } else if (currentResize === "50%") {
+              tWidth = Math.round(originalWidth * 0.5); tHeight = Math.round(originalHeight * 0.5);
+            } else if (currentResize === "25%") {
+              tWidth = Math.round(originalWidth * 0.25); tHeight = Math.round(originalHeight * 0.25);
+            }
 
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
-          const ctx = canvas.getContext("2d");
+            const canvas = document.createElement("canvas");
+            canvas.width = tWidth; canvas.height = tHeight;
+            const ctx = canvas.getContext("2d");
 
-          if (currentFmt === "image/jpeg") { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
-          
-          ctx.drawImage(img, 0, 0);
-          const quality = Number(qualInput.value) / 100;
-          
-          canvas.toBlob((blob) => {
+            if (currentFmt === "image/jpeg") { 
+              ctx.fillStyle = "#ffffff"; 
+              ctx.fillRect(0, 0, canvas.width, canvas.height); 
+            }
+            
+            ctx.drawImage(currentBitmap, 0, 0, tWidth, tHeight);
+            const quality = Number(qualInput.value) / 100;
+            
+            canvas.toBlob((blob) => {
+              btnProcess.disabled = false;
+              btnProcess.textContent = "Konwertuj zdjęcie";
+              
+              if (!blob) return showToast("Błąd: Nie udało się przetworzyć zdjęcia.");
+
+              const outUrl = URL.createObjectURL(blob); 
+              activeUrls.push(outUrl);
+              
+              const ext = currentFmt.split("/")[1];
+              const outName = currentFile.name.replace(/\.[^.]+$/, "") + "_conv." + ext;
+              
+              const diff = ((blob.size - currentFile.size) / currentFile.size * 100).toFixed(1);
+              const sign = diff > 0 ? "+" : "";
+              
+              statsDiv.innerHTML = `Wymiary: ${originalWidth}x${originalHeight} px &rarr; <span>${tWidth}x${tHeight} px</span><br>Rozmiar: ${(currentFile.size / 1024).toFixed(1)} KB &rarr; <span>${(blob.size / 1024).toFixed(1)} KB</span> (${sign}${diff}%)`;
+
+              imgAfter.src = outUrl;
+              resultSection.classList.remove("hidden");
+
+              dlBtn.href = outUrl;
+              dlBtn.download = outName;
+              dlBtn.textContent = `Pobierz ${outName}`;
+
+            }, currentFmt, quality);
+          } catch (err) {
             btnProcess.disabled = false;
             btnProcess.textContent = "Konwertuj zdjęcie";
-            if (!blob) { showToast("Błąd: Nie udało się przetworzyć zdjęcia."); return; }
-
-            const outUrl = URL.createObjectURL(blob); activeUrls.push(outUrl);
-            const ext = currentFmt.split("/")[1];
-            const outName = currentFile.name.replace(/\.[^.]+$/, "") + "_conv." + ext;
-            const diff = ((blob.size - currentFile.size) / currentFile.size * 100).toFixed(1);
-            const sign = diff > 0 ? "+" : "";
-            
-            statsDiv.innerHTML = `<b>Gotowe!</b><br>Przed: ${(currentFile.size / 1024).toFixed(1)} KB<br>Po: <b>${(blob.size / 1024).toFixed(1)} KB</b> (${sign}${diff}%)`;
-
-            imgAfter.src = outUrl;
-            resultSection.classList.remove("hidden");
-
-            dlBtn.href = outUrl;
-            dlBtn.download = outName;
-            dlBtn.textContent = `Pobierz ${outName}`;
-
-          }, currentFmt, quality);
-        };
-
-        img.onerror = () => { btnProcess.disabled = false; btnProcess.textContent = "Konwertuj zdjęcie"; showToast("Błąd: To nie jest prawidłowy plik graficzny."); };
-        img.src = srcUrl;
+            showToast("Wystąpił błąd podczas konwersji.");
+          }
+        }, 50);
       }, { signal });
     },
-    unmount() { cleanupUrls(); }
+    
+    unmount() { 
+      cleanupUrls(); 
+      if (Hub.activeAbort) {
+         // Signal listeners will be automatically removed by AbortController
+      }
+    }
   });
 })();
