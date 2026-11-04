@@ -25,15 +25,14 @@
             width: 100%; padding: 12px 0; background: transparent; border: none;
             border-bottom: 1px solid var(--line); color: var(--ink); font-size: 16px; 
             font-family: inherit; 
-            resize: vertical; /* Przywrócona rączka do zmiany rozmiaru */
+            resize: vertical; /* Rączka do ręcznej zmiany rozmiaru */
             outline: none; 
             min-height: 100px; 
-            max-height: 1200px; /* Limit ok. 50 linii */
-            overflow-y: auto; 
-            transition: border-color 0.2s; 
+            overflow-y: hidden; /* Domyślnie ukryte - brak drgań */
+            transition: border-color 0.2s, height 0.1s ease-out; 
             line-height: 1.5;
             box-sizing: border-box;
-            touch-action: pan-y; /* Pozwala na płynne przewijanie strony palcem */
+            touch-action: pan-y; /* Płynne przewijanie strony palcem */
           }
           .o-textarea:focus { border-bottom-color: var(--accent); }
           .o-textarea::placeholder { color: var(--muted); font-size: 15px; }
@@ -120,18 +119,26 @@
 
       let history = [];
 
-      // --- AUTOMATYCZNE DOPASOWANIE WYSOKOŚCI ---
+      // --- INTELIGENTNE DOPASOWANIE WYSOKOŚCI (Z LIMITEM) ---
       function autoResize(el) {
         if (!el) return;
-        // Zapisujemy obecną wysokość (jeśli użytkownik ją ręcznie zmienił)
-        const currentHeight = el.style.height;
-        el.style.height = 'auto';
-        // Ustawiamy nową wysokość, ale nie większą niż max-height
-        const newHeight = Math.min(el.scrollHeight, 1200);
-        el.style.height = newHeight + 'px';
+        
+        // Obliczamy limit dla 51 linii: 51 * 24px (wysokość linii) + 24px (padding)
+        const maxHeight = 1248; 
+        
+        el.style.height = 'auto'; // Resetujemy, aby zmierzyć zawartość
+        
+        if (el.scrollHeight > maxHeight) {
+          // Przekroczono limit - zatrzymujemy wzrost i włączamy przewijanie
+          el.style.height = maxHeight + 'px';
+          el.style.overflowY = 'auto';
+        } else {
+          // Mieści się w limicie - rośnie do rozmiaru tekstu + 1 linijka zapasu (24px)
+          el.style.height = (el.scrollHeight + 24) + 'px';
+          el.style.overflowY = 'hidden'; // Brak paska przewijania = brak drgań
+        }
       }
 
-      // Inicjalne dopasowanie obu pól
       setTimeout(() => { autoResize(inputEl); autoResize(outputEl); }, 50);
 
       cleanTrigger.addEventListener("click", () => {
