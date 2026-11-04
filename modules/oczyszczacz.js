@@ -18,7 +18,6 @@
         <style>
           .o-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
           
-          /* Styl płaski, bez kart - nawiązanie do Konwertera Jednostek */
           .o-flat-section { margin-bottom: 28px; }
           .o-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
@@ -41,21 +40,13 @@
           .o-trigger:active { color: var(--accent); }
           .o-trigger .icon { color: var(--muted); font-family: monospace; font-size: 20px; font-weight: 300; line-height: 1; }
           
-          /* Akordeon */
           .o-accordion { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
           .o-accordion.open { max-height: 400px; }
           
-          /* Wiersze opcji (jak w Konwerterze) */
           .o-option-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line); }
           .o-option-row:last-child { border-bottom: none; }
           .o-option-title { font-size: 15px; font-weight: 500; color: var(--ink); }
           .o-option-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
-
-          /* Narzędzia listy */
-          .o-tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-          .o-tool-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
-          .o-tool-btn:active { background: var(--surface-hover); }
-          .o-tool-btn svg { width: 18px; height: 18px; stroke: var(--muted); }
           
           .o-stats { display: flex; justify-content: space-between; font-family: monospace; font-size: 13px; color: var(--muted); padding: 16px 0 0 0; }
           .o-action-row { display: flex; gap: 12px; margin-top: 16px; }
@@ -94,16 +85,6 @@
         <div class="o-divider"></div>
 
         <div class="o-flat-section">
-          <label class="o-label" style="margin-bottom: 12px;">Narzędzia listy</label>
-          <div class="o-tools-grid">
-            <button id="o-sort-btn" class="o-tool-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>Sortuj A-Z</button>
-            <button id="o-dedupe-btn" class="o-tool-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Usuń duplikaty</button>
-          </div>
-        </div>
-
-        <div class="o-divider"></div>
-
-        <div class="o-flat-section">
           <label class="o-label">Wynik (na żywo)</label>
           <textarea id="o-output" class="o-textarea o-output-textarea" readonly placeholder="Tutaj pojawi się czysty tekst..."></textarea>
           <div class="o-stats"><span id="o-stat-chars">Znaki: 0</span><span id="o-stat-words">Słowa: 0</span></div>
@@ -131,7 +112,6 @@
 
       let history = [];
 
-      // Obsługa Akordeonu
       cleanTrigger.addEventListener("click", () => {
         Hub.haptic('light');
         cleanAccordion.classList.toggle("open");
@@ -194,24 +174,6 @@
           caseText.textContent = caseNames[currentCaseMode];
           processText();
         }
-      }, { signal });
-
-      $("o-sort-btn").addEventListener("click", () => {
-        if (!inputEl.value) return;
-        Hub.haptic('light'); saveHistory();
-        const lines = inputEl.value.split(/\r?\n/).filter(l => l.trim().length > 0);
-        lines.sort((a, b) => a.localeCompare(b, 'pl', { sensitivity: 'base' }));
-        inputEl.value = lines.join("\n");
-        processText();
-      }, { signal });
-
-      $("o-dedupe-btn").addEventListener("click", () => {
-        if (!inputEl.value) return;
-        Hub.haptic('light'); saveHistory();
-        const lines = inputEl.value.split(/\r?\n/);
-        const uniqueLines = [...new Set(lines.map(l => l.trim()))].filter(l => l.length > 0);
-        inputEl.value = uniqueLines.join("\n");
-        processText();
       }, { signal });
 
       undoBtn.addEventListener("click", () => {
