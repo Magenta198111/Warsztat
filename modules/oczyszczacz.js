@@ -17,77 +17,102 @@
       container.innerHTML = `
         <style>
           .o-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
-          .o-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-          .o-textarea { width: 100%; padding: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); font-size: 15px; font-family: inherit; resize: vertical; outline: none; min-height: 120px; transition: border-color 0.2s; line-height: 1.5; margin-bottom: 16px; }
-          .o-textarea:focus { border-color: var(--accent); }
-          .o-textarea::placeholder { color: var(--muted); }
-          .o-output-textarea { color: var(--accent); font-weight: 500; margin-bottom: 0; }
           
-          .o-trigger { display: flex; justify-content: space-between; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; color: var(--ink); font-size: 15px; cursor: pointer; user-select: none; transition: background 0.2s; }
-          .o-trigger:active { background: var(--surface-hover); }
-          .o-trigger svg { color: var(--muted); transition: transform 0.3s ease; }
-          .o-trigger.open svg { transform: rotate(180deg); }
+          /* Styl płaski, bez kart - nawiązanie do Konwertera Jednostek */
+          .o-flat-section { margin-bottom: 28px; }
+          .o-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
-          /* STYL AKORDEONU (Rozwijane menu) */
-          .o-accordion { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); margin-top: 0; }
-          .o-accordion.open { max-height: 450px; margin-top: 8px; }
+          .o-textarea {
+            width: 100%; padding: 12px 0; background: transparent; border: none;
+            border-bottom: 1px solid var(--line); color: var(--ink); font-size: 16px; 
+            font-family: inherit; resize: vertical; outline: none; min-height: 100px; 
+            transition: border-color 0.2s; line-height: 1.5;
+          }
+          .o-textarea:focus { border-bottom-color: var(--accent); }
+          .o-textarea::placeholder { color: var(--muted); font-size: 15px; }
+          .o-output-textarea { color: var(--accent); font-weight: 500; }
+
+          .o-trigger { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: transparent; border: none; border-bottom: 1px solid var(--line); 
+            padding: 16px 0; color: var(--ink); font-size: 16px; font-weight: 500;
+            cursor: pointer; user-select: none; transition: color 0.2s;
+          }
+          .o-trigger:active { color: var(--accent); }
+          .o-trigger .icon { color: var(--muted); font-family: monospace; font-size: 20px; font-weight: 300; line-height: 1; }
           
-          .o-tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-          .o-tool-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+          /* Akordeon */
+          .o-accordion { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+          .o-accordion.open { max-height: 400px; }
+          
+          /* Wiersze opcji (jak w Konwerterze) */
+          .o-option-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line); }
+          .o-option-row:last-child { border-bottom: none; }
+          .o-option-title { font-size: 15px; font-weight: 500; color: var(--ink); }
+          .o-option-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+          /* Narzędzia listy */
+          .o-tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+          .o-tool-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
           .o-tool-btn:active { background: var(--surface-hover); }
-          .o-tool-btn svg { width: 20px; height: 20px; stroke: var(--muted); }
+          .o-tool-btn svg { width: 18px; height: 18px; stroke: var(--muted); }
           
-          .o-stats { display: flex; justify-content: space-between; font-family: monospace; font-size: 12px; color: var(--muted); padding: 12px 0; border-top: 1px solid var(--line); margin-top: 16px; }
-          .o-action-row { display: flex; gap: 8px; margin-top: 16px; }
+          .o-stats { display: flex; justify-content: space-between; font-family: monospace; font-size: 13px; color: var(--muted); padding: 16px 0 0 0; }
+          .o-action-row { display: flex; gap: 12px; margin-top: 16px; }
         </style>
 
         ${Hub.backButtonHtml}
 
-        <div style="margin-top: 16px;">
+        <div class="o-flat-section" style="margin-top: 16px;">
           <label class="o-label">Tekst źródłowy</label>
-          <textarea id="o-input" class="o-textarea" placeholder="Wklej tekst ze strony, PDF-a lub AI..."></textarea>
+          <textarea id="o-input" class="o-textarea" placeholder="Wklej tekst..."></textarea>
         </div>
 
-        <div class="o-card">
-          <label class="o-label" style="margin-bottom: 12px;">Wielkość liter</label>
+        <div class="o-flat-section">
+          <label class="o-label">Wielkość liter</label>
           <div id="o-case-trigger" class="o-trigger">
             <span id="o-case-text">${caseNames[currentCaseMode]}</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
         </div>
 
-        <div class="o-card">
-          <div id="o-clean-trigger" class="o-trigger" style="margin-bottom: 0;">
+        <div class="o-flat-section">
+          <div id="o-clean-trigger" class="o-trigger">
             <span>Inteligentne czyszczenie</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <span id="o-clean-icon" class="icon">+</span>
           </div>
           
           <div id="o-clean-accordion" class="o-accordion">
-            <div class="settings-row" style="padding: 12px 0; border-bottom: 1px solid var(--line);"><div style="flex: 1; padding-right: 12px;"><div class="settings-label" style="font-size: 14px;">Usuwaj linki (URL)</div></div><label class="switch"><input type="checkbox" id="o-clean-url"><span class="switch-slider"></span></label></div>
-            <div class="settings-row" style="padding: 12px 0; border-bottom: 1px solid var(--line);"><div style="flex: 1; padding-right: 12px;"><div class="settings-label" style="font-size: 14px;">Usuwaj znaki Markdown</div><div class="settings-desc">np. #, **, _, ></div></div><label class="switch"><input type="checkbox" id="o-clean-md"><span class="switch-slider"></span></label></div>
-            <div class="settings-row" style="padding: 12px 0; border-bottom: 1px solid var(--line);"><div style="flex: 1; padding-right: 12px;"><div class="settings-label" style="font-size: 14px;">Popraw spacje i interpunkcję</div><div class="settings-desc">Usuwa spacje przed . , ! ?</div></div><label class="switch"><input type="checkbox" id="o-clean-space" checked><span class="switch-slider"></span></label></div>
-            <div class="settings-row" style="padding: 12px 0; border-bottom: 1px solid var(--line);"><div style="flex: 1; padding-right: 12px;"><div class="settings-label" style="font-size: 14px;">Usuwaj nawiasy i cudzysłowy</div><div class="settings-desc">Usuwa [], {}, "", ''</div></div><label class="switch"><input type="checkbox" id="o-clean-brackets"><span class="switch-slider"></span></label></div>
-            <div class="settings-row" style="padding: 12px 0; border-bottom: none;"><div style="flex: 1; padding-right: 12px;"><div class="settings-label" style="font-size: 14px;">Zostaw jeden myślnik</div><div class="settings-desc">Zamienia -- na -, wyłącz by usunąć</div></div><label class="switch"><input type="checkbox" id="o-dash-toggle" checked><span class="switch-slider"></span></label></div>
+            <div class="o-option-row"><div><div class="o-option-title">Usuwaj linki</div><div class="o-option-desc">Usuwa adresy URL</div></div><label class="switch"><input type="checkbox" id="o-clean-url"><span class="switch-slider"></span></label></div>
+            <div class="o-option-row"><div><div class="o-option-title">Usuwaj znaki Markdown</div><div class="o-option-desc">np. #, **, _, ></div></div><label class="switch"><input type="checkbox" id="o-clean-md"><span class="switch-slider"></span></label></div>
+            <div class="o-option-row"><div><div class="o-option-title">Popraw interpunkcję</div><div class="o-option-desc">Usuwa spacje przed . , ! ?</div></div><label class="switch"><input type="checkbox" id="o-clean-space" checked><span class="switch-slider"></span></label></div>
+            <div class="o-option-row"><div><div class="o-option-title">Usuwaj nawiasy</div><div class="o-option-desc">Usuwa [], {}, "", ''</div></div><label class="switch"><input type="checkbox" id="o-clean-brackets"><span class="switch-slider"></span></label></div>
+            <div class="o-option-row"><div><div class="o-option-title">Zostaw jeden myślnik</div><div class="o-option-desc">Zamienia -- na -, wyłącz by usunąć</div></div><label class="switch"><input type="checkbox" id="o-dash-toggle" checked><span class="switch-slider"></span></label></div>
           </div>
         </div>
 
-        <div class="o-card">
-          <label class="o-label" style="margin-bottom: 12px;">Narzędzia listy (modyfikują tekst źródłowy)</label>
+        <div class="o-divider"></div>
+
+        <div class="o-flat-section">
+          <label class="o-label" style="margin-bottom: 12px;">Narzędzia listy</label>
           <div class="o-tools-grid">
             <button id="o-sort-btn" class="o-tool-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>Sortuj A-Z</button>
             <button id="o-dedupe-btn" class="o-tool-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Usuń duplikaty</button>
           </div>
         </div>
 
-        <div style="margin-top: 24px;">
+        <div class="o-divider"></div>
+
+        <div class="o-flat-section">
           <label class="o-label">Wynik (na żywo)</label>
           <textarea id="o-output" class="o-textarea o-output-textarea" readonly placeholder="Tutaj pojawi się czysty tekst..."></textarea>
           <div class="o-stats"><span id="o-stat-chars">Znaki: 0</span><span id="o-stat-words">Słowa: 0</span></div>
-          <div class="o-action-row">
-            <button id="o-undo" class="n-btn n-btn-outline" style="flex: 1; opacity: 0.4;" disabled>Cofnij</button>
-            <button id="o-clear" class="n-btn" style="flex: 1; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);">Wyczyść</button>
-            <button id="o-copy" class="n-btn n-btn-outline" style="flex: 2;">Kopiuj wynik</button>
-          </div>
+        </div>
+
+        <div class="o-action-row">
+          <button id="o-undo" class="n-btn n-btn-outline" style="flex: 1; opacity: 0.4;" disabled>Cofnij</button>
+          <button id="o-clear" class="n-btn" style="flex: 1; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);">Wyczyść</button>
+          <button id="o-copy" class="n-btn n-btn-outline" style="flex: 2;">Kopiuj wynik</button>
         </div>
       `;
 
@@ -96,7 +121,7 @@
       const outputEl = $("o-output");
       const caseTrigger = $("o-case-trigger"), caseText = $("o-case-text");
       
-      const cleanTrigger = $("o-clean-trigger"), cleanAccordion = $("o-clean-accordion");
+      const cleanTrigger = $("o-clean-trigger"), cleanAccordion = $("o-clean-accordion"), cleanIcon = $("o-clean-icon");
       const cleanUrl = $("o-clean-url"), cleanMd = $("o-clean-md"), 
             cleanSpace = $("o-clean-space"), cleanBrackets = $("o-clean-brackets"), 
             dashToggle = $("o-dash-toggle");
@@ -105,13 +130,12 @@
       const undoBtn = $("o-undo");
 
       let history = [];
-      const newLineChar = String.fromCharCode(10);
 
       // Obsługa Akordeonu
       cleanTrigger.addEventListener("click", () => {
         Hub.haptic('light');
-        cleanTrigger.classList.toggle("open");
         cleanAccordion.classList.toggle("open");
+        cleanIcon.textContent = cleanAccordion.classList.contains("open") ? "−" : "+";
       }, { signal });
 
       function saveHistory() {
@@ -177,7 +201,7 @@
         Hub.haptic('light'); saveHistory();
         const lines = inputEl.value.split(/\r?\n/).filter(l => l.trim().length > 0);
         lines.sort((a, b) => a.localeCompare(b, 'pl', { sensitivity: 'base' }));
-        inputEl.value = lines.join(newLineChar);
+        inputEl.value = lines.join("\n");
         processText();
       }, { signal });
 
@@ -186,7 +210,7 @@
         Hub.haptic('light'); saveHistory();
         const lines = inputEl.value.split(/\r?\n/);
         const uniqueLines = [...new Set(lines.map(l => l.trim()))].filter(l => l.length > 0);
-        inputEl.value = uniqueLines.join(newLineChar);
+        inputEl.value = uniqueLines.join("\n");
         processText();
       }, { signal });
 
