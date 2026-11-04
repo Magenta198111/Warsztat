@@ -70,7 +70,8 @@
           .uc-input-container { display: flex; flex-direction: column; align-items: center; padding: 20px 0 32px 0; border-bottom: 1px solid var(--line); margin-bottom: 24px; overflow: hidden; }
           .uc-big-input { width: 100%; background: transparent; border: none; color: var(--ink); font-size: 48px; font-weight: 700; text-align: center; outline: none; padding: 0; letter-spacing: -0.03em; overflow-x: auto; white-space: nowrap; }
           .uc-select-trigger { display: flex; align-items: center; gap: 6px; background: transparent; border: none; color: var(--accent); font-size: 16px; font-weight: 600; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
-          .uc-clear-btn { background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 12px; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+          .uc-clear-btn { background: var(--surface); border: 1px solid var(--line); color: var(--muted); width: 26px; height: 26px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+          .uc-clear-btn svg { width: 14px; height: 14px; }
           .uc-clear-btn:active { background: var(--surface-hover); color: var(--ink); }
           .uc-list { display: flex; flex-direction: column; }
           .uc-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
@@ -95,12 +96,14 @@
 
         <div class="uc-input-container">
           <input type="text" id="u-input" class="uc-big-input" placeholder="0" value="1" inputmode="decimal" autocomplete="off" spellcheck="false">
-          <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px;">
             <div id="u-unit-trigger" class="uc-select-trigger">
               <span id="u-unit-text">${data[currentCat].names[currentUnit]}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
-            <button type="button" id="u-clear" class="uc-clear-btn" title="Wyczyść liczbę">Wyczyść</button>
+            <button type="button" id="u-clear" class="uc-clear-btn" title="Wyczyść (ustaw 0)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
           </div>
         </div>
 
