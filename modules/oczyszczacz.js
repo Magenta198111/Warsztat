@@ -6,6 +6,7 @@
 
     async mount(container, signal) {
       let currentCaseMode = "sentence";
+      let dashMode = "leave"; // 'leave' lub 'remove'
 
       const caseNames = {
         "sentence": "Zdania (Duża po kropce)",
@@ -43,7 +44,7 @@
           .o-accordion { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
           .o-accordion.open { max-height: 800px; }
           
-          .o-option-group { border-bottom: 1px solid var(--line); }
+          .o-option-group { border-bottom: 1px solid var(--line); padding-bottom: 4px; }
           .o-option-group:last-child { border-bottom: none; }
           
           .o-option-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; }
@@ -61,10 +62,23 @@
           .o-sub-arrow.open { transform: rotate(180deg); }
           .o-sub-arrow svg { width: 16px; height: 16px; }
 
-          .o-sub-options { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 28px; border-left: 1px solid var(--line); margin-left: 8px; }
-          .o-sub-options.open { max-height: 200px; margin-bottom: 12px; }
+          /* ZMIENIONO: Usunięto border-left, dodano czyste wcięcie */
+          .o-sub-options { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 32px; }
+          .o-sub-options.open { max-height: 400px; margin-bottom: 12px; }
           .o-sub-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
           .o-sub-title { font-size: 13px; color: var(--muted); }
+
+          /* NOWY: Przycisk segmentowy (Lewo/Prawo) */
+          .o-segmented-control { 
+            display: flex; background: var(--bg); border: 1px solid var(--line); 
+            border-radius: 6px; overflow: hidden; width: 100%; margin-top: 8px; margin-bottom: 8px;
+          }
+          .o-segment { 
+            flex: 1; padding: 10px; background: transparent; border: none; 
+            color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; 
+            transition: background 0.2s, color 0.2s; outline: none;
+          }
+          .o-segment.active { background: var(--surface-hover); color: var(--accent); font-weight: 600; }
 
           .switch.partial .switch-slider { opacity: 0.6; }
           .switch.partial .switch-slider:before { opacity: 0.8; }
@@ -103,14 +117,14 @@
                   <button class="o-sub-arrow" data-target="sub-url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
                   <div class="o-option-text">
                     <div class="o-option-title">Usuwaj linki</div>
-                    <div class="o-option-desc">Usuwa adresy URL (także www.)</div>
+                    <div class="o-option-desc">Usuwa adresy internetowe</div>
                   </div>
                 </div>
                 <label class="switch" id="sw-url-group"><input type="checkbox" id="o-clean-url" data-group="url"><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-url">
-                <div class="o-sub-row"><span class="o-sub-title">Adresy URL (https://)</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url"><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Adresy WWW (www.)</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj https://</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj www.</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url"><span class="switch-slider"></span></label></div>
               </div>
             </div>
 
@@ -120,16 +134,16 @@
                 <div class="o-option-left">
                   <button class="o-sub-arrow" data-target="sub-md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
                   <div class="o-option-text">
-                    <div class="o-option-title">Znaki Markdown</div>
-                    <div class="o-option-desc">Usuwa formatowanie tekstu (#, **, >)</div>
+                    <div class="o-option-title">Usuwaj znaki Markdown</div>
+                    <div class="o-option-desc">Usuwa formatowanie tekstu</div>
                   </div>
                 </div>
                 <label class="switch" id="sw-md-group"><input type="checkbox" id="o-clean-md" data-group="md"><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-md">
-                <div class="o-sub-row"><span class="o-sub-title">Nagłówki (#)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Pogrubienie (*, _)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Cytaty (>)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj # (nagłówki)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj * i _ (pogrubienie)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj > (cytaty)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
               </div>
             </div>
 
@@ -140,51 +154,53 @@
                   <button class="o-sub-arrow" data-target="sub-space"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
                   <div class="o-option-text">
                     <div class="o-option-title">Popraw interpunkcję</div>
-                    <div class="o-option-desc">Usuwa spacje przed . , ! ?</div>
+                    <div class="o-option-desc">Usuwa spacje przed znakami</div>
                   </div>
                 </div>
                 <label class="switch" id="sw-space-group"><input type="checkbox" id="o-clean-space" data-group="space" checked><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-space">
-                <div class="o-sub-row"><span class="o-sub-title">Kropki i przecinki (. ,)</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Wykrzykniki i pytajniki (! ?)</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj spację przed . ,</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj spację przed ! ?</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
               </div>
             </div>
 
-            <!-- GRUPA 4: NAWIASY -->
+            <!-- GRUPA 4: NAWIASY I CUDZYSŁOWY -->
             <div class="o-option-group">
               <div class="o-option-row">
                 <div class="o-option-left">
                   <button class="o-sub-arrow" data-target="sub-brackets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
                   <div class="o-option-text">
-                    <div class="o-option-title">Usuwaj nawiasy</div>
+                    <div class="o-option-title">Usuwaj nawiasy i cudzysłowy</div>
                     <div class="o-option-desc">Usuwa [], {}, "", ''</div>
                   </div>
                 </div>
                 <label class="switch" id="sw-brackets-group"><input type="checkbox" id="o-clean-brackets" data-group="brackets"><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-brackets">
-                <div class="o-sub-row"><span class="o-sub-title">Kwadratowe []</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Klamrowe {}</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Cudzysłowy "" ''</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj () i []</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj klamrowe {}</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj cudzysłowy "" ''</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
               </div>
             </div>
 
-            <!-- GRUPA 5: MYŚLNIKI -->
+            <!-- GRUPA 5: MYŚLNIKI (PRZYCISK LEWO/PRAWO) -->
             <div class="o-option-group">
               <div class="o-option-row">
                 <div class="o-option-left">
                   <button class="o-sub-arrow" data-target="sub-dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
                   <div class="o-option-text">
-                    <div class="o-option-title">Zostaw jeden myślnik</div>
-                    <div class="o-option-desc">Zamienia -- na -, wyłącz by usunąć</div>
+                    <div class="o-option-title">Zamiana myślników</div>
+                    <div class="o-option-desc">Wybierz co zrobić z "--"</div>
                   </div>
                 </div>
                 <label class="switch" id="sw-dash-group"><input type="checkbox" id="o-dash-toggle" data-group="dash" checked><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-dash">
-                <div class="o-sub-row"><span class="o-sub-title">Zamień (-- na -)</span><label class="switch"><input type="checkbox" class="sub-dash-opt" data-parent="o-dash-toggle" checked><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Usuwaj (-- całkiem)</span><label class="switch"><input type="checkbox" class="sub-dash-opt" data-parent="o-dash-toggle"><span class="switch-slider"></span></label></div>
+                <div class="o-segmented-control" id="dash-segmented">
+                    <button class="o-segment active" data-val="leave">Zostaw jeden (-)</button>
+                    <button class="o-segment" data-val="remove">Usuń całkowicie</button>
+                </div>
               </div>
             </div>
 
@@ -217,8 +233,19 @@
 
       let history = [];
 
+      // --- OBSŁUGA PRZYCISKU SEGMENTOWEGO (MYŚLNIKI) ---
+      const segBtns = container.querySelectorAll('#dash-segmented .o-segment');
+      segBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          Hub.haptic('light');
+          segBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          dashMode = btn.dataset.val;
+          processText();
+        }, { signal });
+      });
+
       // --- LOGIKA SYNCHRONIZACJI SWITCHY ---
-      
       container.querySelectorAll(".o-sub-arrow").forEach(arrow => {
         arrow.addEventListener("click", () => {
           Hub.haptic('light');
@@ -233,8 +260,11 @@
         const parentInput = $(parentId);
         const parentLabel = parentInput.closest('.switch');
         const group = parentInput.dataset.group;
-        const subOpts = container.querySelectorAll(`.sub-${group}-opt`);
         
+        // Grupa "dash" ma przycisk segmentowy zamiast switchy, więc ją pomijamy
+        if (group === "dash") return;
+
+        const subOpts = container.querySelectorAll(`.sub-${group}-opt`);
         if (!subOpts || subOpts.length === 0) return;
 
         let checkedCount = 0;
@@ -268,8 +298,10 @@
           parentLabel.classList.remove('partial');
           
           const group = e.target.dataset.group;
-          const subOpts = container.querySelectorAll(`.sub-${group}-opt`);
-          subOpts.forEach(opt => { opt.checked = isChecked; });
+          if (group !== "dash") {
+            const subOpts = container.querySelectorAll(`.sub-${group}-opt`);
+            subOpts.forEach(opt => { opt.checked = isChecked; });
+          }
           
           processText();
         }, { signal });
@@ -351,17 +383,17 @@
 
           if ($("o-clean-brackets").checked) {
             const subs = container.querySelectorAll('.sub-brackets-opt');
-            if (subs[0].checked) l = l.replace(/[\[\]]/g, "");
+            if (subs[0].checked) l = l.replace(/[\[\]()]/g, "");
             if (subs[1].checked) l = l.replace(/[{}]/g, "");
             if (subs[2].checked) l = l.replace(/["']/g, "");
           }
 
           if ($("o-dash-toggle").checked) {
-            const subs = container.querySelectorAll('.sub-dash-opt');
-            if (subs[0].checked) l = l.replace(/-{2,}/g, "-");
-            if (subs[1].checked) l = l.replace(/-{2,}/g, "");
-          } else {
-            l = l.replace(/-{2,}/g, "");
+            if (dashMode === "leave") {
+              l = l.replace(/-{2,}/g, "-");
+            } else {
+              l = l.replace(/-{2,}/g, "");
+            }
           }
           
           l = l.replace(/\s+/g, " ").trim();
