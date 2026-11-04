@@ -5,8 +5,14 @@
     desc: "Błyskawiczne przeliczanie długości, masy, temperatury, objętości, prędkości, czasu i powierzchni",
 
     async mount(container, signal) {
-      let savedPrecision = 4;
-      try { savedPrecision = await Hub.db.get("unit_precision", 4); } catch(e) {}
+      let savedPrecision = 2;
+      let savedCat = "length";
+      let savedUnits = {};
+      try {
+        savedPrecision = await Hub.db.get("unit_precision", 2);
+        savedCat = await Hub.db.get("unit_last_cat", "length");
+        savedUnits = await Hub.db.get("unit_last_units", {});
+      } catch(e) {}
 
       const data = {
         length: {
@@ -53,8 +59,9 @@
         }
       };
 
-      let currentCat = 'length';
-      let currentUnit = Object.keys(data[currentCat].units)[0];
+      const unitsFor = (cat) => Array.isArray(data[cat].units) ? data[cat].units : Object.keys(data[cat].units);
+      let currentCat = data[savedCat] ? savedCat : "length";
+      let currentUnit = unitsFor(currentCat).includes(savedUnits[currentCat]) ? savedUnits[currentCat] : unitsFor(currentCat)[0];
 
       container.innerHTML = `
         <style>
@@ -71,6 +78,8 @@
           .uc-row-val { color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; text-align: right; white-space: nowrap; overflow-x: auto; max-width: 100%; }
           .uc-copy-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 2px 0 0 0; }
           .uc-copy-btn svg { width: 16px; height: 16px; }
+          .uc-clear { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 0 4px; font-size: 20px; line-height: 1; font-family: monospace; }
+          .uc-precision-box { width: 40px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); border-radius: 4px; text-align: center; padding: 4px 0; font-family: monospace; outline: none; }
         </style>
 
         ${Hub.backButtonHtml}
@@ -84,7 +93,7 @@
         </div>
 
         <div class="uc-input-container">
-          <input type="text" id="u-input" class="uc-big-input" placeholder="0" value="1" inputmode="decimal">
+          <input type="text" id="u-input" class="uc-big-input" placeholder="0" value="1" inputmode="decimal" autocomplete="off" spellcheck="false">
           <div id="u-unit-trigger" class="uc-select-trigger">
             <span id="u-unit-text">${data[currentCat].names[currentUnit]}</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -94,9 +103,10 @@
         <div>
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
             <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px;">Przeliczenia</div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);">
+            <div style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);">
               Miejsca po przecinku:
-              <input type="number" id="u-precision" value="${savedPrecision}" min="0" max="20" style="width: 40px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); border-radius: 4px; text-align: center; padding: 4px 0; font-family: monospace; outline: none;">
+              <input type="number" id="u-precision" value="${savedPrecision}" min="0" max="20" class="uc-precision-box">
+              <button id="u-clear" class="uc-clear" title="Wyczyść (ustaw 1)">×</button>
             </div>
           </div>
           <div id="u-all-list" class="uc-list"></div>
@@ -107,15 +117,17 @@
       const inputEl = $("u-input"), precisionEl = $("u-precision"), allList = $("u-all-list");
       const unitText = $("u-unit-text"), unitTrigger = $("u-unit-trigger");
       const catTrigger = $("u-cat-trigger"), catName = $("u-cat-name"), catIcon = $("u-cat-icon");
+      const clearBtn = $("u-clear");
 
       function parseStrToFrac(str) {
         str = str.replace(',', '.').replace(/\s/g, '');
-        if (str === '' || str === '-') return { n: 0n, d: 1n };
+        if (str === '' || str === '-' || str === '.') return { n: 0n, d: 1n };
         let neg = false;
         if (str.startsWith('-')) { neg = true; str = str.slice(1); }
+        if (!/^\d*\.?\d*$/.test(str)) return { n: 0n, d: 1n };
         if (str.includes('.')) {
           let parts = str.split('.'), intP = parts[0] || '0', fracP = parts[1] || '';
-          return { n: neg ? -BigInt(intP + fracP) : BigInt(intP + fracP), d: 10n ** BigInt(fracP.length) };
+          return { n: neg ? -BigInt((intP || '0') + fracP) : BigInt((intP || '0') + fracP), d: 10n ** BigInt(fracP.length) };
         }
         return { n: neg ? -BigInt(str) : BigInt(str), d: 1n };
       }
@@ -136,6 +148,12 @@
         return (neg ? '-' : '') + resStr;
       }
 
+      function fixTrailingZero(strVal) {
+        if (strVal.includes('.')) strVal = strVal.replace(/0+$/, '').replace(/\.$/, '');
+        if (strVal === '-0' || strVal === '' || strVal === '-') strVal = '0';
+        return strVal;
+      }
+
       function formatToDisplay(str, raw = false) {
         let parts = str.split('.');
         let intP = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -144,23 +162,22 @@
       }
 
       function calculate() {
-        const rawStr = inputEl.value;
+        let rawStr = inputEl.value.trim();
+        if (rawStr === '' || rawStr === '-' || rawStr === '.') rawStr = '0';
         let precision = Math.min(20, Math.max(0, parseInt(precisionEl.value) || 0));
-        if (!rawStr || rawStr === '-') { allList.innerHTML = ""; return; }
 
         allList.innerHTML = "";
         const catData = data[currentCat];
-        const keys = currentCat === 'temp' ? catData.units : Object.keys(catData.units);
+        const keys = unitsFor(currentCat);
 
         if (currentCat === 'temp') {
           let val = parseFloat(rawStr.replace(',', '.'));
-          if (isNaN(val)) return;
+          if (isNaN(val)) val = 0;
           keys.forEach(k => {
             if (k === currentUnit) return;
             let c = currentUnit === 'F' ? (val - 32) * 5/9 : (currentUnit === 'K' ? val - 273.15 : val);
             let r = k === 'C' ? c : (k === 'F' ? (c * 9/5) + 32 : c + 273.15);
-            let strVal = r.toFixed(precision).replace(/\.?0+$/, '');
-            if (strVal === '-0') strVal = '0';
+            let strVal = fixTrailingZero(r.toFixed(precision));
             allList.innerHTML += `
               <div class="uc-row">
                 <span class="uc-row-name">${catData.names[k]}</span>
@@ -199,39 +216,60 @@
           currentCat = choice;
           catName.textContent = data[currentCat].name;
           catIcon.innerHTML = data[currentCat].icon;
-          inputEl.value = "1";
-          updateUnitList();
+          Hub.db.set("unit_last_cat", currentCat);
+          const ks = unitsFor(currentCat);
+          currentUnit = (savedUnits[currentCat] && ks.includes(savedUnits[currentCat])) ? savedUnits[currentCat] : ks[0];
+          unitText.textContent = data[currentCat].names[currentUnit];
+          calculate();
         }
       }, { signal });
 
       unitTrigger.addEventListener("click", async () => {
         const catData = data[currentCat];
-        const keys = currentCat === 'temp' ? catData.units : Object.keys(catData.units);
+        const keys = unitsFor(currentCat);
         const opts = keys.map(k => ({ id: k, label: catData.names[k] }));
         const choice = await Hub.showSelect({ title: "Wybierz jednostkę", options: opts, current: currentUnit, anchor: unitTrigger, signal });
         if (choice && choice !== currentUnit) {
           currentUnit = choice;
+          savedUnits[currentCat] = currentUnit;
+          Hub.db.set("unit_last_units", savedUnits);
           unitText.textContent = catData.names[currentUnit];
           calculate();
         }
       }, { signal });
 
       precisionEl.addEventListener("input", () => {
-        Hub.db.set("unit_precision", parseInt(precisionEl.value) || 0);
+        const p = parseInt(precisionEl.value);
+        if (!isNaN(p)) Hub.db.set("unit_precision", Math.min(20, Math.max(0, p)));
         calculate();
       }, { signal });
 
-      inputEl.addEventListener("input", calculate, { signal });
-
-      function updateUnitList() {
-        const catData = data[currentCat];
-        const keys = currentCat === 'temp' ? catData.units : Object.keys(catData.units);
-        currentUnit = keys[0];
-        unitText.textContent = catData.names[currentUnit];
+      precisionEl.addEventListener("blur", () => {
+        let p = parseInt(precisionEl.value);
+        if (isNaN(p) || p < 0) p = 0;
+        if (p > 20) p = 20;
+        precisionEl.value = p;
+        Hub.db.set("unit_precision", p);
         calculate();
-      }
+      }, { signal });
 
-      updateUnitList();
+      inputEl.addEventListener("input", () => {
+        let v = inputEl.value;
+        let cleaned = v.replace(/[^0-9,.\-]/g, '');
+        cleaned = cleaned.replace(/(?!^)-/g, '');
+        const dotIdx = cleaned.search(/[.,]/);
+        if (dotIdx !== -1) cleaned = cleaned.slice(0, dotIdx + 1) + cleaned.slice(dotIdx + 1).replace(/[.,]/g, '');
+        if (cleaned !== v) inputEl.value = cleaned;
+        calculate();
+      }, { signal });
+
+      clearBtn.addEventListener("click", () => {
+        inputEl.value = "1";
+        calculate();
+        inputEl.focus();
+      }, { signal });
+
+      calculate();
     },
     unmount() {}
   });
