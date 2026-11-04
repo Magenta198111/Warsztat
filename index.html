@@ -114,108 +114,31 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .settings-opt-btn { padding: 8px 16px; font-size: 13px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); cursor: pointer; }
 .settings-opt-btn.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 
-/* --- PALETA AKCENTÓW (NOWY UKŁAD 2x4 + RGB) --- */
+/* --- PALETA AKCENTÓW --- */
 .accent-layout-wrapper { display: flex; gap: 16px; align-items: center; width: 100%; margin-top: 4px; }
 .accent-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex: 1; }
-.accent-swatch { width: 100%; aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
-.accent-swatch.active { border-color: var(--ink); transform: scale(1.05); }
-.accent-custom-side { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
-.rgb-wheel-wrapper { width: 52px; height: 52px; border-radius: 50%; position: relative; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s; }
-.rgb-wheel-wrapper.active { border-color: var(--ink); }
+.accent-swatch { width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; transition: transform 0.2s; box-shadow: 0 0 0 0 transparent; }
+.accent-swatch.active { box-shadow: inset 0 0 0 3px var(--bg), inset 0 0 0 5px var(--ink); transform: scale(1.05); }
+.rgb-wheel-wrapper { width: 52px; height: 52px; border-radius: 50%; position: relative; cursor: pointer; flex-shrink: 0; box-shadow: 0 0 0 0 transparent; transition: transform 0.2s; }
+.rgb-wheel-wrapper.active { box-shadow: inset 0 0 0 3px var(--bg), inset 0 0 0 5px var(--ink); transform: scale(1.05); }
 .rgb-wheel-bg { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(from 90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000); }
-.accent-picker { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; border: none; }
-.accent-hex-input { width: 76px; text-transform: uppercase; font-family: monospace; padding: 6px 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; font-size: 13px; color: var(--ink); outline: none; text-align: center; font-weight: 600; }
-.accent-hex-input:focus { border-color: var(--accent); }
 
-#toast-container { position: fixed; top: calc(70px + var(--safe-top)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 10000; pointer-events: none; width: 90%; max-width: 400px; }
-.toast { background: var(--surface-hover); color: var(--ink); padding: 14px 20px; border-radius: 8px; border: 1px solid var(--line); font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); opacity: 0; transform: translateY(-20px); transition: all 0.3s; text-align: center; }
-.toast.show { opacity: 1; transform: translateY(0); }
-
-/* --- HUB: SELEKTOR (bottom-sheet / dropdown) --- */
-.hub-select-overlay {
-  position: fixed; inset: 0; z-index: 9000;
-  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
-  opacity: 0; pointer-events: none; transition: opacity 0.25s;
-  display: flex; align-items: flex-end; justify-content: center;
-}
-.hub-select-overlay.open { opacity: 1; pointer-events: auto; }
-.hub-select-overlay.dropdown-mode { background: transparent; backdrop-filter: none; }
-
-.hub-select-sheet {
-  width: 100%; max-width: 600px;
-  background: var(--surface); border: 1px solid var(--line);
-  border-top-left-radius: 16px; border-top-right-radius: 16px;
-  padding: 24px 16px calc(24px + var(--safe-bottom));
-  max-height: 80vh; overflow-y: auto; overscroll-behavior: contain;
-  transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.hub-select-overlay.open .hub-select-sheet { transform: translateY(0); }
-
-.hub-select-title {
-  font-size: 12px; font-weight: 600; text-transform: uppercase;
-  color: var(--muted); text-align: center; margin-bottom: 16px; letter-spacing: 0.5px;
-}
-.hub-select-item {
-  padding: 16px; border-radius: 6px; margin-bottom: 4px;
-  font-size: 15px; color: var(--ink);
-  display: flex; align-items: center; gap: 12px; cursor: pointer;
-  background: var(--bg);
-}
-.hub-select-item:active { background: var(--line); }
-.hub-select-item.active { color: var(--accent); font-weight: 600; }
-.hub-select-item.centered { justify-content: center; text-align: center; gap: 0; }
-
-.hub-select-dropdown {
-  position: fixed;
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8);
-  overflow: hidden; opacity: 0; transform: translateY(-4px);
-  transition: opacity 0.15s, transform 0.15s;
-  max-height: 60vh; overflow-y: auto; overscroll-behavior: contain;
-}
-.hub-select-overlay.open .hub-select-dropdown { opacity: 1; transform: translateY(0); }
-.hub-select-dd-item {
-  padding: 14px 16px; font-size: 14px; color: var(--ink);
-  display: flex; align-items: center; gap: 12px; cursor: pointer;
-  border-bottom: 1px solid var(--line);
-}
-.hub-select-dd-item:last-child { border-bottom: none; }
-.hub-select-dd-item.active { color: var(--accent); font-weight: 600; background: rgba(129, 140, 248, 0.05); }
-.hub-select-dd-item.centered { justify-content: center; text-align: center; gap: 0; }
-
-/* --- HUB: MODAL (pełnoekranowy podgląd) --- */
-.hub-modal-overlay {
-  position: fixed; inset: 0; z-index: 9100;
-  background: rgba(0,0,0,0.95);
-  opacity: 0; pointer-events: none; transition: opacity 0.25s;
-  display: flex; align-items: center; justify-content: center;
-  padding: calc(20px + var(--safe-top)) max(20px, var(--safe-right)) calc(20px + var(--safe-bottom)) max(20px, var(--safe-left));
-}
-.hub-modal-overlay.open { opacity: 1; pointer-events: auto; }
-.hub-modal-content { max-width: 100%; max-height: 100%; display: flex; align-items: center; justify-content: center; }
-.hub-modal-content > * { max-width: 100%; max-height: calc(100vh - 40px - var(--safe-top) - var(--safe-bottom)); }
-.hub-modal-close {
-  position: absolute; top: calc(16px + var(--safe-top)); right: calc(16px + var(--safe-right));
-  width: 40px; height: 40px; border-radius: 50%;
-  background: rgba(24, 24, 27, 0.8); border: 1px solid var(--line);
-  color: var(--ink); cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-.hub-modal-close:active { background: var(--surface-hover); }
-
-/* --- HUB: CONFIRM --- */
-.hub-confirm-overlay {
-  position: fixed; inset: 0; z-index: 9200;
-  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-  opacity: 0; pointer-events: none; transition: opacity 0.25s;
-  display: flex; align-items: center; justify-content: center; padding: 20px;
-}
-.hub-confirm-overlay.open { opacity: 1; pointer-events: auto; }
-.hub-confirm-box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 24px; width: 100%; max-width: 400px; }
-.hub-confirm-msg { font-size: 15px; color: var(--ink); margin-bottom: 20px; line-height: 1.5; }
-.hub-confirm-btns { display: flex; gap: 8px; }
-.hub-confirm-btns .n-btn { flex: 1; }
+/* --- NOWY WŁASNY COLOR PICKER --- */
+.color-picker-overlay { position: fixed; inset: 0; z-index: 9500; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.25s; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.color-picker-overlay.open { opacity: 1; pointer-events: auto; }
+.color-picker-box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; width: 100%; max-width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 16px; }
+.cp-header { font-size: 16px; font-weight: 600; color: var(--ink); text-align: center; }
+.cp-square-wrap { position: relative; width: 100%; aspect-ratio: 1.2; border-radius: 8px; overflow: hidden; cursor: crosshair; }
+.cp-square-bg { position: absolute; inset: 0; background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(240, 100%, 50%)); }
+.cp-square-cursor { position: absolute; width: 16px; height: 16px; border: 2px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 4px rgba(0,0,0,0.5); pointer-events: none; }
+.cp-hue-slider { width: 100%; height: 24px; border-radius: 12px; background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 66%, #f0f 83%, #f00 100%); position: relative; cursor: pointer; }
+.cp-hue-cursor { position: absolute; top: -4px; bottom: -4px; width: 8px; border: 2px solid #fff; border-radius: 4px; transform: translateX(-50%); box-shadow: 0 0 4px rgba(0,0,0,0.5); pointer-events: none; }
+.cp-preview-row { display: flex; align-items: center; gap: 12px; }
+.cp-preview-color { width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--line); flex-shrink: 0; }
+.cp-hex-input { flex: 1; background: var(--bg); border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 12px; font-family: monospace; font-size: 16px; text-transform: uppercase; outline: none; text-align: center; }
+.cp-hex-input:focus { border-color: var(--accent); }
+.cp-actions { display: flex; gap: 8px; margin-top: 8px; }
+.cp-actions .n-btn { flex: 1; }
 </style>
 </head>
 <body>
@@ -270,16 +193,10 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
       <div><div class="settings-label">Paleta Akcentów</div><div class="settings-desc">Kolor wyróżnień, suwaków i aktywnych elementów</div></div>
       
       <div class="accent-layout-wrapper">
-        <!-- Siatka 2x4 (pod nią wstrzykniemy kolory przez JS) -->
         <div class="accent-presets" id="accent-grid"></div>
-        
-        <!-- Koło RGB i pole HEX -->
-        <div class="accent-custom-side">
-          <div class="rgb-wheel-wrapper" id="rgb-wheel-wrapper" title="Wybierz własny kolor">
-            <div class="rgb-wheel-bg"></div>
-            <input type="color" id="accent-picker" class="accent-picker" value="#818cf8">
-          </div>
-          <input type="text" id="accent-hex" class="accent-hex-input" maxlength="7" placeholder="#818CF8" autocomplete="off" spellcheck="false">
+        <!-- Kolorowe koło otwierające nasze nowe okno -->
+        <div class="rgb-wheel-wrapper" id="rgb-wheel-wrapper" title="Wybierz własny kolor">
+          <div class="rgb-wheel-bg"></div>
         </div>
       </div>
 
@@ -288,6 +205,33 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 </main>
 
 <button class="fab" id="fab-add">+</button>
+
+<!-- NOWE WŁASNE OKNO WYBORU KOLORU -->
+<div class="color-picker-overlay" id="custom-color-picker">
+  <div class="color-picker-box">
+    <div class="cp-header">Wybierz kolor</div>
+    
+    <div class="cp-square-wrap" id="cp-square">
+      <div class="cp-square-bg" id="cp-square-bg"></div>
+      <div class="cp-square-cursor" id="cp-cursor"></div>
+    </div>
+
+    <div class="cp-hue-slider" id="cp-hue">
+      <div class="cp-hue-cursor" id="cp-hue-cursor"></div>
+    </div>
+
+    <div class="cp-preview-row">
+      <div class="cp-preview-color" id="cp-preview"></div>
+      <input type="text" class="cp-hex-input" id="cp-hex" maxlength="7" placeholder="#818CF8" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="cp-actions">
+      <button class="n-btn" id="cp-cancel">Anuluj</button>
+      <button class="n-btn" id="cp-apply" style="border-color:var(--accent); color:var(--accent);">Zastosuj</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 </div>
 <script>
@@ -342,7 +286,7 @@ window.Hub = {
   // --- FUNKCJE POMOCNICZE ---
   getMenuStyle: function() { return Hub.db.get("menu_style", "bottom"); },
 
-  // Inteligentne ustawianie koloru akcentu z automatycznym kontrastem
+  // Inteligentne ustawianie koloru akcentu (z automatycznym kontrastem)
   applyAccent: function(hex) {
     if (!hex) hex = "#818cf8";
     hex = hex.toUpperCase();
@@ -354,20 +298,14 @@ window.Hub = {
     let b = parseInt(hex.slice(5, 7), 16);
     if (isNaN(r) || isNaN(g) || isNaN(b)) return;
 
-    // Wzór YIQ do sprawdzenia jasności koloru (im jaśniejszy, tym wyższy wynik)
+    // Wzór YIQ do sprawdzenia jasności koloru
     let yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    let inkColor = (yiq >= 128) ? '#000000' : '#ffffff'; // Jeśli jasny -> czarny tekst, jeśli ciemny -> biały
+    let inkColor = (yiq >= 128) ? '#000000' : '#ffffff'; // Jeśli jasny -> czarny tekst
 
     document.documentElement.style.setProperty('--accent', hex);
     document.documentElement.style.setProperty('--accent-ink', inkColor);
     
-    // Synchronizacja interfejsu w Ustawieniach
-    const hexInput = document.getElementById('accent-hex');
-    if (hexInput) hexInput.value = hex;
-    const picker = document.getElementById('accent-picker');
-    if (picker) picker.value = hex;
-
-    // Podświetlenie aktywnego elementu (kółka z palety LUB koła RGB)
+    // Podświetlenie aktywnego elementu w Ustawieniach
     let isPreset = false;
     document.querySelectorAll('.accent-swatch').forEach(s => {
       if (s.dataset.color.toUpperCase() === hex) {
@@ -625,39 +563,142 @@ openModule: function(id, push = true) {
       { name: 'Fiolet', hex: '#a855f7' },
       { name: 'Turkus', hex: '#2dd4bf' }
     ];
-    
-    // Wstrzykiwanie 8 kolorowych kółek do siatki 2x4
     const grid = document.getElementById('accent-grid');
     grid.innerHTML = presets.map(p => `<div class="accent-swatch" data-color="${p.hex}" style="background-color: ${p.hex}" title="${p.name}"></div>`).join('');
     
-    // Sprawdzenie i podświetlenie aktualnie wybranego koloru
     const currentAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim().toUpperCase();
     
-    // Podpinanie zdarzeń
     grid.onclick = (e) => {
       if (e.target.classList.contains('accent-swatch')) Hub.applyAccent(e.target.dataset.color);
     };
 
-    const picker = document.getElementById('accent-picker');
-    const hexInput = document.getElementById('accent-hex');
-    picker.value = currentAccent;
-    hexInput.value = currentAccent;
+    const rgbWrapper = document.getElementById('rgb-wheel-wrapper');
+    rgbWrapper.onclick = () => {
+      const currentAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim().toUpperCase();
+      Hub.openColorPicker(currentAccent);
+    };
+  },
 
-    // Wybór z koła RGB
-    picker.oninput = (e) => Hub.applyAccent(e.target.value);
+  // --- NOWY WŁASNY WYBÓR KOLORU ---
+  openColorPicker: function(initialHex) {
+    const overlay = document.getElementById('custom-color-picker');
+    const square = document.getElementById('cp-square');
+    const squareBg = document.getElementById('cp-square-bg');
+    const cursor = document.getElementById('cp-cursor');
+    const hueSlider = document.getElementById('cp-hue');
+    const hueCursor = document.getElementById('cp-hue-cursor');
+    const preview = document.getElementById('cp-preview');
+    const hexInput = document.getElementById('cp-hex');
     
+    let h = 240, s = 1, v = 1; // Domyślny stan (indygo)
+    
+    // Konwersja HEX -> HSV
+    function hexToHsv(hex) {
+      let r = parseInt(hex.slice(1,3), 16) / 255;
+      let g = parseInt(hex.slice(3,5), 16) / 255;
+      let b = parseInt(hex.slice(5,7), 16) / 255;
+      let max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h = 0, s = 0, v = max;
+      let d = max - min;
+      s = max === 0 ? 0 : d / max;
+      if (max !== min) {
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return { h: h * 360, s: s, v: v };
+    }
+
+    // Konwersja HSV -> HEX
+    function hsvToHex(h, s, v) {
+      h = h / 360;
+      let r, g, b, i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+      switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+      }
+      const toHex = x => Math.round(x * 255).toString(16).padStart(2, '0');
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+    }
+
+    // Aktualizacja wyglądu na podstawie obecnego stanu
+    function updateUI() {
+      const hex = hsvToHex(h, s, v);
+      squareBg.style.background = `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(${h}, 100%, 50%))`;
+      cursor.style.left = `${s * 100}%`;
+      cursor.style.top = `${(1 - v) * 100}%`;
+      hueCursor.style.left = `${(h / 360) * 100}%`;
+      preview.style.backgroundColor = hex;
+      hexInput.value = hex;
+      return hex;
+    }
+
+    // Ustawienie początkowego koloru
+    const initialHsv = hexToHsv(initialHex);
+    h = initialHsv.h; s = initialHsv.s; v = initialHsv.v;
+    updateUI();
+    overlay.classList.add('open');
+
+    // Obsługa przeciągania palcem po kwadracie
+    function handleSquareMove(e) {
+      e.preventDefault();
+      const rect = square.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      s = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      v = Math.max(0, Math.min(1, 1 - ((clientY - rect.top) / rect.height)));
+      updateUI();
+    }
+    square.addEventListener('mousedown', () => {
+      const move = (ev) => handleSquareMove(ev);
+      const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+    square.addEventListener('touchstart', handleSquareMove, { passive: false });
+    square.addEventListener('touchmove', handleSquareMove, { passive: false });
+
+    // Obsługa przeciągania po suwaku odcienia
+    function handleHueMove(e) {
+      e.preventDefault();
+      const rect = hueSlider.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      h = percent * 360;
+      updateUI();
+    }
+    hueSlider.addEventListener('mousedown', () => {
+      const move = (ev) => handleHueMove(ev);
+      const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+    hueSlider.addEventListener('touchstart', handleHueMove, { passive: false });
+    hueSlider.addEventListener('touchmove', handleHueMove, { passive: false });
+
     // Ręczne wpisywanie HEX
     hexInput.oninput = (e) => {
-      let val = e.target.value;
+      let val = e.target.value.toUpperCase();
       if (!val.startsWith('#')) val = '#' + val;
-      if (/^#[0-9A-F]{6}$/i.test(val)) Hub.applyAccent(val);
+      if (/^#[0-9A-F]{6}$/i.test(val)) {
+        const hsv = hexToHsv(val);
+        h = hsv.h; s = hsv.s; v = hsv.v;
+        updateUI();
+      }
     };
 
-    hexInput.onblur = (e) => {
-      const val = e.target.value;
-      if (!/^#[0-9A-F]{6}$/i.test(val)) {
-        e.target.value = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim().toUpperCase();
-      }
+    // Przyciski
+    document.getElementById('cp-cancel').onclick = () => { overlay.classList.remove('open'); };
+    document.getElementById('cp-apply').onclick = () => {
+      Hub.applyAccent(updateUI());
+      overlay.classList.remove('open');
     };
   }
 };
