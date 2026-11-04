@@ -74,11 +74,12 @@
           .uc-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
           .uc-row:last-child { border-bottom: none; }
           .uc-row-name { color: var(--muted); font-weight: 500; flex-shrink: 0; }
-          .uc-row-val-container { display: flex; align-items: flex-start; justify-content: flex-end; gap: 8px; flex: 1; overflow: hidden; }
-          .uc-row-val { color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; text-align: right; white-space: nowrap; overflow-x: auto; max-width: 100%; }
-          .uc-copy-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 2px 0 0 0; }
+          .uc-row-val-container { display: flex; align-items: flex-start; justify-content: flex-end; gap: 8px; flex: 1; min-width: 0; }
+          .uc-row-val { color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; text-align: right; white-space: normal; word-break: break-all; }
+          .uc-copy-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 2px 0 0 0; flex-shrink: 0; }
           .uc-copy-btn svg { width: 16px; height: 16px; }
-          .uc-clear { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 0 4px; font-size: 20px; line-height: 1; font-family: monospace; }
+          .uc-clear { background: var(--surface); border: 1px solid var(--line); color: var(--muted); cursor: pointer; width: 26px; height: 26px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-family: monospace; }
+          .uc-clear:active { background: var(--line); color: var(--ink); }
           .uc-precision-box { width: 40px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); border-radius: 4px; text-align: center; padding: 4px 0; font-family: monospace; outline: none; }
         </style>
 
@@ -106,7 +107,7 @@
             <div style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);">
               Miejsca po przecinku:
               <input type="number" id="u-precision" value="${savedPrecision}" min="0" max="20" class="uc-precision-box">
-              <button id="u-clear" class="uc-clear" title="Wyczyść (ustaw 1)">×</button>
+              <button type="button" id="u-clear" class="uc-clear" title="Przywróć 1">×</button>
             </div>
           </div>
           <div id="u-all-list" class="uc-list"></div>
@@ -148,12 +149,6 @@
         return (neg ? '-' : '') + resStr;
       }
 
-      function fixTrailingZero(strVal) {
-        if (strVal.includes('.')) strVal = strVal.replace(/0+$/, '').replace(/\.$/, '');
-        if (strVal === '-0' || strVal === '' || strVal === '-') strVal = '0';
-        return strVal;
-      }
-
       function formatToDisplay(str, raw = false) {
         let parts = str.split('.');
         let intP = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -165,25 +160,31 @@
         let rawStr = inputEl.value.trim();
         if (rawStr === '' || rawStr === '-' || rawStr === '.') rawStr = '0';
         let precision = Math.min(20, Math.max(0, parseInt(precisionEl.value) || 0));
-
         allList.innerHTML = "";
         const catData = data[currentCat];
         const keys = unitsFor(currentCat);
 
         if (currentCat === 'temp') {
-          let val = parseFloat(rawStr.replace(',', '.'));
-          if (isNaN(val)) val = 0;
+          let valFrac = parseStrToFrac(rawStr);
+          let cNum = 0n, cDen = 1n;
+          if (currentUnit === 'C') { cNum = valFrac.n; cDen = valFrac.d; }
+          else if (currentUnit === 'F') { cNum = (valFrac.n - 32n * valFrac.d) * 5n; cDen = valFrac.d * 9n; }
+          else if (currentUnit === 'K') { cNum = (valFrac.n * 100n) - (27315n * valFrac.d); cDen = valFrac.d * 100n; }
+          
           keys.forEach(k => {
             if (k === currentUnit) return;
-            let c = currentUnit === 'F' ? (val - 32) * 5/9 : (currentUnit === 'K' ? val - 273.15 : val);
-            let r = k === 'C' ? c : (k === 'F' ? (c * 9/5) + 32 : c + 273.15);
-            let strVal = fixTrailingZero(r.toFixed(precision));
+            let resNum = 0n, resDen = 1n;
+            if (k === 'C') { resNum = cNum; resDen = cDen; }
+            else if (k === 'F') { resNum = (cNum * 9n) + (160n * cDen); resDen = cDen * 5n; }
+            else if (k === 'K') { resNum = cNum * 100n + 27315n * cDen; resDen = cDen * 100n; }
+
+            let resStr = divideBigRounded(resNum, resDen, precision);
             allList.innerHTML += `
               <div class="uc-row">
                 <span class="uc-row-name">${catData.names[k]}</span>
                 <div class="uc-row-val-container">
-                  <span class="uc-row-val">${formatToDisplay(strVal)}</span>
-                  <button class="uc-copy-btn" data-copy="${formatToDisplay(strVal, true)}" onclick="Hub.copy(this.dataset.copy, this)">
+                  <span class="uc-row-val">${formatToDisplay(resStr)}</span>
+                  <button class="uc-copy-btn" data-copy="${formatToDisplay(resStr, true)}" onclick="Hub.copy(this.dataset.copy, this)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                   </button>
                 </div>
@@ -263,7 +264,9 @@
         calculate();
       }, { signal });
 
-      clearBtn.addEventListener("click", () => {
+      clearBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         inputEl.value = "1";
         calculate();
         inputEl.focus();
