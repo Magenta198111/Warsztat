@@ -150,6 +150,7 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 }
 .hub-select-item:active { background: var(--line); }
 .hub-select-item.active { color: var(--accent); font-weight: 600; }
+.hub-select-item.centered { justify-content: center; text-align: center; gap: 0; }
 
 .hub-select-dropdown {
   position: fixed;
@@ -339,9 +340,9 @@ window.Hub = {
   },
 
   backButtonHtml: `<button class="n-back" onclick="history.back()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>`,
-  showSelect: async function({ title, options, current, anchor, signal }) {
+  showSelect: async function({ title, options, current, anchor, signal, forceBottom = false, center = false }) {
     const style = await Hub.getMenuStyle();
-    const useDropdown = (style === "dropdown") && anchor;
+    const useDropdown = (style === "dropdown") && anchor && !forceBottom;
 
     return new Promise(resolve => {
       const overlay = document.createElement('div');
@@ -364,8 +365,8 @@ window.Hub = {
           <div class="hub-select-sheet">
             ${title ? `<div class="hub-select-title">${title}</div>` : ''}
             ${options.map(o => `
-              <div class="hub-select-item ${o.id === current ? 'active' : ''}" data-id="${o.id}">
-                ${o.icon ? `<div style="width:18px;height:18px;opacity:0.7;">${o.icon}</div>` : ''}
+              <div class="hub-select-item ${o.id === current ? 'active' : ''} ${center ? 'centered' : ''}" data-id="${o.id}">
+                ${(!center && o.icon) ? `<div style="width:18px;height:18px;opacity:0.7;">${o.icon}</div>` : ''}
                 <span>${o.label}</span>
               </div>
             `).join('')}
