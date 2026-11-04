@@ -1,299 +1,486 @@
 (() => {
-  let activeUrls = [];
-
-  function cleanupUrls() {
-    activeUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch(e){} });
-    activeUrls = [];
-  }
-
   Hub.register({
-    id: "konwerter",
-    title: "Konwerter Zdjęć",
-    desc: "Kompresja, zmiana formatu i rozmiaru zdjęć",
+    id: "oczyszczacz",
+    title: "Oczyszczacz Tekstu",
+    desc: "Usuwanie formatowania, gwiazdek, myślników i zbędnych spacji",
 
     async mount(container, signal) {
-      let savedFmt = "image/jpeg";
-      let savedQual = 85;
-      let savedResizeMode = "orig";
-      
-      try {
-        savedFmt = await Hub.db.get("conv_fmt", "image/jpeg");
-        savedQual = await Hub.db.get("conv_qual", 85);
-        savedResizeMode = await Hub.db.get("conv_resize", "orig");
-      } catch (e) {}
+      let currentCaseMode = "sentence";
+      let dashMode = "leave"; 
 
-      const formatNames = {
-        "image/webp": "WebP (najmniejszy)",
-        "image/jpeg": "JPEG (standard)",
-        "image/png": "PNG (bezstratny)"
-      };
-
-      const resizeNames = {
-        "orig": "Oryginalny rozmiar",
-        "1080p": "Maks. 1920 px (Full HD)",
-        "720p": "Maks. 1280 px (HD)",
-        "50%": "50% szerokości",
-        "25%": "25% szerokości"
+      const caseNames = {
+        "sentence": "Zdania (Duża po kropce)",
+        "upper": "Wszystko WIELKIMI literami",
+        "lower": "wszystko małymi literami",
+        "title": "Każde Słowo Z Dużej Litery"
       };
 
       container.innerHTML = `
         <style>
-          .hidden { display: none !important; }
-          .c-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 0; }
-          .c-trigger { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; color: var(--ink); font-size: 15px; cursor: pointer; user-select: none; margin-bottom: 20px; }
-          .c-trigger:active { background: var(--surface-hover); }
-          .c-trigger svg { color: var(--muted); }
+          .o-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .o-flat-section { margin-bottom: 28px; }
+          .o-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
-          .c-range { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; outline: none; margin: 20px 0 10px 0; width: 100%; background: linear-gradient(to right, var(--accent) var(--percent, 85%), var(--line) var(--percent, 85%)); touch-action: pan-y; }
-          .c-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.4); margin-top: -2px; transition: transform 0.1s, box-shadow 0.1s; }
-          .c-range:active::-webkit-slider-thumb { transform: scale(1.15); box-shadow: 0 6px 12px rgba(0,0,0,0.6); }
+          .o-textarea {
+            width: 100%; padding: 12px 0; background: transparent; border: none;
+            border-bottom: 1px solid var(--line); color: var(--ink); font-size: 16px; 
+            font-family: inherit; resize: vertical; outline: none; 
+            min-height: 100px; overflow-y: hidden; transition: border-color 0.2s, height 0.1s ease-out; 
+            line-height: 1.5; box-sizing: border-box; touch-action: pan-y;
+          }
+          .o-textarea:focus { border-bottom-color: var(--accent); }
+          .o-textarea::placeholder { color: var(--muted); font-size: 15px; }
+          .o-output-textarea { color: var(--accent); font-weight: 500; }
+
+          .o-trigger { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: transparent; border: none; border-bottom: 1px solid var(--line); 
+            padding: 16px 0; color: var(--ink); font-size: 16px; font-weight: 500;
+            cursor: pointer; user-select: none; transition: color 0.2s;
+          }
+          .o-trigger:active { color: var(--accent); }
+          .o-trigger .icon { color: var(--muted); font-family: monospace; font-size: 20px; font-weight: 300; line-height: 1; }
           
-          .c-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
-          .c-file-name { font-size: 13px; color: var(--muted); margin-top: 8px; text-align: center; word-break: break-all; min-height: 18px; }
-          .c-stats { font-family: monospace; text-align: center; font-size: 13px; line-height: 1.6; margin-bottom: 20px; color: var(--ink); }
-          .c-stats span { color: var(--accent); font-weight: bold; }
+          .o-accordion { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+          .o-accordion.open { max-height: 800px; }
           
-          .c-preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-          .c-preview-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; text-align: center; }
-          .c-preview-img { width: 100%; border-radius: 6px; border: 1px solid var(--line); display: block; object-fit: contain; height: 200px; background: var(--surface); cursor: zoom-in; transition: opacity 0.2s; }
-          .c-preview-img:active { opacity: 0.8; }
+          .o-option-group { border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+          .o-option-group:last-child { border-bottom: none; }
           
-          .c-drop-zone { border: 2px dashed var(--line); border-radius: 8px; padding: 30px 20px; text-align: center; color: var(--muted); cursor: pointer; transition: border-color 0.2s; margin-bottom: 16px; }
-          .c-drop-zone:active { border-color: var(--accent); }
+          .o-option-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; }
+          .o-option-left { display: flex; align-items: flex-start; gap: 12px; }
+          
+          .o-option-text { display: flex; flex-direction: column; }
+          .o-option-title { font-size: 15px; font-weight: 500; color: var(--ink); }
+          .o-option-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+          
+          .o-sub-arrow { 
+            background: transparent; border: none; color: var(--muted); cursor: pointer; 
+            padding: 2px 4px; display: flex; align-items: center; justify-content: center; 
+            transition: transform 0.2s; outline: none; margin-top: 2px;
+          }
+          .o-sub-arrow.open { transform: rotate(180deg); }
+          .o-sub-arrow svg { width: 16px; height: 16px; }
+
+          .o-sub-options { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 32px; }
+          .o-sub-options.open { max-height: 400px; margin-bottom: 12px; }
+          .o-sub-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+          .o-sub-title { font-size: 13px; color: var(--muted); }
+
+          .o-segmented-control { 
+            display: flex; background: var(--bg); border: 1px solid var(--line); 
+            border-radius: 6px; overflow: hidden; width: 100%; margin-top: 8px; margin-bottom: 8px;
+          }
+          .o-segment { 
+            flex: 1; padding: 10px; background: transparent; border: none; 
+            color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; 
+            transition: background 0.2s, color 0.2s; outline: none;
+          }
+          .o-segment.active { background: var(--surface-hover); color: var(--accent); font-weight: 600; }
+
+          .switch.partial .switch-slider { opacity: 0.6; }
+          .switch.partial .switch-slider:before { opacity: 0.8; }
+
+          .o-stats { display: flex; justify-content: space-between; font-family: monospace; font-size: 13px; color: var(--muted); padding: 16px 0 0 0; }
+          .o-action-row { display: flex; gap: 12px; margin-top: 16px; }
         </style>
 
         ${Hub.backButtonHtml}
 
-        <div style="margin-bottom: 24px;">
-          <label class="c-label">Plik źródłowy</label>
-          <input type="file" id="c-file" accept="image/*" style="display:none;">
-          <div id="c-drop-zone" class="c-drop-zone">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px; opacity:0.5;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-            <div style="font-size: 14px; font-weight: 500;">Kliknij, aby wybrać zdjęcie</div>
-            <div style="font-size: 12px; margin-top: 4px; opacity: 0.7;">lub wklej ze schowka (Ctrl+V)</div>
-          </div>
-          <div id="c-file-name" class="c-file-name">Nie wybrano pliku</div>
+        <div class="o-flat-section" style="margin-top: 16px;">
+          <label class="o-label">Tekst źródłowy</label>
+          <textarea id="o-input" class="o-textarea" placeholder="Wklej tekst..."></textarea>
         </div>
 
-        <div class="c-divider"></div>
-
-        <div>
-          <label class="c-label">Format docelowy</label>
-          <div id="c-fmt-trigger" class="c-trigger">
-            <span id="c-fmt-text">${formatNames[savedFmt]}</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-
-          <label class="c-label">Rozmiar (wymiary)</label>
-          <div id="c-resize-trigger" class="c-trigger">
-            <span id="c-resize-text">${resizeNames[savedResizeMode]}</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-
-          <div id="c-qual-wrapper">
-            <span id="c-qual-label" class="c-label" style="margin-bottom:0;">Jakość: ${savedQual}%</span>
-            <input type="range" id="c-qual" min="10" max="100" value="${savedQual}" class="c-range">
+        <div class="o-flat-section">
+          <label class="o-label">Wielkość liter</label>
+          <div id="o-case-trigger" class="o-trigger">
+            <span id="o-case-text">${caseNames[currentCaseMode]}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
         </div>
 
-        <button id="c-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; font-size: 15px; margin-top: 16px; margin-bottom: 24px;">Konwertuj zdjęcie</button>
-        
-        <div id="c-result-section" class="hidden">
-          <div class="c-divider"></div>
-          <div id="c-stats" class="c-stats"></div>
-          <div class="c-preview-grid">
-            <div>
-              <div class="c-preview-label">Przed</div>
-              <img id="c-img-before" class="c-preview-img">
-            </div>
-            <div>
-              <div class="c-preview-label">Po</div>
-              <img id="c-img-after" class="c-preview-img">
-            </div>
+        <div class="o-flat-section">
+          <div id="o-clean-trigger" class="o-trigger">
+            <span>Inteligentne czyszczenie</span>
+            <span id="o-clean-icon" class="icon">+</span>
           </div>
-          <a class="n-btn n-btn-outline" id="c-dl" style="text-decoration: none; display: flex; width: 100%; padding: 14px; font-size: 15px;">Pobierz plik</a>
+          
+          <div id="o-clean-accordion" class="o-accordion">
+            
+            <!-- GRUPA 1: LINKI -->
+            <div class="o-option-group">
+              <div class="o-option-row">
+                <div class="o-option-left">
+                  <button class="o-sub-arrow" data-target="sub-url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                  <div class="o-option-text">
+                    <div class="o-option-title">Usuwaj linki</div>
+                    <div class="o-option-desc">Usuwa adresy internetowe</div>
+                  </div>
+                </div>
+                <label class="switch" id="sw-url-group"><input type="checkbox" id="o-clean-url" data-group="url"><span class="switch-slider"></span></label>
+              </div>
+              <div class="o-sub-options" id="sub-url">
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: https://</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: www.</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url"><span class="switch-slider"></span></label></div>
+              </div>
+            </div>
+
+            <!-- GRUPA 2: MARKDOWN -->
+            <div class="o-option-group">
+              <div class="o-option-row">
+                <div class="o-option-left">
+                  <button class="o-sub-arrow" data-target="sub-md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                  <div class="o-option-text">
+                    <div class="o-option-title">Usuwaj znaki Markdown</div>
+                    <div class="o-option-desc">Usuwa formatowanie tekstu</div>
+                  </div>
+                </div>
+                <label class="switch" id="sw-md-group"><input type="checkbox" id="o-clean-md" data-group="md"><span class="switch-slider"></span></label>
+              </div>
+              <div class="o-sub-options" id="sub-md">
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: #</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: * i _</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: ></span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
+              </div>
+            </div>
+
+            <!-- GRUPA 3: INTERPUNKCJA -->
+            <div class="o-option-group">
+              <div class="o-option-row">
+                <div class="o-option-left">
+                  <button class="o-sub-arrow" data-target="sub-space"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                  <div class="o-option-text">
+                    <div class="o-option-title">Popraw interpunkcję</div>
+                    <div class="o-option-desc">Usuwa spacje przed znakami</div>
+                  </div>
+                </div>
+                <label class="switch" id="sw-space-group"><input type="checkbox" id="o-clean-space" data-group="space" checked><span class="switch-slider"></span></label>
+              </div>
+              <div class="o-sub-options" id="sub-space">
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj spację przed: . i ,</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj spację przed: ! i ?</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
+              </div>
+            </div>
+
+            <!-- GRUPA 4: NAWIASY I CUDZYSŁOWY -->
+            <div class="o-option-group">
+              <div class="o-option-row">
+                <div class="o-option-left">
+                  <button class="o-sub-arrow" data-target="sub-brackets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                  <div class="o-option-text">
+                    <div class="o-option-title">Usuwaj nawiasy i cudzysłowy</div>
+                    <div class="o-option-desc">Usuwa () [], {}, "", ''</div>
+                  </div>
+                </div>
+                <label class="switch" id="sw-brackets-group"><input type="checkbox" id="o-clean-brackets" data-group="brackets"><span class="switch-slider"></span></label>
+              </div>
+              <div class="o-sub-options" id="sub-brackets">
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: () i []</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: {}</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: "" i ''</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
+              </div>
+            </div>
+
+            <!-- GRUPA 5: MYŚLNIKI -->
+            <div class="o-option-group">
+              <div class="o-option-row">
+                <div class="o-option-left">
+                  <button class="o-sub-arrow" data-target="sub-dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                  <div class="o-option-text">
+                    <div class="o-option-title">Zamiana myślników</div>
+                    <div class="o-option-desc">Wybierz co zrobić z "--"</div>
+                  </div>
+                </div>
+                <label class="switch" id="sw-dash-group"><input type="checkbox" id="o-dash-toggle" data-group="dash" checked><span class="switch-slider"></span></label>
+              </div>
+              <div class="o-sub-options" id="sub-dash">
+                <div class="o-segmented-control" id="dash-segmented">
+                    <button class="o-segment active" data-val="leave">Zostaw jeden (-)</button>
+                    <button class="o-segment" data-val="remove">Usuń całkowicie</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="o-divider"></div>
+
+        <div class="o-flat-section">
+          <label class="o-label">Wynik (na żywo)</label>
+          <textarea id="o-output" class="o-textarea o-output-textarea" readonly placeholder="Tutaj pojawi się czysty tekst..."></textarea>
+          <div class="o-stats"><span id="o-stat-chars">Znaki: 0</span><span id="o-stat-words">Słowa: 0</span></div>
+        </div>
+
+        <div class="o-action-row">
+          <button id="o-undo" class="n-btn n-btn-outline" style="flex: 1; opacity: 0.4;" disabled>Cofnij</button>
+          <button id="o-clear" class="n-btn" style="flex: 1; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);">Wyczyść</button>
+          <button id="o-copy" class="n-btn n-btn-outline" style="flex: 2;">Kopiuj wynik</button>
         </div>
       `;
 
       const $ = id => container.querySelector("#" + id);
-      const fileInput = $("c-file"), dropZone = $("c-drop-zone"), fileName = $("c-file-name");
-      const fmtTrigger = $("c-fmt-trigger"), fmtText = $("c-fmt-text");
-      const resizeTrigger = $("c-resize-trigger"), resizeText = $("c-resize-text");
-      const qualWrapper = $("c-qual-wrapper"), qualInput = $("c-qual"), qualLabel = $("c-qual-label");
-      const btnProcess = $("c-btn");
-      const resultSection = $("c-result-section"), statsDiv = $("c-stats"), dlBtn = $("c-dl");
-      const imgBefore = $("c-img-before"), imgAfter = $("c-img-after");
+      const inputEl = $("o-input");
+      const outputEl = $("o-output");
+      const caseTrigger = $("o-case-trigger"), caseText = $("o-case-text");
+      
+      const cleanTrigger = $("o-clean-trigger"), cleanAccordion = $("o-clean-accordion"), cleanIcon = $("o-clean-icon");
+      const statChars = $("o-stat-chars"), statWords = $("o-stat-words");
+      const undoBtn = $("o-undo");
 
-      let currentFmt = savedFmt;
-      let currentResize = savedResizeMode;
-      let currentFile = null;
-      let currentBitmap = null;
-      let originalWidth = 0, originalHeight = 0;
+      let history = [];
 
-      function updateSliderFill(el) {
-        const percent = ((el.value - el.min) / (el.max - el.min)) * 100;
-        el.style.setProperty('--percent', `${percent}%`);
-      }
+      // --- OBSŁUGA PRZYCISKU SEGMENTOWEGO (MYŚLNIKI) ---
+      const segBtns = container.querySelectorAll('#dash-segmented .o-segment');
+      segBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          Hub.haptic('light');
+          segBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          dashMode = btn.dataset.val;
+          processText();
+        }, { signal });
+      });
 
-      updateSliderFill(qualInput);
+      // --- LOGIKA SYNCHRONIZACJI SWITCHY ---
+      container.querySelectorAll(".o-sub-arrow").forEach(arrow => {
+        arrow.addEventListener("click", () => {
+          Hub.haptic('light');
+          const targetId = arrow.dataset.target;
+          const target = $(targetId);
+          target.classList.toggle("open");
+          arrow.classList.toggle("open");
+        }, { signal });
+      });
 
-      function updateQualVisibility() {
-        if (currentFmt === "image/png") qualWrapper.classList.add("hidden");
-        else qualWrapper.classList.remove("hidden");
-      }
-      updateQualVisibility();
-
-      qualInput.addEventListener("input", () => {
-        qualLabel.textContent = `Jakość: ${qualInput.value}%`;
-        updateSliderFill(qualInput);
-        Hub.db.set("conv_qual", Number(qualInput.value)).catch(()=>{});
-      }, { signal });
-
-      async function handleFile(file) {
-        if (!file || !file.type.startsWith('image/')) return showToast("Wybierz prawidłowy plik graficzny.");
+      function syncGroup(parentId) {
+        const parentInput = $(parentId);
+        const parentLabel = parentInput.closest('.switch');
+        const group = parentInput.dataset.group;
         
-        currentFile = file;
-        resultSection.classList.add("hidden");
-        fileName.textContent = file.name;
-        fileName.style.color = "var(--ink)";
+        if (group === "dash") return;
 
-        try {
-          currentBitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-          originalWidth = currentBitmap.width;
-          originalHeight = currentBitmap.height;
-          fileName.textContent = `${file.name} (${originalWidth}x${originalHeight} px)`;
+        const subOpts = container.querySelectorAll(`.sub-${group}-opt`);
+        if (!subOpts || subOpts.length === 0) return;
 
-          cleanupUrls();
-          const beforeUrl = URL.createObjectURL(file);
-          activeUrls.push(beforeUrl);
-          imgBefore.src = beforeUrl;
+        let checkedCount = 0;
+        subOpts.forEach(opt => { if (opt.checked) checkedCount++; });
 
-          if (originalWidth > 6000 || originalHeight > 6000) {
-             showToast("Uwaga: Bardzo duże zdjęcie. Konwersja może chwilę potrwać.");
+        if (checkedCount === 0) {
+          parentInput.checked = false;
+          parentLabel.classList.remove('partial');
+        } else if (checkedCount === subOpts.length) {
+          parentInput.checked = true;
+          parentLabel.classList.remove('partial');
+        } else {
+          parentInput.checked = true;
+          parentLabel.classList.add('partial');
+        }
+        processText();
+      }
+
+      container.querySelectorAll('input[type="checkbox"][class$="-opt"]').forEach(subOpt => {
+        subOpt.addEventListener("change", () => {
+          Hub.haptic('light');
+          syncGroup(subOpt.dataset.parent);
+        }, { signal });
+      });
+
+      ['o-clean-url', 'o-clean-md', 'o-clean-space', 'o-clean-brackets', 'o-dash-toggle'].forEach(id => {
+        $(id).addEventListener("change", (e) => {
+          Hub.haptic('medium');
+          const isChecked = e.target.checked;
+          const parentLabel = e.target.closest('.switch');
+          parentLabel.classList.remove('partial');
+          
+          const group = e.target.dataset.group;
+          if (group !== "dash") {
+            const subOpts = container.querySelectorAll(`.sub-${group}-opt`);
+            subOpts.forEach(opt => { opt.checked = isChecked; });
           }
-        } catch (e) {
-          showToast("Błąd podczas odczytu zdjęcia.");
-          currentFile = null; currentBitmap = null;
-          fileName.textContent = "Błąd odczytu";
+          
+          processText();
+        }, { signal });
+      });
+
+      // --- AUTOMATYCZNE DOPASOWANIE WYSOKOŚCI ---
+      function autoResize(el) {
+        if (!el) return;
+        const maxHeight = 1248; 
+        el.style.height = 'auto'; 
+        if (el.scrollHeight > maxHeight) {
+          el.style.height = maxHeight + 'px';
+          el.style.overflowY = 'auto';
+        } else {
+          el.style.height = (el.scrollHeight + 24) + 'px';
+          el.style.overflowY = 'hidden';
         }
       }
 
-      dropZone.addEventListener("click", () => fileInput.click(), { signal });
-      fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]), { signal });
+      setTimeout(() => { autoResize(inputEl); autoResize(outputEl); }, 50);
 
-      document.addEventListener('paste', (e) => {
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (let index in items) {
-          const item = items[index];
-          if (item.kind === 'file' && item.type.startsWith('image/')) {
-            const blob = item.getAsFile();
-            handleFile(blob);
-            break;
+      cleanTrigger.addEventListener("click", () => {
+        Hub.haptic('light');
+        cleanAccordion.classList.toggle("open");
+        cleanIcon.textContent = cleanAccordion.classList.contains("open") ? "−" : "+";
+      }, { signal });
+
+      function saveHistory() {
+        if (inputEl.value !== history[history.length - 1]) {
+          history.push(inputEl.value);
+          if (history.length > 20) history.shift();
+          undoBtn.disabled = false;
+          undoBtn.style.opacity = "1";
+        }
+      }
+
+      function updateStats(text) {
+        if (!text) { statChars.textContent = "Znaki: 0"; statWords.textContent = "Słowa: 0"; return; }
+        const chars = text.length;
+        const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+        statChars.textContent = `Znaki: ${chars}`;
+        statWords.textContent = `Słowa: ${words}`;
+      }
+
+      // --- GŁÓWNA LOGIKA PRZETWARZANIA ---
+      function processText() {
+        let text = inputEl.value;
+        if (!text) { 
+          outputEl.value = ""; 
+          updateStats(""); 
+          autoResize(outputEl);
+          return; 
+        }
+
+        let lines = text.split(/\r?\n/);
+
+        lines = lines.map(line => {
+          let l = line;
+          
+          if ($("o-clean-url").checked) {
+            const isUrlChecked = container.querySelectorAll('.sub-url-opt')[0].checked;
+            const isWwwChecked = container.querySelectorAll('.sub-url-opt')[1].checked;
+            if (isUrlChecked) l = l.replace(/https?:\/\/[^\s]+/gi, "");
+            if (isWwwChecked) l = l.replace(/www\.[^\s]+/gi, "");
           }
+
+          if ($("o-clean-md").checked) {
+            const subs = container.querySelectorAll('.sub-md-opt');
+            if (subs[0].checked) l = l.replace(/#/g, "");
+            if (subs[1].checked) l = l.replace(/[*_]/g, "");
+            if (subs[2].checked) l = l.replace(/>/g, "");
+          }
+
+          if ($("o-clean-space").checked) {
+            const subs = container.querySelectorAll('.sub-space-opt');
+            if (subs[0].checked) l = l.replace(/\s+([.,])/g, "$1");
+            if (subs[1].checked) l = l.replace(/\s+([!?])/g, "$1");
+          }
+
+          if ($("o-clean-brackets").checked) {
+            const subs = container.querySelectorAll('.sub-brackets-opt');
+            if (subs[0].checked) l = l.replace(/[\[\]()]/g, "");
+            if (subs[1].checked) l = l.replace(/[{}]/g, "");
+            if (subs[2].checked) l = l.replace(/["']/g, "");
+          }
+
+          if ($("o-dash-toggle").checked) {
+            if (dashMode === "leave") {
+              l = l.replace(/-{2,}/g, "-");
+            } else {
+              l = l.replace(/-{2,}/g, "");
+            }
+          }
+          
+          l = l.replace(/\s+/g, " ").trim();
+          return l;
+        });
+
+        text = lines.join("\n");
+        text = text.replace(/\n{3,}/g, "\n\n").trim();
+
+        if (currentCaseMode === "sentence") {
+          text = text.replace(/(^\s*|[.!?]\s+)([a-ząćęłńóśźż])/gm, (m, p, letter) => p + letter.toUpperCase());
+        } else if (currentCaseMode === "upper") {
+          text = text.toUpperCase();
+        } else if (currentCaseMode === "lower") {
+          text = text.toLowerCase();
+        } else if (currentCaseMode === "title") {
+          text = text.replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        outputEl.value = text;
+        updateStats(outputEl.value);
+        autoResize(outputEl);
+      }
+
+      inputEl.addEventListener("input", () => {
+        processText();
+        autoResize(inputEl);
+        clearTimeout(inputEl._historyTimer);
+        inputEl._historyTimer = setTimeout(saveHistory, 1000);
+      }, { signal });
+
+      caseTrigger.addEventListener("click", async () => {
+        const opts = Object.keys(caseNames).map(k => ({ id: k, label: caseNames[k] }));
+        const choice = await Hub.showSelect({ title: "Wielkość liter", options: opts, current: currentCaseMode, anchor: caseTrigger, signal });
+        if (choice && choice !== currentCaseMode) {
+          currentCaseMode = choice;
+          caseText.textContent = caseNames[currentCaseMode];
+          processText();
         }
       }, { signal });
 
-      fmtTrigger.addEventListener("click", async () => {
-        const opts = Object.keys(formatNames).map(k => ({ id: k, label: formatNames[k] }));
-        const choice = await Hub.showSelect({ title: "Format docelowy", options: opts, current: currentFmt, anchor: fmtTrigger, signal });
-        if (choice) {
-          currentFmt = choice;
-          fmtText.textContent = formatNames[currentFmt];
-          Hub.db.set("conv_fmt", currentFmt).catch(()=>{});
-          updateQualVisibility();
+      undoBtn.addEventListener("click", () => {
+        if (history.length > 1) {
+          history.pop();
+          inputEl.value = history[history.length - 1];
+          processText();
+          autoResize(inputEl);
+          Hub.haptic('light');
+          if (history.length <= 1) { undoBtn.disabled = true; undoBtn.style.opacity = "0.4"; }
         }
       }, { signal });
 
-      resizeTrigger.addEventListener("click", async () => {
-        const opts = Object.keys(resizeNames).map(k => ({ id: k, label: resizeNames[k] }));
-        const choice = await Hub.showSelect({ title: "Rozmiar wyjściowy", options: opts, current: currentResize, anchor: resizeTrigger, signal });
-        if (choice) {
-          currentResize = choice;
-          resizeText.textContent = resizeNames[currentResize];
-          Hub.db.set("conv_resize", currentResize).catch(()=>{});
-        }
-      }, { signal });
+      $("o-copy").addEventListener("click", () => {
+        if (!outputEl.value) return showToast("Brak tekstu do skopiowania");
+        const textToCopy = outputEl.value;
+        const btn = $("o-copy");
 
-      imgBefore.addEventListener("click", () => {
-        if (imgBefore.src) {
-          Hub.showModal({ content: `<img src="${imgBefore.src}" style="width: 100vw; height: 100vh; object-fit: contain; pointer-events: none; padding: 20px; box-sizing: border-box;">` });
-        }
-      }, { signal });
-
-      imgAfter.addEventListener("click", () => {
-        if (imgAfter.src) {
-          Hub.showModal({ content: `<img src="${imgAfter.src}" style="width: 100vw; height: 100vh; object-fit: contain; pointer-events: none; padding: 20px; box-sizing: border-box;">` });
-        }
-      }, { signal });
-
-      btnProcess.addEventListener("click", () => {
-        if (!currentBitmap) return showToast("Najpierw wybierz zdjęcie!");
+        const ta = document.createElement('textarea');
+        ta.value = textToCopy;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
         
-        btnProcess.disabled = true;
-        btnProcess.textContent = "Przetwarzanie...";
+        let success = false;
+        try { success = document.execCommand('copy'); } catch(e) {}
 
-        setTimeout(() => {
-          try {
-            let tWidth = originalWidth, tHeight = originalHeight;
-            
-            if (currentResize === "1080p" && originalWidth > 1920) {
-              tWidth = 1920; tHeight = Math.round((tWidth / originalWidth) * originalHeight);
-            } else if (currentResize === "720p" && originalWidth > 1280) {
-              tWidth = 1280; tHeight = Math.round((tWidth / originalWidth) * originalHeight);
-            } else if (currentResize === "50%") {
-              tWidth = Math.round(originalWidth * 0.5); tHeight = Math.round(originalHeight * 0.5);
-            } else if (currentResize === "25%") {
-              tWidth = Math.round(originalWidth * 0.25); tHeight = Math.round(originalHeight * 0.25);
-            }
+        document.body.removeChild(ta);
 
-            const canvas = document.createElement("canvas");
-            canvas.width = tWidth; canvas.height = tHeight;
-            const ctx = canvas.getContext("2d");
-
-            if (currentFmt === "image/jpeg") { 
-              ctx.fillStyle = "#ffffff"; 
-              ctx.fillRect(0, 0, canvas.width, canvas.height); 
-            }
-            
-            ctx.drawImage(currentBitmap, 0, 0, tWidth, tHeight);
-            const quality = Number(qualInput.value) / 100;
-            
-            canvas.toBlob((blob) => {
-              btnProcess.disabled = false;
-              btnProcess.textContent = "Konwertuj zdjęcie";
-              
-              if (!blob) return showToast("Błąd: Nie udało się przetworzyć zdjęcia.");
-
-              const outUrl = URL.createObjectURL(blob); 
-              activeUrls.push(outUrl);
-              
-              const ext = currentFmt.split("/")[1];
-              const outName = currentFile.name.replace(/\.[^.]+$/, "") + "_conv." + ext;
-              
-              const diff = ((blob.size - currentFile.size) / currentFile.size * 100).toFixed(1);
-              const sign = diff > 0 ? "+" : "";
-              
-              statsDiv.innerHTML = `Wymiary: ${originalWidth}x${originalHeight} px &rarr; <span>${tWidth}x${tHeight} px</span><br>Rozmiar: ${(currentFile.size / 1024).toFixed(1)} KB &rarr; <span>${(blob.size / 1024).toFixed(1)} KB</span> (${sign}${diff}%)`;
-
-              imgAfter.src = outUrl;
-              resultSection.classList.remove("hidden");
-
-              dlBtn.href = outUrl;
-              dlBtn.download = outName;
-              dlBtn.textContent = `Pobierz ${outName}`;
-
-            }, currentFmt, quality);
-          } catch (err) {
-            btnProcess.disabled = false;
-            btnProcess.textContent = "Konwertuj zdjęcie";
-            showToast("Wystąpił błąd podczas konwersji.");
-          }
-        }, 50);
+        if (success) {
+          Hub.haptic('success');
+          const orig = btn.innerHTML;
+          btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+          setTimeout(() => { btn.innerHTML = orig; }, 1500);
+        } else {
+          Hub.copy(textToCopy, btn);
+        }
       }, { signal });
+
+      $("o-clear").addEventListener("click", () => {
+        Hub.haptic('medium'); saveHistory();
+        inputEl.value = ""; outputEl.value = ""; updateStats(""); 
+        autoResize(inputEl); autoResize(outputEl);
+        inputEl.focus();
+      }, { signal });
+
+      processText();
     },
-    
-    unmount() { 
-      cleanupUrls(); 
-    }
+    unmount() {}
   });
 })();
