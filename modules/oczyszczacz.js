@@ -41,34 +41,32 @@
           .o-trigger .icon { color: var(--muted); font-family: monospace; font-size: 20px; font-weight: 300; line-height: 1; }
           
           .o-accordion { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
-          .o-accordion.open { max-height: 800px; } /* Zwiększone dla pod-opcji */
+          .o-accordion.open { max-height: 800px; }
           
-          /* Style dla grupy opcji */
           .o-option-group { border-bottom: 1px solid var(--line); }
           .o-option-group:last-child { border-bottom: none; }
           
+          /* Główny wiersz opcji z przywróconym opisem */
           .o-option-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; }
+          .o-option-left { display: flex; align-items: flex-start; gap: 12px; }
           
-          .o-option-left { display: flex; align-items: center; gap: 8px; }
+          .o-option-text { display: flex; flex-direction: column; }
           .o-option-title { font-size: 15px; font-weight: 500; color: var(--ink); }
           .o-option-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
           
-          /* Mała strzałka do rozwijania pod-opcji */
           .o-sub-arrow { 
             background: transparent; border: none; color: var(--muted); cursor: pointer; 
-            padding: 4px; display: flex; align-items: center; justify-content: center; 
-            transition: transform 0.2s; outline: none;
+            padding: 2px 4px; display: flex; align-items: center; justify-content: center; 
+            transition: transform 0.2s; outline: none; margin-top: 2px;
           }
           .o-sub-arrow.open { transform: rotate(180deg); }
           .o-sub-arrow svg { width: 16px; height: 16px; }
 
-          /* Kontener na pod-opcje */
-          .o-sub-options { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 16px; border-left: 1px solid var(--line); margin-left: 8px; }
+          .o-sub-options { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 28px; border-left: 1px solid var(--line); margin-left: 8px; }
           .o-sub-options.open { max-height: 200px; margin-bottom: 12px; }
           .o-sub-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
           .o-sub-title { font-size: 13px; color: var(--muted); }
 
-          /* Stan częściowy dla głównego switcha */
           .switch.partial .switch-slider { opacity: 0.6; }
           .switch.partial .switch-slider:before { opacity: 0.8; }
 
@@ -104,7 +102,10 @@
               <div class="o-option-row">
                 <div class="o-option-left">
                   <button class="o-sub-arrow" data-target="sub-url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
-                  <div><div class="o-option-title">Usuwaj linki</div></div>
+                  <div class="o-option-text">
+                    <div class="o-option-title">Usuwaj linki</div>
+                    <div class="o-option-desc">Usuwa adresy URL (także www.)</div>
+                  </div>
                 </div>
                 <label class="switch" id="sw-url-group"><input type="checkbox" id="o-clean-url"><span class="switch-slider"></span></label>
               </div>
@@ -119,7 +120,10 @@
               <div class="o-option-row">
                 <div class="o-option-left">
                   <button class="o-sub-arrow" data-target="sub-md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
-                  <div><div class="o-option-title">Znaki Markdown</div></div>
+                  <div class="o-option-text">
+                    <div class="o-option-title">Znaki Markdown</div>
+                    <div class="o-option-desc">Usuwa formatowanie tekstu (#, **, >)</div>
+                  </div>
                 </div>
                 <label class="switch" id="sw-md-group"><input type="checkbox" id="o-clean-md"><span class="switch-slider"></span></label>
               </div>
@@ -135,7 +139,10 @@
               <div class="o-option-row">
                 <div class="o-option-left">
                   <button class="o-sub-arrow" data-target="sub-space"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
-                  <div><div class="o-option-title">Popraw interpunkcję</div></div>
+                  <div class="o-option-text">
+                    <div class="o-option-title">Popraw interpunkcję</div>
+                    <div class="o-option-desc">Usuwa spacje przed . , ! ?</div>
+                  </div>
                 </div>
                 <label class="switch" id="sw-space-group"><input type="checkbox" id="o-clean-space" checked><span class="switch-slider"></span></label>
               </div>
@@ -150,7 +157,10 @@
               <div class="o-option-row">
                 <div class="o-option-left">
                   <button class="o-sub-arrow" data-target="sub-brackets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
-                  <div><div class="o-option-title">Usuwaj nawiasy</div></div>
+                  <div class="o-option-text">
+                    <div class="o-option-title">Usuwaj nawiasy</div>
+                    <div class="o-option-desc">Usuwa [], {}, "", ''</div>
+                  </div>
                 </div>
                 <label class="switch" id="sw-brackets-group"><input type="checkbox" id="o-clean-brackets"><span class="switch-slider"></span></label>
               </div>
@@ -166,7 +176,10 @@
               <div class="o-option-row">
                 <div class="o-option-left">
                   <button class="o-sub-arrow" data-target="sub-dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
-                  <div><div class="o-option-title">Zostaw jeden myślnik</div></div>
+                  <div class="o-option-text">
+                    <div class="o-option-title">Zostaw jeden myślnik</div>
+                    <div class="o-option-desc">Zamienia -- na -, wyłącz by usunąć</div>
+                  </div>
                 </div>
                 <label class="switch" id="sw-dash-group"><input type="checkbox" id="o-dash-toggle" checked><span class="switch-slider"></span></label>
               </div>
@@ -207,7 +220,6 @@
 
       // --- LOGIKA SYNCHRONIZACJI SWITCHY ---
       
-      // 1. Obsługa strzałek (rozwijanie pod-opcji)
       container.querySelectorAll(".o-sub-arrow").forEach(arrow => {
         arrow.addEventListener("click", () => {
           Hub.haptic('light');
@@ -218,11 +230,11 @@
         }, { signal });
       });
 
-      // 2. Funkcja synchronizująca stan głównego switcha na podstawie pod-opcji
       function syncGroup(parentId) {
         const parentInput = $(parentId);
         const parentLabel = parentInput.closest('.switch');
-        const subOpts = container.querySelectorAll(`.sub-${parentId.split('-')[1]}-opt`); // np. o-clean-url -> sub-url-opt
+        const prefix = parentId.split('-')[1]; 
+        const subOpts = container.querySelectorAll(`.sub-${prefix}-opt`);
         
         if (!subOpts || subOpts.length === 0) return;
 
@@ -242,7 +254,6 @@
         processText();
       }
 
-      // 3. Podpięcie zdarzeń do pod-opcji
       container.querySelectorAll('input[type="checkbox"][class$="-opt"]').forEach(subOpt => {
         subOpt.addEventListener("change", () => {
           Hub.haptic('light');
@@ -250,7 +261,6 @@
         }, { signal });
       });
 
-      // 4. Podpięcie zdarzeń do głównych switchy
       ['o-clean-url', 'o-clean-md', 'o-clean-space', 'o-clean-brackets', 'o-dash-toggle'].forEach(id => {
         $(id).addEventListener("change", (e) => {
           Hub.haptic('medium');
@@ -258,8 +268,7 @@
           const parentLabel = e.target.closest('.switch');
           parentLabel.classList.remove('partial');
           
-          // Zaznacz/odznacz wszystkie pod-opcje
-          const prefix = id.split('-')[1]; // np. url, md, space, brackets, dash
+          const prefix = id.split('-')[1];
           const subOpts = container.querySelectorAll(`.sub-${prefix}-opt`);
           subOpts.forEach(opt => { opt.checked = isChecked; });
           
@@ -321,16 +330,13 @@
         lines = lines.map(line => {
           let l = line;
           
-          // Linki
           if ($("o-clean-url").checked) {
-            const subUrl1 = container.querySelector('.sub-url-opt:nth-child(1)'); // nie działa tak prosto, użyjmy querySelector z klasą
             const isUrlChecked = container.querySelectorAll('.sub-url-opt')[0].checked;
             const isWwwChecked = container.querySelectorAll('.sub-url-opt')[1].checked;
             if (isUrlChecked) l = l.replace(/https?:\/\/[^\s]+/gi, "");
             if (isWwwChecked) l = l.replace(/www\.[^\s]+/gi, "");
           }
 
-          // Markdown
           if ($("o-clean-md").checked) {
             const subs = container.querySelectorAll('.sub-md-opt');
             if (subs[0].checked) l = l.replace(/#/g, "");
@@ -338,14 +344,12 @@
             if (subs[2].checked) l = l.replace(/>/g, "");
           }
 
-          // Interpunkcja
           if ($("o-clean-space").checked) {
             const subs = container.querySelectorAll('.sub-space-opt');
             if (subs[0].checked) l = l.replace(/\s+([.,])/g, "$1");
             if (subs[1].checked) l = l.replace(/\s+([!?])/g, "$1");
           }
 
-          // Nawiasy
           if ($("o-clean-brackets").checked) {
             const subs = container.querySelectorAll('.sub-brackets-opt');
             if (subs[0].checked) l = l.replace(/[\[\]]/g, "");
@@ -353,7 +357,6 @@
             if (subs[2].checked) l = l.replace(/["']/g, "");
           }
 
-          // Myślniki
           if ($("o-dash-toggle").checked) {
             const subs = container.querySelectorAll('.sub-dash-opt');
             if (subs[0].checked) l = l.replace(/-{2,}/g, "-");
@@ -380,77 +383,4 @@
         }
 
         outputEl.value = text;
-        updateStats(outputEl.value);
-        autoResize(outputEl);
-      }
-
-      inputEl.addEventListener("input", () => {
-        processText();
-        autoResize(inputEl);
-        clearTimeout(inputEl._historyTimer);
-        inputEl._historyTimer = setTimeout(saveHistory, 1000);
-      }, { signal });
-
-      caseTrigger.addEventListener("click", async () => {
-        const opts = Object.keys(caseNames).map(k => ({ id: k, label: caseNames[k] }));
-        const choice = await Hub.showSelect({ title: "Wielkość liter", options: opts, current: currentCaseMode, anchor: caseTrigger, signal });
-        if (choice && choice !== currentCaseMode) {
-          currentCaseMode = choice;
-          caseText.textContent = caseNames[currentCaseMode];
-          processText();
-        }
-      }, { signal });
-
-      undoBtn.addEventListener("click", () => {
-        if (history.length > 1) {
-          history.pop();
-          inputEl.value = history[history.length - 1];
-          processText();
-          autoResize(inputEl);
-          Hub.haptic('light');
-          if (history.length <= 1) { undoBtn.disabled = true; undoBtn.style.opacity = "0.4"; }
-        }
-      }, { signal });
-
-      $("o-copy").addEventListener("click", () => {
-        if (!outputEl.value) return showToast("Brak tekstu do skopiowania");
-        const textToCopy = outputEl.value;
-        const btn = $("o-copy");
-
-        const ta = document.createElement('textarea');
-        ta.value = textToCopy;
-        ta.setAttribute('readonly', '');
-        ta.style.position = 'fixed';
-        ta.style.left = '-9999px';
-        document.body.appendChild(ta);
-        ta.select();
-        ta.setSelectionRange(0, ta.value.length);
-        
-        let success = false;
-        try { success = document.execCommand('copy'); } catch(e) {}
-
-        document.body.removeChild(ta);
-
-        if (success) {
-          Hub.haptic('success');
-          const orig = btn.innerHTML;
-          btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-          setTimeout(() => { btn.innerHTML = orig; }, 1500);
-        } else {
-          Hub.copy(textToCopy, btn);
-        }
-      }, { signal });
-
-      $("o-clear").addEventListener("click", () => {
-        Hub.haptic('medium'); saveHistory();
-        inputEl.value = ""; outputEl.value = ""; updateStats(""); 
-        autoResize(inputEl); autoResize(outputEl);
-        inputEl.focus();
-      }, { signal });
-
-      // Inicjalizacja
-      processText();
-    },
-    unmount() {}
-  });
-})();
+        updateStats(outputEl.value
