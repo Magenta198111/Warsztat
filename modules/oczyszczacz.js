@@ -46,7 +46,6 @@
           .o-option-group { border-bottom: 1px solid var(--line); }
           .o-option-group:last-child { border-bottom: none; }
           
-          /* Główny wiersz opcji z przywróconym opisem */
           .o-option-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; }
           .o-option-left { display: flex; align-items: flex-start; gap: 12px; }
           
@@ -107,11 +106,11 @@
                     <div class="o-option-desc">Usuwa adresy URL (także www.)</div>
                   </div>
                 </div>
-                <label class="switch" id="sw-url-group"><input type="checkbox" id="o-clean-url"><span class="switch-slider"></span></label>
+                <label class="switch" id="sw-url-group"><input type="checkbox" id="o-clean-url" data-group="url"><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-url">
-                <div class="o-sub-row"><span class="o-sub-title">Adresy URL (https://)</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url" checked><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Adresy WWW (www.)</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Adresy URL (https://)</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Adresy WWW (www.)</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url"><span class="switch-slider"></span></label></div>
               </div>
             </div>
 
@@ -125,12 +124,12 @@
                     <div class="o-option-desc">Usuwa formatowanie tekstu (#, **, >)</div>
                   </div>
                 </div>
-                <label class="switch" id="sw-md-group"><input type="checkbox" id="o-clean-md"><span class="switch-slider"></span></label>
+                <label class="switch" id="sw-md-group"><input type="checkbox" id="o-clean-md" data-group="md"><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-md">
-                <div class="o-sub-row"><span class="o-sub-title">Nagłówki (#)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md" checked><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Pogrubienie (*, _)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md" checked><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Cytaty (>)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Nagłówki (#)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Pogrubienie (*, _)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Cytaty (>)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
               </div>
             </div>
 
@@ -144,7 +143,7 @@
                     <div class="o-option-desc">Usuwa spacje przed . , ! ?</div>
                   </div>
                 </div>
-                <label class="switch" id="sw-space-group"><input type="checkbox" id="o-clean-space" checked><span class="switch-slider"></span></label>
+                <label class="switch" id="sw-space-group"><input type="checkbox" id="o-clean-space" data-group="space" checked><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-space">
                 <div class="o-sub-row"><span class="o-sub-title">Kropki i przecinki (. ,)</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
@@ -162,12 +161,12 @@
                     <div class="o-option-desc">Usuwa [], {}, "", ''</div>
                   </div>
                 </div>
-                <label class="switch" id="sw-brackets-group"><input type="checkbox" id="o-clean-brackets"><span class="switch-slider"></span></label>
+                <label class="switch" id="sw-brackets-group"><input type="checkbox" id="o-clean-brackets" data-group="brackets"><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-brackets">
-                <div class="o-sub-row"><span class="o-sub-title">Kwadratowe []</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets" checked><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Klamrowe {}</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets" checked><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Cudzysłowy "" ''</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Kwadratowe []</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Klamrowe {}</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Cudzysłowy "" ''</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
               </div>
             </div>
 
@@ -181,7 +180,7 @@
                     <div class="o-option-desc">Zamienia -- na -, wyłącz by usunąć</div>
                   </div>
                 </div>
-                <label class="switch" id="sw-dash-group"><input type="checkbox" id="o-dash-toggle" checked><span class="switch-slider"></span></label>
+                <label class="switch" id="sw-dash-group"><input type="checkbox" id="o-dash-toggle" data-group="dash" checked><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-dash">
                 <div class="o-sub-row"><span class="o-sub-title">Zamień (-- na -)</span><label class="switch"><input type="checkbox" class="sub-dash-opt" data-parent="o-dash-toggle" checked><span class="switch-slider"></span></label></div>
@@ -233,8 +232,8 @@
       function syncGroup(parentId) {
         const parentInput = $(parentId);
         const parentLabel = parentInput.closest('.switch');
-        const prefix = parentId.split('-')[1]; 
-        const subOpts = container.querySelectorAll(`.sub-${prefix}-opt`);
+        const group = parentInput.dataset.group;
+        const subOpts = container.querySelectorAll(`.sub-${group}-opt`);
         
         if (!subOpts || subOpts.length === 0) return;
 
@@ -268,8 +267,8 @@
           const parentLabel = e.target.closest('.switch');
           parentLabel.classList.remove('partial');
           
-          const prefix = id.split('-')[1];
-          const subOpts = container.querySelectorAll(`.sub-${prefix}-opt`);
+          const group = e.target.dataset.group;
+          const subOpts = container.querySelectorAll(`.sub-${group}-opt`);
           subOpts.forEach(opt => { opt.checked = isChecked; });
           
           processText();
