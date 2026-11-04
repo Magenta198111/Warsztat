@@ -49,13 +49,13 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .n-btn:active { background: var(--surface-hover); border-color: var(--muted); }
 .n-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* NOWY PRZYCISK: Delikatne tło + kolorowa ramka i tekst */
-.n-btn-accent-tinted {
-  background: color-mix(in srgb, var(--accent) 15%, transparent) !important;
-  border-color: var(--accent) !important;
+/* NOWY PRZYCISK: Outline (czarne tło, kolorowa ramka i tekst) */
+.n-btn-outline {
+  background: transparent !important;
+  border: 1px solid var(--accent) !important;
   color: var(--accent) !important;
 }
-.n-btn-accent-tinted:active {
+.n-btn-outline:active {
   background: var(--accent) !important;
   color: var(--accent-ink) !important;
 }
@@ -110,10 +110,16 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
 .list.grid-view .tile-desc { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-/* ZASIĘG KOLORU AKCENTU */
-body.scope-icons .tile-icon svg,
-body.scope-max .tile-icon svg { stroke: var(--accent); }
-body.scope-max .drawer-item svg { color: var(--accent); }
+/* ZASIĘG KOLORU AKCENTU (KLASY ZARZĄDZAJĄCE) */
+body.scope-home-icons .tile-icon svg { stroke: var(--accent); }
+body.scope-drawer-icons .drawer-item svg { color: var(--accent); }
+body.scope-action-btns .n-btn-outline { border-color: var(--accent); color: var(--accent); }
+
+/* TRYB MONOCHROMATYCZNY */
+body.no-accent { --accent: #52525b !important; --accent-ink: #ffffff !important; }
+body.no-accent .accent-layout-wrapper { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
+body.no-accent .cp-square-wrap, body.no-accent .cp-hue-slider { filter: grayscale(1); pointer-events: none; }
+body.no-accent .cp-preview-color { background: #52525b !important; }
 
 /* --- PRZEŁĄCZNIK (SWITCH) --- */
 .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
@@ -347,13 +353,23 @@ body.scope-max .drawer-item svg { color: var(--accent); }
         </div>
       </div>
     </div>
-    <div class="settings-row" style="border-top: 1px solid var(--line);">
-      <div><div class="settings-label">Zasięg koloru</div><div class="settings-desc">Co ma dodatkowo przejmować kolor akcentu?</div></div>
-      <div class="settings-options">
-        <button class="settings-opt-btn" id="opt-scope-default">Tylko akcenty</button>
-        <button class="settings-opt-btn" id="opt-scope-icons">+ Ikony modułów</button>
-        <button class="settings-opt-btn" id="opt-scope-max">Maksymalny</button>
-      </div>
+    
+    <!-- NOWY ZASIĘG KOLORU (PRZEŁĄCZNIKI) -->
+    <div class="settings-row" style="border-top: 1px solid var(--line); flex-direction: row; justify-content: space-between; align-items: center;">
+      <div><div class="settings-label" style="font-weight: 600; color: var(--accent);">Włącz akcenty</div><div class="settings-desc">Główny wyłącznik kolorów</div></div>
+      <label class="switch"><input type="checkbox" id="opt-accent-master"><span class="switch-slider"></span></label>
+    </div>
+    <div class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
+      <div><div class="settings-label">Ikony modułów</div><div class="settings-desc">Koloruj ikony na stronie głównej</div></div>
+      <label class="switch"><input type="checkbox" id="opt-scope-home"><span class="switch-slider"></span></label>
+    </div>
+    <div class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
+      <div><div class="settings-label">Ikony w menu</div><div class="settings-desc">Koloruj ikony w menu bocznym</div></div>
+      <label class="switch"><input type="checkbox" id="opt-scope-drawer"><span class="switch-slider"></span></label>
+    </div>
+    <div class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
+      <div><div class="settings-label">Przyciski akcji</div><div class="settings-desc">Koloruj główne przyciski w modułach</div></div>
+      <label class="switch"><input type="checkbox" id="opt-scope-btns"><span class="switch-slider"></span></label>
     </div>
   </div>
 
@@ -447,7 +463,7 @@ window.Hub = {
   modules: new Map(),
   activeModule: null,
   activeAbort: null,
-  settings: { accent: '#818cf8', menuStyle: 'bottom', gridView: false, accentScope: 'default', haptics: true },
+  settings: { accent: '#818cf8', menuStyle: 'bottom', gridView: false, haptics: true, noAccent: false, scopeHome: false, scopeDrawer: false, scopeBtns: false },
   
   db: {
     open: () => new Promise((res, rej) => { const r = indexedDB.open("WarsztatDB", 1); r.onupgradeneeded = e => { if(!e.target.result.objectStoreNames.contains("kv")) e.target.result.createObjectStore("kv"); }; r.onsuccess = e => res(e.target.result); r.onerror = e => rej(e.target.error); }),
@@ -488,9 +504,15 @@ window.Hub = {
     let yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
     let inkColor = (yiq >= 128) ? '#000000' : '#ffffff';
 
-    document.documentElement.style.setProperty('--accent', hex);
-    document.documentElement.style.setProperty('--accent-ink', inkColor);
     Hub.settings.accent = hex;
+
+    if (Hub.settings.noAccent) {
+      document.documentElement.style.setProperty('--accent', '#52525b');
+      document.documentElement.style.setProperty('--accent-ink', '#ffffff');
+    } else {
+      document.documentElement.style.setProperty('--accent', hex);
+      document.documentElement.style.setProperty('--accent-ink', inkColor);
+    }
 
     let isPreset = false;
     document.querySelectorAll('.accent-swatch').forEach(s => {
@@ -507,14 +529,22 @@ window.Hub = {
     if (forceSave) Hub.db.set("accent_color", hex);
   },
 
-  applyScope: function(scope) {
-    document.body.classList.remove('scope-icons', 'scope-max');
-    if (scope === 'icons') document.body.classList.add('scope-icons');
-    if (scope === 'max') document.body.classList.add('scope-max');
-    Hub.settings.accentScope = scope;
-    document.querySelectorAll('#opt-scope-default, #opt-scope-icons, #opt-scope-max').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('opt-scope-' + (scope === 'default' ? 'default' : scope)).classList.add('active');
-    Hub.db.set("accent_scope", scope);
+  applyScope: function() {
+    document.body.classList.toggle('no-accent', Hub.settings.noAccent);
+    document.body.classList.toggle('scope-home-icons', Hub.settings.scopeHome);
+    document.body.classList.toggle('scope-drawer-icons', Hub.settings.scopeDrawer);
+    document.body.classList.toggle('scope-action-btns', Hub.settings.scopeBtns);
+    
+    // Zapis do bazy
+    Hub.db.set("accent_scope", {
+      noAccent: Hub.settings.noAccent,
+      home: Hub.settings.scopeHome,
+      drawer: Hub.settings.scopeDrawer,
+      btns: Hub.settings.scopeBtns
+    });
+
+    // Odświeżenie koloru (bo główny przełącznik może zmienić --accent)
+    Hub.applyAccent(Hub.settings.accent);
   },
 
   applyGridView: function(isGrid) {
@@ -807,16 +837,30 @@ window.Hub = {
 
     const rgbWrapper = document.getElementById('rgb-wheel-wrapper');
     rgbWrapper.onclick = () => {
+      if (Hub.settings.noAccent) return showToast("Włącz najpierw główny wyłącznik akcentów");
       Hub.haptic('medium');
       Hub.openColorPicker(Hub.settings.accent);
     };
 
-    // 4. Zasięg koloru
-    document.querySelectorAll('#opt-scope-default, #opt-scope-icons, #opt-scope-max').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('opt-scope-' + (Hub.settings.accentScope === 'default' ? 'default' : Hub.settings.accentScope)).classList.add('active');
-    document.getElementById('opt-scope-default').onclick = () => { Hub.haptic('light'); Hub.applyScope('default'); };
-    document.getElementById('opt-scope-icons').onclick = () => { Hub.haptic('light'); Hub.applyScope('icons'); };
-    document.getElementById('opt-scope-max').onclick = () => { Hub.haptic('light'); Hub.applyScope('max'); };
+    // 4. Zasięg koloru (Nowe Przełączniki)
+    const chkMaster = document.getElementById('opt-accent-master');
+    const chkHome = document.getElementById('opt-scope-home');
+    const chkDrawer = document.getElementById('opt-scope-drawer');
+    const chkBtns = document.getElementById('opt-scope-btns');
+
+    chkMaster.checked = !Hub.settings.noAccent;
+    chkHome.checked = Hub.settings.scopeHome;
+    chkDrawer.checked = Hub.settings.scopeDrawer;
+    chkBtns.checked = Hub.settings.scopeBtns;
+
+    chkMaster.onchange = (e) => {
+      Hub.haptic('medium');
+      Hub.settings.noAccent = !e.target.checked;
+      Hub.applyScope();
+    };
+    chkHome.onchange = (e) => { Hub.haptic('light'); Hub.settings.scopeHome = e.target.checked; Hub.applyScope(); };
+    chkDrawer.onchange = (e) => { Hub.haptic('light'); Hub.settings.scopeDrawer = e.target.checked; Hub.applyScope(); };
+    chkBtns.onchange = (e) => { Hub.haptic('light'); Hub.settings.scopeBtns = e.target.checked; Hub.applyScope(); };
 
     // 5. Wibracje
     const hapticToggle = document.getElementById('opt-haptics');
@@ -941,7 +985,8 @@ window.Hub = {
       if (!val.startsWith('#')) val = '#' + val;
       if (/^#[0-9A-F]{6}$/i.test(val)) {
         const hsv = hexToHsv(val);
-        h = hsv.h; s = hsv.s; v = hsv.v;
+        h.hsv = hsv.h; s = hsv.s; v = hsv.v; // POPRAWKA: h.hsv na hsv.h
+        h = hsv.h;
         updateUI();
       }
     };
@@ -956,15 +1001,29 @@ window.Hub = {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const [accent, menuStyle, gridView, accentScope, haptics] = await Promise.all([
-    Hub.db.get("accent_color", "#818cf8"), Hub.db.get("menu_style", "bottom"),
-    Hub.db.get("grid_view", false), Hub.db.get("accent_scope", "default"), Hub.db.get("haptics", true)
+  // Odczyt nowych ustawień
+  const [accent, menuStyle, gridView, haptics, scopeData] = await Promise.all([
+    Hub.db.get("accent_color", "#818cf8"),
+    Hub.db.get("menu_style", "bottom"),
+    Hub.db.get("grid_view", false),
+    Hub.db.get("haptics", true),
+    Hub.db.get("accent_scope", { noAccent: false, home: false, drawer: false, btns: false })
   ]);
 
-  Hub.settings.accent = accent; Hub.settings.menuStyle = menuStyle;
-  Hub.settings.gridView = gridView; Hub.settings.accentScope = accentScope; Hub.settings.haptics = haptics;
+  Hub.settings.accent = accent; 
+  Hub.settings.menuStyle = menuStyle;
+  Hub.settings.gridView = gridView; 
+  Hub.settings.haptics = haptics;
+  
+  // Aplikowanie nowych ustawień zasięgu
+  Hub.settings.noAccent = scopeData.noAccent;
+  Hub.settings.scopeHome = scopeData.home;
+  Hub.settings.scopeDrawer = scopeData.drawer;
+  Hub.settings.scopeBtns = scopeData.btns;
 
-  Hub.applyAccent(accent); Hub.applyGridView(gridView); Hub.applyScope(accentScope);
+  Hub.applyAccent(accent); 
+  Hub.applyGridView(gridView); 
+  Hub.applyScope();
 
   document.getElementById('drawer-home').classList.add('active');
   document.getElementById("fab-add").onclick = () => { Hub.haptic('light'); showToast("Wgraj plik do folderu modules i dopisz do modules.json"); };
