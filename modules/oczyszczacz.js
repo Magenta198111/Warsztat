@@ -24,8 +24,10 @@
           .o-textarea {
             width: 100%; padding: 12px 0; background: transparent; border: none;
             border-bottom: 1px solid var(--line); color: var(--ink); font-size: 16px; 
-            font-family: inherit; resize: vertical; outline: none; min-height: 100px; 
-            transition: border-color 0.2s; line-height: 1.5;
+            font-family: inherit; resize: none; outline: none; 
+            min-height: 100px; max-height: 1200px;
+            overflow-y: auto; transition: border-color 0.2s; line-height: 1.5;
+            box-sizing: border-box;
           }
           .o-textarea:focus { border-bottom-color: var(--accent); }
           .o-textarea::placeholder { color: var(--muted); font-size: 15px; }
@@ -74,7 +76,7 @@
           </div>
           
           <div id="o-clean-accordion" class="o-accordion">
-            <div class="o-option-row"><div><div class="o-option-title">Usuwaj linki</div><div class="o-option-desc">Usuwa adresy URL</div></div><label class="switch"><input type="checkbox" id="o-clean-url"><span class="switch-slider"></span></label></div>
+            <div class="o-option-row"><div><div class="o-option-title">Usuwaj linki</div><div class="o-option-desc">Usuwa adresy URL (także www.)</div></div><label class="switch"><input type="checkbox" id="o-clean-url"><span class="switch-slider"></span></label></div>
             <div class="o-option-row"><div><div class="o-option-title">Usuwaj znaki Markdown</div><div class="o-option-desc">np. #, **, _, ></div></div><label class="switch"><input type="checkbox" id="o-clean-md"><span class="switch-slider"></span></label></div>
             <div class="o-option-row"><div><div class="o-option-title">Popraw interpunkcję</div><div class="o-option-desc">Usuwa spacje przed . , ! ?</div></div><label class="switch"><input type="checkbox" id="o-clean-space" checked><span class="switch-slider"></span></label></div>
             <div class="o-option-row"><div><div class="o-option-title">Usuwaj nawiasy</div><div class="o-option-desc">Usuwa [], {}, "", ''</div></div><label class="switch"><input type="checkbox" id="o-clean-brackets"><span class="switch-slider"></span></label></div>
@@ -112,6 +114,16 @@
 
       let history = [];
 
+      // --- AUTOMATYCZNE DOPASOWANIE WYSOKOŚCI ---
+      function autoResize(el) {
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+      }
+
+      // Inicjalne dopasowanie obu pól
+      setTimeout(() => { autoResize(inputEl); autoResize(outputEl); }, 50);
+
       cleanTrigger.addEventListener("click", () => {
         Hub.haptic('light');
         cleanAccordion.classList.toggle("open");
@@ -137,33 +149,32 @@
 
       function processText() {
         let text = inputEl.value;
-        if (!text) { outputEl.value = ""; updateStats(""); return; }
+        if (!text) { 
+          outputEl.value = ""; 
+          updateStats(""); 
+          autoResize(outputEl);
+          return; 
+        }
 
-        // 1. Dzielimy tekst na linie, aby zachować strukturę (Entery)
         let lines = text.split(/\r?\n/);
 
-        // 2. Przetwarzamy każdą linię osobno
         lines = lines.map(line => {
           let l = line;
-          if (cleanUrl.checked) l = l.replace(/https?:\/\/[^\s]+/g, "");
+          if (cleanUrl.checked) l = l.replace(/(?:https?:\/\/|www\.)[^\s]+/gi, "");
           if (cleanMd.checked) l = l.replace(/[#*_>]/g, "");
           if (cleanBrackets.checked) l = l.replace(/[\[\]{}""'']/g, "");
           if (cleanSpace.checked) l = l.replace(/\s+([.,!?;:])/g, "$1");
           if (dashToggle.checked) l = l.replace(/-{2,}/g, "-");
           else l = l.replace(/-{2,}/g, "");
           
-          // Redukcja wielokrotnych spacji wewnątrz linii
           l = l.replace(/\s+/g, " ").trim();
           return l;
         });
 
-        // 3. Łączymy linie i redukujemy nadmiarowe puste wiersze
         text = lines.join("\n");
         text = text.replace(/\n{3,}/g, "\n\n").trim();
 
-        // 4. Wielkość liter
         if (currentCaseMode === "sentence") {
-          // Flaga 'm' pozwala na dopasowanie początku każdej linii
           text = text.replace(/(^\s*|[.!?]\s+)([a-ząćęłńóśźż])/gm, (m, p, letter) => p + letter.toUpperCase());
         } else if (currentCaseMode === "upper") {
           text = text.toUpperCase();
@@ -175,10 +186,12 @@
 
         outputEl.value = text;
         updateStats(outputEl.value);
+        autoResize(outputEl);
       }
 
       inputEl.addEventListener("input", () => {
         processText();
+        autoResize(inputEl);
         clearTimeout(inputEl._historyTimer);
         inputEl._historyTimer = setTimeout(saveHistory, 1000);
       }, { signal });
@@ -202,19 +215,50 @@
           history.pop();
           inputEl.value = history[history.length - 1];
           processText();
+          autoResize(inputEl);
           Hub.haptic('light');
           if (history.length <= 1) { undoBtn.disabled = true; undoBtn.style.opacity = "0.4"; }
         }
       }, { signal });
 
+      // --- CICHE KOPIOWANIE (bez dużego okna Androida) ---
       $("o-copy").addEventListener("click", () => {
         if (!outputEl.value) return showToast("Brak tekstu do skopiowania");
-        Hub.copy(outputEl.value, $("o-copy"));
+        const textToCopy = outputEl.value;
+        const btn = $("o-copy");
+
+        // Metoda 1: execCommand (cichsza na Androidzie)
+        const ta = document.createElement('textarea');
+        ta.value = textToCopy;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        ta.style.top = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
+        
+        let success = false;
+        try { success = document.execCommand('copy'); } catch(e) {}
+
+        document.body.removeChild(ta);
+
+        if (success) {
+          Hub.haptic('success');
+          const orig = btn.innerHTML;
+          btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+          setTimeout(() => { btn.innerHTML = orig; }, 1500);
+        } else {
+          // Fallback do nowoczesnej metody
+          Hub.copy(textToCopy, btn);
+        }
       }, { signal });
 
       $("o-clear").addEventListener("click", () => {
         Hub.haptic('medium'); saveHistory();
-        inputEl.value = ""; outputEl.value = ""; updateStats(""); inputEl.focus();
+        inputEl.value = ""; outputEl.value = ""; updateStats(""); 
+        autoResize(inputEl); autoResize(outputEl);
+        inputEl.focus();
       }, { signal });
 
       processText();
