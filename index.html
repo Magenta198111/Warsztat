@@ -117,7 +117,6 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 #toast-container { position: fixed; top: calc(70px + var(--safe-top)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 10000; pointer-events: none; width: 90%; max-width: 400px; }
 .toast { background: var(--surface-hover); color: var(--ink); padding: 14px 20px; border-radius: 8px; border: 1px solid var(--line); font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); opacity: 0; transform: translateY(-20px); transition: all 0.3s; text-align: center; }
 .toast.show { opacity: 1; transform: translateY(0); }
-
 /* --- HUB: SELEKTOR (bottom-sheet / dropdown) --- */
 .hub-select-overlay {
   position: fixed; inset: 0; z-index: 9000;
@@ -253,7 +252,6 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 <button class="fab" id="fab-add">+</button>
 <div id="toast-container"></div>
 </div>
-
 <script>
 // Globalny system obsługi błędów
 window.addEventListener('error', e => { const b = document.getElementById('error-bar'); if(b){ b.style.display='block'; b.textContent = 'BŁĄD: ' + e.message; } });
@@ -279,7 +277,7 @@ document.addEventListener('touchmove', e => {
   }
 }, { passive: false });
 
-// Blokada zoomu (double-tap + pinch) - wsparcie dla iOS
+// Blokada zoomu (double-tap + pinch)
 ['gesturestart','gesturechange','gestureend'].forEach(evt => {
   document.addEventListener(evt, e => e.preventDefault(), { passive: false });
 });
@@ -303,14 +301,9 @@ window.Hub = {
     Hub.renderGrid();
   },
 
-  // =========================================================
-  // FUNKCJE POMOCNICZE DLA MODUŁÓW
-  // =========================================================
-
-  // [3] Skrót do ustawienia menu
+  // --- FUNKCJE POMOCNICZE ---
   getMenuStyle: function() { return Hub.db.get("menu_style", "bottom"); },
 
-  // [2] Pobieranie plików
   download: function(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -320,13 +313,11 @@ window.Hub = {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   },
 
-  // [8] Debounce
   debounce: function(fn, delay = 200) {
     let timer;
     return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
   },
 
-  // [8] Throttle
   throttle: function(fn, delay = 200) {
     let last = 0, timer;
     return (...args) => {
@@ -338,7 +329,6 @@ window.Hub = {
     };
   },
 
-  // Kopiowanie z wizualnym potwierdzeniem (ptaszek)
   copy: function(text, btnEl) {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
@@ -348,5 +338,4 @@ window.Hub = {
     }).catch(() => showToast("Błąd kopiowania"));
   },
 
-  // Gotowy HTML przycisku powrotu
-  backButtonHtml: `<button class="n-back" onclick="history.back()"><svg width="24" height="24" viewBox="0 0 24 24" fill="n
+  backButtonHtml: `<button class="n-back" onclick="history.back()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>`,
