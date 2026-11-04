@@ -234,7 +234,7 @@
         const catData = data[currentCat];
         const keys = unitsFor(currentCat);
         const opts = keys.map(k => ({ id: k, label: catData.names[k] }));
-        const choice = await Hub.showSelect({ title: "Wybierz jednostkę", options: opts, current: currentUnit, anchor: unitTrigger, signal });
+        const choice = await Hub.showSelect({ title: "Wybierz jednostkę", options: opts, current: currentUnit, anchor: unitTrigger, signal, forceBottom: true, center: true });
         if (choice && choice !== currentUnit) {
           currentUnit = choice;
           savedUnits[currentCat] = currentUnit;
