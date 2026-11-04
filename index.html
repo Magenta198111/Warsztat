@@ -168,6 +168,7 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 }
 .hub-select-dd-item:last-child { border-bottom: none; }
 .hub-select-dd-item.active { color: var(--accent); font-weight: 600; background: rgba(129, 140, 248, 0.05); }
+.hub-select-dd-item.centered { justify-content: center; text-align: center; gap: 0; }
 
 /* --- HUB: MODAL (pełnoekranowy podgląd) --- */
 .hub-modal-overlay {
@@ -340,9 +341,10 @@ window.Hub = {
   },
 
   backButtonHtml: `<button class="n-back" onclick="history.back()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>`,
-  showSelect: async function({ title, options, current, anchor, signal, forceBottom = false, center = false }) {
+
+  showSelect: async function({ title, options, current, anchor, signal, center = false }) {
     const style = await Hub.getMenuStyle();
-    const useDropdown = (style === "dropdown") && anchor && !forceBottom;
+    const useDropdown = (style === "dropdown") && anchor;
 
     return new Promise(resolve => {
       const overlay = document.createElement('div');
@@ -350,11 +352,15 @@ window.Hub = {
 
       if (useDropdown) {
         const rect = anchor.getBoundingClientRect();
+        const ddWidth = Math.max(rect.width, 200);
+        let ddLeft = rect.left + rect.width / 2 - ddWidth / 2;
+        ddLeft = Math.max(10, Math.min(ddLeft, window.innerWidth - ddWidth - 10));
+        const itemStyle = center ? 'justify-content: center; text-align: center; gap: 0;' : '';
         overlay.innerHTML = `
-          <div class="hub-select-dropdown" style="top:${rect.bottom + 4}px; left:${rect.left}px; width:${rect.width}px;">
+          <div class="hub-select-dropdown" style="top:${rect.bottom + 4}px; left:${ddLeft}px; width:${ddWidth}px;">
             ${options.map(o => `
-              <div class="hub-select-dd-item ${o.id === current ? 'active' : ''}" data-id="${o.id}">
-                ${o.icon ? `<div style="width:16px;height:16px;opacity:0.7;">${o.icon}</div>` : ''}
+              <div class="hub-select-dd-item ${o.id === current ? 'active' : ''}" data-id="${o.id}" style="${itemStyle}">
+                ${(!center && o.icon) ? `<div style="width:16px;height:16px;opacity:0.7;">${o.icon}</div>` : ''}
                 <span>${o.label}</span>
               </div>
             `).join('')}
@@ -375,6 +381,7 @@ window.Hub = {
       }
 
       document.body.appendChild(overlay);
+      
       if (useDropdown) {
         const dd = overlay.querySelector('.hub-select-dropdown');
         const ddRect = dd.getBoundingClientRect();
@@ -383,6 +390,7 @@ window.Hub = {
           dd.style.top = Math.max(10, rect.top - ddRect.height - 4) + 'px';
         }
       }
+      
       requestAnimationFrame(() => overlay.classList.add('open'));
 
       const close = (val) => {
@@ -399,7 +407,6 @@ window.Hub = {
       if (signal) signal.addEventListener('abort', () => close(null), { once: true });
     });
   },
-
   showModal: function({ content }) {
     const overlay = document.createElement('div');
     overlay.className = 'hub-modal-overlay';
