@@ -24,10 +24,16 @@
           .o-textarea {
             width: 100%; padding: 12px 0; background: transparent; border: none;
             border-bottom: 1px solid var(--line); color: var(--ink); font-size: 16px; 
-            font-family: inherit; resize: none; outline: none; 
-            min-height: 100px; max-height: 1200px;
-            overflow-y: auto; transition: border-color 0.2s; line-height: 1.5;
+            font-family: inherit; 
+            resize: vertical; /* Przywrócona rączka do zmiany rozmiaru */
+            outline: none; 
+            min-height: 100px; 
+            max-height: 1200px; /* Limit ok. 50 linii */
+            overflow-y: auto; 
+            transition: border-color 0.2s; 
+            line-height: 1.5;
             box-sizing: border-box;
+            touch-action: pan-y; /* Pozwala na płynne przewijanie strony palcem */
           }
           .o-textarea:focus { border-bottom-color: var(--accent); }
           .o-textarea::placeholder { color: var(--muted); font-size: 15px; }
@@ -117,8 +123,12 @@
       // --- AUTOMATYCZNE DOPASOWANIE WYSOKOŚCI ---
       function autoResize(el) {
         if (!el) return;
+        // Zapisujemy obecną wysokość (jeśli użytkownik ją ręcznie zmienił)
+        const currentHeight = el.style.height;
         el.style.height = 'auto';
-        el.style.height = el.scrollHeight + 'px';
+        // Ustawiamy nową wysokość, ale nie większą niż max-height
+        const newHeight = Math.min(el.scrollHeight, 1200);
+        el.style.height = newHeight + 'px';
       }
 
       // Inicjalne dopasowanie obu pól
@@ -221,13 +231,11 @@
         }
       }, { signal });
 
-      // --- CICHE KOPIOWANIE (bez dużego okna Androida) ---
       $("o-copy").addEventListener("click", () => {
         if (!outputEl.value) return showToast("Brak tekstu do skopiowania");
         const textToCopy = outputEl.value;
         const btn = $("o-copy");
 
-        // Metoda 1: execCommand (cichsza na Androidzie)
         const ta = document.createElement('textarea');
         ta.value = textToCopy;
         ta.setAttribute('readonly', '');
@@ -249,7 +257,6 @@
           btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
           setTimeout(() => { btn.innerHTML = orig; }, 1500);
         } else {
-          // Fallback do nowoczesnej metody
           Hub.copy(textToCopy, btn);
         }
       }, { signal });
