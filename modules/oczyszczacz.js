@@ -383,4 +383,76 @@
         }
 
         outputEl.value = text;
-        updateStats(outputEl.value
+        updateStats(outputEl.value);
+        autoResize(outputEl);
+      }
+
+      inputEl.addEventListener("input", () => {
+        processText();
+        autoResize(inputEl);
+        clearTimeout(inputEl._historyTimer);
+        inputEl._historyTimer = setTimeout(saveHistory, 1000);
+      }, { signal });
+
+      caseTrigger.addEventListener("click", async () => {
+        const opts = Object.keys(caseNames).map(k => ({ id: k, label: caseNames[k] }));
+        const choice = await Hub.showSelect({ title: "Wielkość liter", options: opts, current: currentCaseMode, anchor: caseTrigger, signal });
+        if (choice && choice !== currentCaseMode) {
+          currentCaseMode = choice;
+          caseText.textContent = caseNames[currentCaseMode];
+          processText();
+        }
+      }, { signal });
+
+      undoBtn.addEventListener("click", () => {
+        if (history.length > 1) {
+          history.pop();
+          inputEl.value = history[history.length - 1];
+          processText();
+          autoResize(inputEl);
+          Hub.haptic('light');
+          if (history.length <= 1) { undoBtn.disabled = true; undoBtn.style.opacity = "0.4"; }
+        }
+      }, { signal });
+
+      $("o-copy").addEventListener("click", () => {
+        if (!outputEl.value) return showToast("Brak tekstu do skopiowania");
+        const textToCopy = outputEl.value;
+        const btn = $("o-copy");
+
+        const ta = document.createElement('textarea');
+        ta.value = textToCopy;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
+        
+        let success = false;
+        try { success = document.execCommand('copy'); } catch(e) {}
+
+        document.body.removeChild(ta);
+
+        if (success) {
+          Hub.haptic('success');
+          const orig = btn.innerHTML;
+          btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+          setTimeout(() => { btn.innerHTML = orig; }, 1500);
+        } else {
+          Hub.copy(textToCopy, btn);
+        }
+      }, { signal });
+
+      $("o-clear").addEventListener("click", () => {
+        Hub.haptic('medium'); saveHistory();
+        inputEl.value = ""; outputEl.value = ""; updateStats(""); 
+        autoResize(inputEl); autoResize(outputEl);
+        inputEl.focus();
+      }, { signal });
+
+      processText();
+    },
+    unmount() {}
+  });
+})();
