@@ -81,7 +81,7 @@
           .uc-row-val { color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; text-align: right; white-space: normal; overflow-wrap: break-word; word-break: normal; }
           .uc-copy-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 2px 0 0 0; flex-shrink: 0; }
           .uc-copy-btn svg { width: 16px; height: 16px; }
-          .uc-precision-box { width: 40px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); border-radius: 4px; text-align: center; padding: 4px 0; font-family: monospace; outline: none; }
+          .uc-precision-box { width: 52px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); border-radius: 6px; text-align: center; padding: 6px 0; font-family: monospace; font-size: 16px; outline: none; font-weight: 600; }
         </style>
 
         ${Hub.backButtonHtml}
@@ -108,9 +108,9 @@
         </div>
 
         <div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-            <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px;">Przeliczenia</div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+            <div style="font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px;">Przeliczenia</div>
+            <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted);">
               Miejsca po przecinku:
               <input type="number" id="u-precision" value="${savedPrecision}" min="0" max="20" class="uc-precision-box">
             </div>
