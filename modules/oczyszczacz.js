@@ -17,22 +17,15 @@
       container.innerHTML = `
         <style>
           .o-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
-          
           .o-flat-section { margin-bottom: 28px; }
           .o-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
           .o-textarea {
             width: 100%; padding: 12px 0; background: transparent; border: none;
             border-bottom: 1px solid var(--line); color: var(--ink); font-size: 16px; 
-            font-family: inherit; 
-            resize: vertical; /* Rączka do ręcznej zmiany rozmiaru */
-            outline: none; 
-            min-height: 100px; 
-            overflow-y: hidden; /* Domyślnie ukryte - brak drgań */
-            transition: border-color 0.2s, height 0.1s ease-out; 
-            line-height: 1.5;
-            box-sizing: border-box;
-            touch-action: pan-y; /* Płynne przewijanie strony palcem */
+            font-family: inherit; resize: vertical; outline: none; 
+            min-height: 100px; overflow-y: hidden; transition: border-color 0.2s, height 0.1s ease-out; 
+            line-height: 1.5; box-sizing: border-box; touch-action: pan-y;
           }
           .o-textarea:focus { border-bottom-color: var(--accent); }
           .o-textarea::placeholder { color: var(--muted); font-size: 15px; }
@@ -48,13 +41,37 @@
           .o-trigger .icon { color: var(--muted); font-family: monospace; font-size: 20px; font-weight: 300; line-height: 1; }
           
           .o-accordion { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
-          .o-accordion.open { max-height: 400px; }
+          .o-accordion.open { max-height: 800px; } /* Zwiększone dla pod-opcji */
           
-          .o-option-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line); }
-          .o-option-row:last-child { border-bottom: none; }
+          /* Style dla grupy opcji */
+          .o-option-group { border-bottom: 1px solid var(--line); }
+          .o-option-group:last-child { border-bottom: none; }
+          
+          .o-option-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; }
+          
+          .o-option-left { display: flex; align-items: center; gap: 8px; }
           .o-option-title { font-size: 15px; font-weight: 500; color: var(--ink); }
           .o-option-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
           
+          /* Mała strzałka do rozwijania pod-opcji */
+          .o-sub-arrow { 
+            background: transparent; border: none; color: var(--muted); cursor: pointer; 
+            padding: 4px; display: flex; align-items: center; justify-content: center; 
+            transition: transform 0.2s; outline: none;
+          }
+          .o-sub-arrow.open { transform: rotate(180deg); }
+          .o-sub-arrow svg { width: 16px; height: 16px; }
+
+          /* Kontener na pod-opcje */
+          .o-sub-options { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 16px; border-left: 1px solid var(--line); margin-left: 8px; }
+          .o-sub-options.open { max-height: 200px; margin-bottom: 12px; }
+          .o-sub-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+          .o-sub-title { font-size: 13px; color: var(--muted); }
+
+          /* Stan częściowy dla głównego switcha */
+          .switch.partial .switch-slider { opacity: 0.6; }
+          .switch.partial .switch-slider:before { opacity: 0.8; }
+
           .o-stats { display: flex; justify-content: space-between; font-family: monospace; font-size: 13px; color: var(--muted); padding: 16px 0 0 0; }
           .o-action-row { display: flex; gap: 12px; margin-top: 16px; }
         </style>
@@ -81,11 +98,84 @@
           </div>
           
           <div id="o-clean-accordion" class="o-accordion">
-            <div class="o-option-row"><div><div class="o-option-title">Usuwaj linki</div><div class="o-option-desc">Usuwa adresy URL (także www.)</div></div><label class="switch"><input type="checkbox" id="o-clean-url"><span class="switch-slider"></span></label></div>
-            <div class="o-option-row"><div><div class="o-option-title">Usuwaj znaki Markdown</div><div class="o-option-desc">np. #, **, _, ></div></div><label class="switch"><input type="checkbox" id="o-clean-md"><span class="switch-slider"></span></label></div>
-            <div class="o-option-row"><div><div class="o-option-title">Popraw interpunkcję</div><div class="o-option-desc">Usuwa spacje przed . , ! ?</div></div><label class="switch"><input type="checkbox" id="o-clean-space" checked><span class="switch-slider"></span></label></div>
-            <div class="o-option-row"><div><div class="o-option-title">Usuwaj nawiasy</div><div class="o-option-desc">Usuwa [], {}, "", ''</div></div><label class="switch"><input type="checkbox" id="o-clean-brackets"><span class="switch-slider"></span></label></div>
-            <div class="o-option-row"><div><div class="o-option-title">Zostaw jeden myślnik</div><div class="o-option-desc">Zamienia -- na -, wyłącz by usunąć</div></div><label class="switch"><input type="checkbox" id="o-dash-toggle" checked><span class="switch-slider"></span></label></div>
+            
+            <!-- GRUPA 1: LINKI -->
+            <div class="o-option-group">
+              <div class="o-option-row">
+                <div class="o-option-left">
+                  <button class="o-sub-arrow" data-target="sub-url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                  <div><div class="o-option-title">Usuwaj linki</div></div>
+                </div>
+                <label class="switch" id="sw-url-group"><input type="checkbox" id="o-clean-url"><span class="switch-slider"></span></label>
+              </div>
+              <div class="o-sub-options" id="sub-url">
+                <div class="o-sub-row"><span class="o-sub-title">Adresy URL (https://)</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Adresy WWW (www.)</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url" checked><span class="switch-slider"></span></label></div>
+              </div>
+            </div>
+
+            <!-- GRUPA 2: MARKDOWN -->
+            <div class="o-option-group">
+              <div class="o-option-row">
+                <div class="o-option-left">
+                  <button class="o-sub-arrow" data-target="sub-md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                  <div><div class="o-option-title">Znaki Markdown</div></div>
+                </div>
+                <label class="switch" id="sw-md-group"><input type="checkbox" id="o-clean-md"><span class="switch-slider"></span></label>
+              </div>
+              <div class="o-sub-options" id="sub-md">
+                <div class="o-sub-row"><span class="o-sub-title">Nagłówki (#)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Pogrubienie (*, _)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Cytaty (>)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md" checked><span class="switch-slider"></span></label></div>
+              </div>
+            </div>
+
+            <!-- GRUPA 3: INTERPUNKCJA -->
+            <div class="o-option-group">
+              <div class="o-option-row">
+                <div class="o-option-left">
+                  <button class="o-sub-arrow" data-target="sub-space"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                  <div><div class="o-option-title">Popraw interpunkcję</div></div>
+                </div>
+                <label class="switch" id="sw-space-group"><input type="checkbox" id="o-clean-space" checked><span class="switch-slider"></span></label>
+              </div>
+              <div class="o-sub-options" id="sub-space">
+                <div class="o-sub-row"><span class="o-sub-title">Kropki i przecinki (. ,)</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Wykrzykniki i pytajniki (! ?)</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
+              </div>
+            </div>
+
+            <!-- GRUPA 4: NAWIASY -->
+            <div class="o-option-group">
+              <div class="o-option-row">
+                <div class="o-option-left">
+                  <button class="o-sub-arrow" data-target="sub-brackets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                  <div><div class="o-option-title">Usuwaj nawiasy</div></div>
+                </div>
+                <label class="switch" id="sw-brackets-group"><input type="checkbox" id="o-clean-brackets"><span class="switch-slider"></span></label>
+              </div>
+              <div class="o-sub-options" id="sub-brackets">
+                <div class="o-sub-row"><span class="o-sub-title">Kwadratowe []</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Klamrowe {}</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Cudzysłowy "" ''</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets" checked><span class="switch-slider"></span></label></div>
+              </div>
+            </div>
+
+            <!-- GRUPA 5: MYŚLNIKI -->
+            <div class="o-option-group">
+              <div class="o-option-row">
+                <div class="o-option-left">
+                  <button class="o-sub-arrow" data-target="sub-dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                  <div><div class="o-option-title">Zostaw jeden myślnik</div></div>
+                </div>
+                <label class="switch" id="sw-dash-group"><input type="checkbox" id="o-dash-toggle" checked><span class="switch-slider"></span></label>
+              </div>
+              <div class="o-sub-options" id="sub-dash">
+                <div class="o-sub-row"><span class="o-sub-title">Zamień (-- na -)</span><label class="switch"><input type="checkbox" class="sub-dash-opt" data-parent="o-dash-toggle" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj (-- całkiem)</span><label class="switch"><input type="checkbox" class="sub-dash-opt" data-parent="o-dash-toggle"><span class="switch-slider"></span></label></div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -110,32 +200,84 @@
       const caseTrigger = $("o-case-trigger"), caseText = $("o-case-text");
       
       const cleanTrigger = $("o-clean-trigger"), cleanAccordion = $("o-clean-accordion"), cleanIcon = $("o-clean-icon");
-      const cleanUrl = $("o-clean-url"), cleanMd = $("o-clean-md"), 
-            cleanSpace = $("o-clean-space"), cleanBrackets = $("o-clean-brackets"), 
-            dashToggle = $("o-dash-toggle");
-
       const statChars = $("o-stat-chars"), statWords = $("o-stat-words");
       const undoBtn = $("o-undo");
 
       let history = [];
 
-      // --- INTELIGENTNE DOPASOWANIE WYSOKOŚCI (Z LIMITEM) ---
+      // --- LOGIKA SYNCHRONIZACJI SWITCHY ---
+      
+      // 1. Obsługa strzałek (rozwijanie pod-opcji)
+      container.querySelectorAll(".o-sub-arrow").forEach(arrow => {
+        arrow.addEventListener("click", () => {
+          Hub.haptic('light');
+          const targetId = arrow.dataset.target;
+          const target = $(targetId);
+          target.classList.toggle("open");
+          arrow.classList.toggle("open");
+        }, { signal });
+      });
+
+      // 2. Funkcja synchronizująca stan głównego switcha na podstawie pod-opcji
+      function syncGroup(parentId) {
+        const parentInput = $(parentId);
+        const parentLabel = parentInput.closest('.switch');
+        const subOpts = container.querySelectorAll(`.sub-${parentId.split('-')[1]}-opt`); // np. o-clean-url -> sub-url-opt
+        
+        if (!subOpts || subOpts.length === 0) return;
+
+        let checkedCount = 0;
+        subOpts.forEach(opt => { if (opt.checked) checkedCount++; });
+
+        if (checkedCount === 0) {
+          parentInput.checked = false;
+          parentLabel.classList.remove('partial');
+        } else if (checkedCount === subOpts.length) {
+          parentInput.checked = true;
+          parentLabel.classList.remove('partial');
+        } else {
+          parentInput.checked = true;
+          parentLabel.classList.add('partial');
+        }
+        processText();
+      }
+
+      // 3. Podpięcie zdarzeń do pod-opcji
+      container.querySelectorAll('input[type="checkbox"][class$="-opt"]').forEach(subOpt => {
+        subOpt.addEventListener("change", () => {
+          Hub.haptic('light');
+          syncGroup(subOpt.dataset.parent);
+        }, { signal });
+      });
+
+      // 4. Podpięcie zdarzeń do głównych switchy
+      ['o-clean-url', 'o-clean-md', 'o-clean-space', 'o-clean-brackets', 'o-dash-toggle'].forEach(id => {
+        $(id).addEventListener("change", (e) => {
+          Hub.haptic('medium');
+          const isChecked = e.target.checked;
+          const parentLabel = e.target.closest('.switch');
+          parentLabel.classList.remove('partial');
+          
+          // Zaznacz/odznacz wszystkie pod-opcje
+          const prefix = id.split('-')[1]; // np. url, md, space, brackets, dash
+          const subOpts = container.querySelectorAll(`.sub-${prefix}-opt`);
+          subOpts.forEach(opt => { opt.checked = isChecked; });
+          
+          processText();
+        }, { signal });
+      });
+
+      // --- AUTOMATYCZNE DOPASOWANIE WYSOKOŚCI ---
       function autoResize(el) {
         if (!el) return;
-        
-        // Obliczamy limit dla 51 linii: 51 * 24px (wysokość linii) + 24px (padding)
         const maxHeight = 1248; 
-        
-        el.style.height = 'auto'; // Resetujemy, aby zmierzyć zawartość
-        
+        el.style.height = 'auto'; 
         if (el.scrollHeight > maxHeight) {
-          // Przekroczono limit - zatrzymujemy wzrost i włączamy przewijanie
           el.style.height = maxHeight + 'px';
           el.style.overflowY = 'auto';
         } else {
-          // Mieści się w limicie - rośnie do rozmiaru tekstu + 1 linijka zapasu (24px)
           el.style.height = (el.scrollHeight + 24) + 'px';
-          el.style.overflowY = 'hidden'; // Brak paska przewijania = brak drgań
+          el.style.overflowY = 'hidden';
         }
       }
 
@@ -164,6 +306,7 @@
         statWords.textContent = `Słowa: ${words}`;
       }
 
+      // --- GŁÓWNA LOGIKA PRZETWARZANIA ---
       function processText() {
         let text = inputEl.value;
         if (!text) { 
@@ -177,12 +320,47 @@
 
         lines = lines.map(line => {
           let l = line;
-          if (cleanUrl.checked) l = l.replace(/(?:https?:\/\/|www\.)[^\s]+/gi, "");
-          if (cleanMd.checked) l = l.replace(/[#*_>]/g, "");
-          if (cleanBrackets.checked) l = l.replace(/[\[\]{}""'']/g, "");
-          if (cleanSpace.checked) l = l.replace(/\s+([.,!?;:])/g, "$1");
-          if (dashToggle.checked) l = l.replace(/-{2,}/g, "-");
-          else l = l.replace(/-{2,}/g, "");
+          
+          // Linki
+          if ($("o-clean-url").checked) {
+            const subUrl1 = container.querySelector('.sub-url-opt:nth-child(1)'); // nie działa tak prosto, użyjmy querySelector z klasą
+            const isUrlChecked = container.querySelectorAll('.sub-url-opt')[0].checked;
+            const isWwwChecked = container.querySelectorAll('.sub-url-opt')[1].checked;
+            if (isUrlChecked) l = l.replace(/https?:\/\/[^\s]+/gi, "");
+            if (isWwwChecked) l = l.replace(/www\.[^\s]+/gi, "");
+          }
+
+          // Markdown
+          if ($("o-clean-md").checked) {
+            const subs = container.querySelectorAll('.sub-md-opt');
+            if (subs[0].checked) l = l.replace(/#/g, "");
+            if (subs[1].checked) l = l.replace(/[*_]/g, "");
+            if (subs[2].checked) l = l.replace(/>/g, "");
+          }
+
+          // Interpunkcja
+          if ($("o-clean-space").checked) {
+            const subs = container.querySelectorAll('.sub-space-opt');
+            if (subs[0].checked) l = l.replace(/\s+([.,])/g, "$1");
+            if (subs[1].checked) l = l.replace(/\s+([!?])/g, "$1");
+          }
+
+          // Nawiasy
+          if ($("o-clean-brackets").checked) {
+            const subs = container.querySelectorAll('.sub-brackets-opt');
+            if (subs[0].checked) l = l.replace(/[\[\]]/g, "");
+            if (subs[1].checked) l = l.replace(/[{}]/g, "");
+            if (subs[2].checked) l = l.replace(/["']/g, "");
+          }
+
+          // Myślniki
+          if ($("o-dash-toggle").checked) {
+            const subs = container.querySelectorAll('.sub-dash-opt');
+            if (subs[0].checked) l = l.replace(/-{2,}/g, "-");
+            if (subs[1].checked) l = l.replace(/-{2,}/g, "");
+          } else {
+            l = l.replace(/-{2,}/g, "");
+          }
           
           l = l.replace(/\s+/g, " ").trim();
           return l;
@@ -212,10 +390,6 @@
         clearTimeout(inputEl._historyTimer);
         inputEl._historyTimer = setTimeout(saveHistory, 1000);
       }, { signal });
-
-      [cleanUrl, cleanMd, cleanSpace, cleanBrackets, dashToggle].forEach(toggle => {
-        toggle.addEventListener("change", () => { Hub.haptic('light'); processText(); }, { signal });
-      });
 
       caseTrigger.addEventListener("click", async () => {
         const opts = Object.keys(caseNames).map(k => ({ id: k, label: caseNames[k] }));
@@ -248,7 +422,6 @@
         ta.setAttribute('readonly', '');
         ta.style.position = 'fixed';
         ta.style.left = '-9999px';
-        ta.style.top = '0';
         document.body.appendChild(ta);
         ta.select();
         ta.setSelectionRange(0, ta.value.length);
@@ -275,6 +448,7 @@
         inputEl.focus();
       }, { signal });
 
+      // Inicjalizacja
       processText();
     },
     unmount() {}
