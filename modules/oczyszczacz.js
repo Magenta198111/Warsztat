@@ -139,20 +139,41 @@
         let text = inputEl.value;
         if (!text) { outputEl.value = ""; updateStats(""); return; }
 
-        text = text.replace(/\r?\n|\r/g, " ").replace(/\s+/g, " ");
-        if (cleanUrl.checked) text = text.replace(/https?:\/\/[^\s]+/g, "");
-        if (cleanMd.checked) text = text.replace(/[#*_>]/g, "");
-        if (cleanBrackets.checked) text = text.replace(/[\[\]{}""'']/g, "");
-        if (cleanSpace.checked) text = text.replace(/\s+([.,!?;:])/g, "$1");
-        if (dashToggle.checked) text = text.replace(/-{2,}/g, "-");
-        else text = text.replace(/-{2,}/g, "");
+        // 1. Dzielimy tekst na linie, aby zachować strukturę (Entery)
+        let lines = text.split(/\r?\n/);
 
-        if (currentCaseMode === "sentence") text = text.replace(/(^\s*|[.!?]\s+)([a-ząćęłńóśźż])/g, (m, p, l) => p + l.toUpperCase());
-        else if (currentCaseMode === "upper") text = text.toUpperCase();
-        else if (currentCaseMode === "lower") text = text.toLowerCase();
-        else if (currentCaseMode === "title") text = text.replace(/\b\w/g, l => l.toUpperCase());
+        // 2. Przetwarzamy każdą linię osobno
+        lines = lines.map(line => {
+          let l = line;
+          if (cleanUrl.checked) l = l.replace(/https?:\/\/[^\s]+/g, "");
+          if (cleanMd.checked) l = l.replace(/[#*_>]/g, "");
+          if (cleanBrackets.checked) l = l.replace(/[\[\]{}""'']/g, "");
+          if (cleanSpace.checked) l = l.replace(/\s+([.,!?;:])/g, "$1");
+          if (dashToggle.checked) l = l.replace(/-{2,}/g, "-");
+          else l = l.replace(/-{2,}/g, "");
+          
+          // Redukcja wielokrotnych spacji wewnątrz linii
+          l = l.replace(/\s+/g, " ").trim();
+          return l;
+        });
 
-        outputEl.value = text.trim();
+        // 3. Łączymy linie i redukujemy nadmiarowe puste wiersze
+        text = lines.join("\n");
+        text = text.replace(/\n{3,}/g, "\n\n").trim();
+
+        // 4. Wielkość liter
+        if (currentCaseMode === "sentence") {
+          // Flaga 'm' pozwala na dopasowanie początku każdej linii
+          text = text.replace(/(^\s*|[.!?]\s+)([a-ząćęłńóśźż])/gm, (m, p, letter) => p + letter.toUpperCase());
+        } else if (currentCaseMode === "upper") {
+          text = text.toUpperCase();
+        } else if (currentCaseMode === "lower") {
+          text = text.toLowerCase();
+        } else if (currentCaseMode === "title") {
+          text = text.replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        outputEl.value = text;
         updateStats(outputEl.value);
       }
 
