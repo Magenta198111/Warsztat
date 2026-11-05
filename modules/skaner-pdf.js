@@ -19,7 +19,7 @@
           
           .sk-handle {
             position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px;
-            z-index: 10; pointer-events: none; /* Wyłączone, bo logika jest na płótnie */
+            z-index: 10; pointer-events: none;
           }
           .sk-handle::before, .sk-handle::after {
             content: ''; position: absolute; background-color: var(--accent);
@@ -29,10 +29,13 @@
           .sk-handle::before { width: 32px; height: 3px; }
           .sk-handle::after { width: 3px; height: 32px; }
           
+          /* Nowy styl dla pola wyboru pliku (wygląda jak pusta kartka A4) */
           .sk-drop-zone { 
-            border: 2px dashed var(--line); border-radius: 8px; padding: 30px 20px; 
+            width: 80%; margin: 0 auto; aspect-ratio: 1 / 1.414; /* Proporcje A4 */
+            border: 2px dashed var(--line); border-radius: 8px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; color: var(--muted); cursor: pointer; 
-            transition: border-color 0.2s; margin-bottom: 16px; 
+            transition: border-color 0.2s; 
           }
           .sk-drop-zone:active { border-color: var(--accent); }
 
@@ -48,77 +51,77 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.4); margin-top: -2px; 
             transition: transform 0.1s; 
           }
+          
+          .sk-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         </style>
 
         ${Hub.backButtonHtml}
 
-        <div id="sk-start-card" class="sk-flat-section" style="margin-top: 16px;">
+        <div class="sk-flat-section" style="margin-top: 16px;">
           <label class="sk-label">Plik źródłowy</label>
           <input type="file" id="sk-file" accept="image/*" style="display:none;">
-          <div id="sk-pick-btn" class="sk-drop-zone">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px; opacity:0.5;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-            <div style="font-size: 14px; font-weight: 500;">Kliknij, aby wybrać zdjęcie</div>
-          </div>
-        </div>
-
-        <div id="sk-editor" class="hidden">
-          <div class="sk-divider"></div>
           
-          <label class="sk-label">Kadrowanie i perspektywa</label>
-          <div id="sk-wrapper" style="position:relative; width: 80%; margin: 0 auto; margin-bottom: 24px;">
-            <!-- Dodano touch-action: none, aby płynnie przeciągać po zdjęciu -->
-            <div style="border-radius: 8px; border: 1px solid var(--line); background:#000; overflow:hidden; touch-action: none;">
-              <canvas id="sk-display" style="display:block; width:100%; height:auto; transition: filter 0.1s;"></canvas>
+          <div id="sk-wrapper" style="position:relative; margin: 0 auto; margin-bottom: 24px;">
+            <!-- Pusta kartka (widoczna na starcie) -->
+            <div id="sk-pick-btn" class="sk-drop-zone">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px; opacity:0.5;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              <div style="font-size: 14px; font-weight: 500;">Kliknij, aby wybrać zdjęcie</div>
             </div>
-            <div class="sk-handle" data-id="0"></div>
-            <div class="sk-handle" data-id="1"></div>
-            <div class="sk-handle" data-id="2"></div>
-            <div class="sk-handle" data-id="3"></div>
+
+            <!-- Obszar ze zdjęciem (ukryty na starcie) -->
+            <div id="sk-canvas-container" style="display:none; width: 80%; margin: 0 auto; border-radius: 8px; border: 1px solid var(--line); background:#000; overflow:hidden; touch-action: none;">
+              <canvas id="sk-display" style="display:block; width:100%; height:auto;"></canvas>
+            </div>
+
+            <div class="sk-handle" data-id="0" style="display: none;"></div>
+            <div class="sk-handle" data-id="1" style="display: none;"></div>
+            <div class="sk-handle" data-id="2" style="display: none;"></div>
+            <div class="sk-handle" data-id="3" style="display: none;"></div>
           </div>
           
-          <div style="display: flex; gap: 12px; margin-bottom: 12px;">
-            <button id="sk-rotate-btn" class="n-btn" style="flex: 1; padding: 12px;">Obróć</button>
-            <button id="sk-reset-btn" class="n-btn" style="flex: 1; padding: 12px;">Resetuj rogi</button>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+            <button id="sk-rotate-btn" class="n-btn sk-btn" disabled style="padding: 12px; font-size: 13px;">Obróć</button>
+            <button id="sk-reset-btn" class="n-btn sk-btn" disabled style="padding: 12px; font-size: 13px;">Resetuj</button>
+            <button id="sk-change-btn" class="n-btn sk-btn" disabled style="padding: 12px; font-size: 13px;">Zmień</button>
           </div>
-
-          <!-- NOWY PRZYCISK: Zmiana zdjęcia -->
-          <button id="sk-change-btn" class="n-btn" style="width: 100%; padding: 12px; margin-bottom: 24px;">Wybierz inne zdjęcie</button>
 
           <label class="sk-label">Popraw kontrast</label>
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
-            <input type="range" id="sk-contrast" min="0" max="200" value="100" class="sk-range" style="flex: 1; margin-bottom: 0;">
-            <button id="sk-reset-contrast" class="n-btn" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-color: var(--line); background: transparent;">
+            <input type="range" id="sk-contrast" min="0" max="200" value="100" class="sk-range sk-btn" style="flex: 1; margin-bottom: 0;" disabled>
+            <button id="sk-reset-contrast" class="n-btn sk-btn" disabled style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-color: var(--line); background: transparent;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
             </button>
           </div>
           
           <div class="settings-row" style="padding: 12px 0; border-bottom: none; margin-bottom: 24px;">
             <div style="flex: 1; padding-right: 12px;">
-              <div class="settings-label" style="font-size: 15px;">Tryb skanu (CZ-B)</div>
+              <div class="settings-label" style="font-size: 15px; opacity: 0.4;" id="sk-color-label">Tryb skanu (CZ-B)</div>
               <div class="settings-desc">Zamienia kolory na odcienie szarości</div>
             </div>
-            <label class="switch"><input type="checkbox" id="sk-color-toggle"><span class="switch-slider"></span></label>
+            <label class="switch"><input type="checkbox" id="sk-color-toggle" class="sk-btn" disabled><span class="switch-slider"></span></label>
           </div>
           
           <div class="sk-divider"></div>
 
-          <button class="n-btn n-btn-outline" id="sk-pdf-btn" style="width:100%; padding: 14px; font-size: 15px;">Zapisz jako PDF</button>
+          <button class="n-btn n-btn-outline sk-btn" id="sk-pdf-btn" disabled style="width:100%; padding: 14px; font-size: 15px;">Zapisz jako PDF</button>
         </div>
       `;
 
       const $ = id => container.querySelector("#" + id);
       const fileInput = $("sk-file");
       const pickBtn = $("sk-pick-btn");
-      const changeBtn = $("sk-change-btn");
-      const editorDiv = $("sk-editor");
-      const startCard = $("sk-start-card");
+      const canvasContainer = $("sk-canvas-container");
       const displayCanvasEl = $("sk-display");
       const handles = container.querySelectorAll(".sk-handle");
       const contrastSlider = $("sk-contrast");
       const pdfBtn = $("sk-pdf-btn");
       const rotateBtn = $("sk-rotate-btn");
       const resetBtn = $("sk-reset-btn");
+      const changeBtn = $("sk-change-btn");
       const colorToggle = $("sk-color-toggle");
+      
+      // Wszystkie przyciski, które wymagają wgranego zdjęcia
+      const actionBtns = [rotateBtn, resetBtn, changeBtn, contrastSlider, $("sk-reset-contrast"), colorToggle, pdfBtn];
 
       let activeHandle = null;
       let dragStartHandleX = 0, dragStartHandleY = 0;
@@ -166,6 +169,23 @@
         applyLiveFilter();
       }
 
+      function setLoadedState(loaded) {
+        isLoaded = loaded;
+        
+        actionBtns.forEach(btn => btn.disabled = !loaded);
+        $("sk-color-label").style.opacity = loaded ? "1" : "0.4";
+        
+        if (loaded) {
+          pickBtn.style.display = "none";
+          canvasContainer.style.display = "block";
+          handles.forEach(h => h.style.display = "block");
+        } else {
+          pickBtn.style.display = "flex";
+          canvasContainer.style.display = "none";
+          handles.forEach(h => h.style.display = "none");
+        }
+      }
+
       pickBtn.addEventListener("click", () => fileInput.click(), { signal });
       changeBtn.addEventListener("click", () => fileInput.click(), { signal });
 
@@ -183,15 +203,12 @@
 
             updateDisplay();
             resetHandles();
-
-            startCard.classList.add("hidden");
-            editorDiv.classList.remove("hidden");
-            isLoaded = true;
+            setLoadedState(true);
           };
           img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
-        fileInput.value = ""; // Reset, aby można było wybrać to samo zdjęcie ponownie
+        fileInput.value = ""; // Reset, aby można było wybrać to samo zdjęcie
       }, { signal });
 
       contrastSlider.addEventListener("input", applyLiveFilter, { signal });
@@ -234,7 +251,7 @@
         resetHandles();
       }, { signal });
 
-      // --- NOWA LOGIKA DOTYKU: Przypięta bezpośrednio do płótna ---
+      // --- LOGIKA DOTYKU (tylko na zdjęciu) ---
       displayCanvasEl.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         
@@ -264,7 +281,6 @@
           }
         });
 
-        // Zasięg 120px (wewnątrz zdjęcia)
         if (closestHandle && minDist < 120) {
           activeHandle = closestHandle;
           activeHandle.dataset.lastMoved = ++moveCounter;
