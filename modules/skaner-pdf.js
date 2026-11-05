@@ -21,7 +21,6 @@
             position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px;
             z-index: 10; pointer-events: none; display: none;
           }
-          /* ZMIANA: Cieńsze linie (2px) i przezroczystość (0.6 = 40% przezroczyste) */
           .sk-handle::before, .sk-handle::after {
             content: ''; position: absolute; background-color: var(--accent);
             box-shadow: 0 0 4px rgba(0,0,0,0.8); border-radius: 1px;
@@ -59,6 +58,10 @@
         ${Hub.backButtonHtml}
 
         <div style="margin-top: 16px;">
+          
+          <!-- PRZYCISK "ZMIEŃ ZDJĘCIE" NA GÓRZE -->
+          <button id="sk-change-btn" class="n-btn sk-btn" disabled style="width: 100%; padding: 12px; margin-bottom: 16px;">Zmień zdjęcie</button>
+
           <label class="sk-label">Plik źródłowy</label>
           <input type="file" id="sk-file" accept="image/*" style="display:none;">
           
@@ -79,10 +82,10 @@
             <div class="sk-handle" data-id="3"></div>
           </div>
           
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+          <!-- OBRÓĆ I RESETUJ W DWÓCH KOLUMNACH POD ZDJĘCIEM -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px;">
             <button id="sk-rotate-btn" class="n-btn sk-btn" disabled style="padding: 12px; font-size: 13px;">Obróć zdjęcie</button>
             <button id="sk-reset-btn" class="n-btn sk-btn" disabled style="padding: 12px; font-size: 13px;">Resetuj rogi</button>
-            <button id="sk-change-btn" class="n-btn sk-btn" disabled style="padding: 12px; font-size: 13px;">Zmień zdjęcie</button>
           </div>
 
           <label class="sk-label">Popraw kontrast</label>
