@@ -21,15 +21,16 @@
             position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px;
             z-index: 10; pointer-events: none; display: none;
           }
+          /* ZMIANA: Cieńsze linie (2px) i przezroczystość (0.6 = 40% przezroczyste) */
           .sk-handle::before, .sk-handle::after {
             content: ''; position: absolute; background-color: var(--accent);
-            box-shadow: 0 0 4px rgba(0,0,0,0.8); border-radius: 2px;
+            box-shadow: 0 0 4px rgba(0,0,0,0.8); border-radius: 1px;
             top: 50%; left: 50%; transform: translate(-50%, -50%);
+            opacity: 0.6;
           }
-          .sk-handle::before { width: 32px; height: 3px; }
-          .sk-handle::after { width: 3px; height: 32px; }
+          .sk-handle::before { width: 32px; height: 2px; }
+          .sk-handle::after { width: 2px; height: 32px; }
           
-          /* Pole wyboru pliku (proporcje zdjęcia 4:3) */
           .sk-drop-zone { 
             width: 100%; aspect-ratio: 4 / 3;
             border: 2px dashed var(--line); border-radius: 8px; 
@@ -63,13 +64,11 @@
           
           <div id="sk-wrapper" style="position:relative; width: 80%; margin: 0 auto; margin-bottom: 24px;">
             
-            <!-- Miejsce na wybór zdjęcia (widoczne na starcie) -->
             <div id="sk-pick-btn" class="sk-drop-zone">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px; opacity:0.5;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
               <div style="font-size: 14px; font-weight: 500;">Kliknij, aby wybrać zdjęcie</div>
             </div>
 
-            <!-- Miejsce na zdjęcie (ukryte na starcie) -->
             <div id="sk-canvas-container" style="display:none; width: 100%; border-radius: 8px; border: 1px solid var(--line); background:#000; overflow:hidden; touch-action: none;">
               <canvas id="sk-display" style="display:block; width:100%; height:auto;"></canvas>
             </div>
