@@ -21,12 +21,13 @@
           .o-flat-section { margin-bottom: 28px; }
           .o-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
+          /* Textarea gets standard styling, JS in index.html handles auto-resize if enabled */
           .o-textarea {
             width: 100%; padding: 12px 0; background: transparent; border: none;
             border-bottom: 1px solid var(--line); color: var(--ink); font-size: 16px; 
             font-family: inherit; resize: vertical; outline: none; 
-            min-height: 100px; overflow-y: hidden; transition: border-color 0.2s, height 0.1s ease-out; 
-            line-height: 1.5; box-sizing: border-box; touch-action: pan-y;
+            min-height: 150px; max-height: 800px; overflow-y: auto; 
+            transition: border-color 0.2s; line-height: 1.5; box-sizing: border-box; touch-action: pan-y;
           }
           .o-textarea:focus { border-bottom-color: var(--accent); }
           .o-textarea::placeholder { color: var(--muted); font-size: 15px; }
@@ -304,22 +305,6 @@
         }, { signal });
       });
 
-      // --- AUTOMATYCZNE DOPASOWANIE WYSOKOŚCI ---
-      function autoResize(el) {
-        if (!el) return;
-        const maxHeight = 1248; 
-        el.style.height = 'auto'; 
-        if (el.scrollHeight > maxHeight) {
-          el.style.height = maxHeight + 'px';
-          el.style.overflowY = 'auto';
-        } else {
-          el.style.height = (el.scrollHeight + 24) + 'px';
-          el.style.overflowY = 'hidden';
-        }
-      }
-
-      setTimeout(() => { autoResize(inputEl); autoResize(outputEl); }, 50);
-
       cleanTrigger.addEventListener("click", () => {
         Hub.haptic('light');
         cleanAccordion.classList.toggle("open");
@@ -349,7 +334,7 @@
         if (!text) { 
           outputEl.value = ""; 
           updateStats(""); 
-          autoResize(outputEl);
+          Hub.resizeTextarea(outputEl);
           return; 
         }
 
@@ -412,12 +397,11 @@
 
         outputEl.value = text;
         updateStats(outputEl.value);
-        autoResize(outputEl);
+        Hub.resizeTextarea(outputEl);
       }
 
       inputEl.addEventListener("input", () => {
         processText();
-        autoResize(inputEl);
         clearTimeout(inputEl._historyTimer);
         inputEl._historyTimer = setTimeout(saveHistory, 1000);
       }, { signal });
@@ -437,7 +421,7 @@
           history.pop();
           inputEl.value = history[history.length - 1];
           processText();
-          autoResize(inputEl);
+          Hub.resizeTextarea(inputEl);
           Hub.haptic('light');
           if (history.length <= 1) { undoBtn.disabled = true; undoBtn.style.opacity = "0.4"; }
         }
@@ -475,7 +459,7 @@
       $("o-clear").addEventListener("click", () => {
         Hub.haptic('medium'); saveHistory();
         inputEl.value = ""; outputEl.value = ""; updateStats(""); 
-        autoResize(inputEl); autoResize(outputEl);
+        Hub.resizeTextarea(inputEl); Hub.resizeTextarea(outputEl);
         inputEl.focus();
       }, { signal });
 
