@@ -26,7 +26,7 @@
             content: ''; position: absolute; background-color: var(--accent);
             box-shadow: 0 0 4px rgba(0,0,0,0.8); border-radius: 1px;
             top: 50%; left: 50%; transform: translate(-50%, -50%);
-            opacity: 0.8;
+            opacity: 0.6;
           }
           .sk-handle::before { width: 32px; height: 2px; }
           .sk-handle::after { width: 2px; height: 32px; }
@@ -89,7 +89,7 @@
             </div>
 
             <div id="sk-canvas-container" style="display:none; width: 100%; border-radius: 8px; border: 1px solid var(--line); background:#000; overflow:hidden; touch-action: none;">
-              <canvas id="sk-display" style="display:block; width:100%; height:auto;"></canvas>
+              <canvas id="sk-display" style="display:block; width:100%; height:auto; transition: filter 0.1s;"></canvas>
               <div id="sk-crop-area">
                 <svg preserveAspectRatio="none">
                   <path d="" />
@@ -97,7 +97,6 @@
               </div>
             </div>
 
-            <!-- Lupa -->
             <div id="sk-loupe">
               <canvas id="sk-loupe-canvas" width="120" height="120"></canvas>
             </div>
@@ -194,8 +193,12 @@
 
         loupeCtx.fillStyle = "#000";
         loupeCtx.fillRect(0, 0, w, h);
+        
+        loupeCtx.filter = `contrast(${contrastSlider.value}%)`;
+        if (!isColor) loupeCtx.filter += ` grayscale(100%)`;
         loupeCtx.drawImage(originalCanvas, srcX - viewW/2, srcY - viewH/2, viewW, viewH, 0, 0, w, h);
 
+        loupeCtx.filter = "none";
         loupeCtx.strokeStyle = "var(--accent)";
         loupeCtx.lineWidth = 2;
         loupeCtx.beginPath();
@@ -286,7 +289,6 @@
             originalCanvas.height = img.height;
             const ctx = originalCanvas.getContext("2d");
             
-            // POPRAWKA PRZEŚWIETLENIA: Białe tło pod obrazem zapobiega problemom z kanałem alfa w JPEG
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, originalCanvas.width, originalCanvas.height);
             ctx.drawImage(img, 0, 0);
@@ -383,10 +385,13 @@
           displayCanvasEl.setPointerCapture(e.pointerId);
           Hub.haptic('light');
 
-          // Lupa pojawia się w przeciwnym rogu
-          const oppositeIndex = (parseInt(activeHandle.dataset.id) + 2) % 4;
-          loupe.style.left = handles[oppositeIndex].style.left;
-          loupe.style.top = handles[oppositeIndex].style.top;
+          // Lupa w przeciwnym rogu
+          const id = activeHandle.dataset.id;
+          if (id === "0") { loupe.style.left = "85%"; loupe.style.top = "85%"; }
+          if (id === "1") { loupe.style.left = "15%"; loupe.style.top = "85%"; }
+          if (id === "2") { loupe.style.left = "15%"; loupe.style.top = "15%"; }
+          if (id === "3") { loupe.style.left = "85%"; loupe.style.top = "15%"; }
+          
           loupe.style.display = "block";
           updateLoupe();
         }
@@ -448,28 +453,32 @@
             outCanvas.height = outH;
             const outCtx = outCanvas.getContext("2d");
             
-            // POPRAWKA PRZEŚWIETLENIA: Białe tło
             outCtx.fillStyle = "#ffffff";
             outCtx.fillRect(0, 0, outW, outH);
+            
+            // NAKŁADANIE FILTRA PRZEGLĄDARKI NA UKRYTE PŁÓTNO
+            const tempCanvas = document.createElement("canvas");
+            tempCanvas.width = originalCanvas.width;
+            tempCanvas.height = originalCanvas.height;
+            const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true });
+            
+            let cssFilter = `contrast(${contrastSlider.value}%)`;
+            if (!isColor) cssFilter += ` grayscale(100%)`;
+            tempCtx.filter = cssFilter;
+            tempCtx.drawImage(originalCanvas, 0, 0);
             
             const isDefaultCorners = points.every(p => p[0] === 0 || p[0] === originalCanvas.width) && points.some(p => p[0] === originalCanvas.width);
             
             if (isDefaultCorners) {
-               outCtx.drawImage(originalCanvas, 0, 0, outW, outH);
+               outCtx.drawImage(tempCanvas, 0, 0, outW, outH);
             } else {
-               const srcCtx = originalCanvas.getContext("2d");
-               const srcData = srcCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height).data;
+               const srcData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height).data;
                const outImgData = outCtx.createImageData(outW, outH);
                const outData = outImgData.data;
 
                const src = points;
                const dst = [[0,0], [outW,0], [outW,outH], [0,outH]];
                const H = solveHomography(dst, src);
-
-               const sliderVal = parseFloat(contrastSlider.value);
-               const contrastValue = (sliderVal - 100) * 2.55;
-               const factor = (259 * (contrastValue + 255)) / (255 * (259 - contrastValue));
-               const isColorMode = isColor;
 
                for (let y = 0; y < outH; y++) {
                  for (let x = 0; x < outW; x++) {
@@ -479,31 +488,13 @@
 
                    const dstIdx = (y * outW + x) * 4;
 
-                   if (srcX >= 0 && srcX < originalCanvas.width && srcY >= 0 && srcY < originalCanvas.height) {
-                     const srcIdx = (srcY * originalCanvas.width + srcX) * 4;
-
-                     let r = srcData[srcIdx];
-                     let g = srcData[srcIdx+1];
-                     let b = srcData[srcIdx+2];
-
-                     if (!isColorMode) {
-                       let gray = 0.299*r + 0.587*g + 0.114*b;
-                       gray = factor * (gray - 128) + 128;
-                       gray = Math.max(0, Math.min(255, gray));
-                       outData[dstIdx] = gray;
-                       outData[dstIdx+1] = gray;
-                       outData[dstIdx+2] = gray;
-                     } else {
-                       r = factor * (r - 128) + 128;
-                       g = factor * (g - 128) + 128;
-                       b = factor * (b - 128) + 128;
-                       outData[dstIdx] = Math.max(0, Math.min(255, r));
-                       outData[dstIdx+1] = Math.max(0, Math.min(255, g));
-                       outData[dstIdx+2] = Math.max(0, Math.min(255, b));
-                     }
+                   if (srcX >= 0 && srcX < tempCanvas.width && srcY >= 0 && srcY < tempCanvas.height) {
+                     const srcIdx = (srcY * tempCanvas.width + srcX) * 4;
+                     outData[dstIdx] = srcData[srcIdx];
+                     outData[dstIdx+1] = srcData[srcIdx+1];
+                     outData[dstIdx+2] = srcData[srcIdx+2];
                      outData[dstIdx+3] = 255;
                    } else {
-                     // POPRAWKA PRZEŚWIETLENIA: Wypełnianie dziur na biało
                      outData[dstIdx] = 255;
                      outData[dstIdx+1] = 255;
                      outData[dstIdx+2] = 255;
@@ -514,7 +505,6 @@
                outCtx.putImageData(outImgData, 0, 0);
             }
 
-            // POPRAWKA PRZEŚWIETLENIA: Zwiększona jakość JPEG do 95%
             const jpegUrl = outCanvas.toDataURL("image/jpeg", 0.95);
             const pdfBlob = generatePDF(jpegUrl, outW, outH);
             
