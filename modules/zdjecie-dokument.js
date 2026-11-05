@@ -15,14 +15,16 @@
       let isLoaded = false;
       let currentUnit = "cm";
 
+      // Baza gotowych formatów
       const docPresets = [
-        { id: "dokumenty", label: "Dokumenty urzędowe", w: 3.5, h: 4.5, unit: "cm" },
+        { id: "dokumenty", label: "Dokumenty urzędowe (3.5 × 4.5 cm)", w: 3.5, h: 4.5, unit: "cm" },
         { id: "wiza_us", label: "Wiza USA (5 × 5 cm)", w: 5, h: 5, unit: "cm" },
         { id: "social", label: "Post / Instagram (10 × 10 cm)", w: 10, h: 10, unit: "cm" },
         { id: "print", label: "Odbitka zdjęciowa (10 × 15 cm)", w: 10, h: 15, unit: "cm" },
         { id: "custom", label: "Własne wymiary", w: null, h: null, unit: "cm" }
       ];
 
+      // Baza limitów rozmiaru
       const sizePresets = [
         { id: "20", label: "20 KB" },
         { id: "50", label: "50 KB" },
@@ -42,7 +44,7 @@
           .zd-trigger-btn {
             display: flex; justify-content: space-between; align-items: center; gap: 12px;
             background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
-            padding: 14px 16px; color: var(--ink); font-size: 15px; 
+            padding: 14px 16px; color: var(--ink); font-size: 14px; 
             cursor: pointer; user-select: none; margin-bottom: 16px;
             transition: background 0.2s;
           }
@@ -71,18 +73,26 @@
             touch-action: none; cursor: grab; margin: 0 auto;
           }
           
+          /* ZMIANA: Zwiększony zasięg chwytania suwaka (wysokość 32px, wizualnie pasek 6px) */
           .zd-range { 
-            -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; 
-            outline: none; margin: 10px 0 20px 0; width: 100%; 
-            background: linear-gradient(to right, var(--accent) var(--percent, 100%), var(--line) var(--percent, 100%)); 
+            -webkit-appearance: none; appearance: none; 
+            width: 100%; height: 32px; /* Większy offset */
+            background: transparent;
+            margin: 5px 0 15px 0; 
+            cursor: pointer;
             touch-action: pan-y; 
           }
-          /* ZMIANA: Zwiększono kropkę suwaka do 44px (2x większa) */
+          .zd-range::-webkit-slider-runnable-track {
+            width: 100%; height: 6px;
+            background: linear-gradient(to right, var(--accent) var(--percent, 100%), var(--line) var(--percent, 100%));
+            border-radius: 3px;
+          }
           .zd-range::-webkit-slider-thumb { 
-            -webkit-appearance: none; appearance: none; width: 44px; height: 44px; 
+            -webkit-appearance: none; appearance: none; 
+            width: 24px; height: 24px; 
             border-radius: 50%; background: var(--accent); cursor: pointer; 
             box-shadow: 0 4px 8px rgba(0,0,0,0.4); 
-            margin-top: -19px; /* Wyśrodkowanie na pasku 6px */
+            margin-top: -9px; /* Centrowanie kropki na pasku 6px */
             transition: transform 0.1s; 
           }
 
@@ -101,7 +111,7 @@
           <div class="zd-flat-section">
             <label class="zd-label">Format zdjęcia</label>
             <div id="zd-preset-trigger" class="zd-trigger-btn">
-              <span id="zd-preset-text">Dokumenty urzędowe</span>
+              <span id="zd-preset-text">Dokumenty urzędowe (3.5 × 4.5 cm)</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
 
