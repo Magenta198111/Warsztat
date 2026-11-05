@@ -143,8 +143,11 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
 .fab:active { transform: scale(0.92); }
 
 #view-module { display: none; }
-#view-module.active { display: block; animation: moduleIn 0.22s ease-out; }
-@keyframes moduleIn { from { opacity: 0; } to { opacity: 1; } }
+#view-module.active { display: block; animation: moduleIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes moduleIn { 
+  from { opacity: 0; transform: translateY(12px); } 
+  to { opacity: 1; transform: translateY(0); } 
+}
 #view-settings { display: none; }
 #view-settings.active { display: block; }
 #view-home.hidden { display: none; }
@@ -287,7 +290,7 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
       <label class="switch"><input type="checkbox" id="opt-hide-desc"><span class="switch-slider"></span></label>
     </div>
     <div class="settings-row" style="border-top: 1px solid var(--line); flex-direction: row; justify-content: space-between; align-items: center;">
-      <div><div class="settings-label">Wyłącz animacje</div><div class="settings-desc">Oszczędza baterię i CPU</div></div>
+      <div><div class="settings-label">Animacje</div><div class="settings-desc">Efekty wizualne i płynne przejścia</div></div>
       <label class="switch"><input type="checkbox" id="opt-no-anim"><span class="switch-slider"></span></label>
     </div>
   </div>
@@ -806,8 +809,14 @@ window.Hub = {
     chkHideDesc.onchange = (e) => { Hub.haptic('light'); Hub.settings.hideDesc = e.target.checked; Hub.applyHideDesc(e.target.checked); Hub.db.set('hide_desc', e.target.checked); };
 
     const chkNoAnim = document.getElementById("opt-no-anim");
-    chkNoAnim.checked = Hub.settings.noAnim;
-    chkNoAnim.onchange = (e) => { Hub.haptic('light'); Hub.settings.noAnim = e.target.checked; Hub.applyNoAnim(e.target.checked); Hub.db.set('no_anim', e.target.checked); };
+    // Checkbox checked = Animacje ON = noAnim false
+    chkNoAnim.checked = !Hub.settings.noAnim;
+    chkNoAnim.onchange = (e) => { 
+      Hub.haptic('light'); 
+      Hub.settings.noAnim = !e.target.checked; 
+      Hub.applyNoAnim(Hub.settings.noAnim); 
+      Hub.db.set('no_anim', Hub.settings.noAnim); 
+    };
 
     const chkAutoExpand = document.getElementById("opt-auto-expand");
     const rowExpandLines = document.getElementById("row-expand-lines");
