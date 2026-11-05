@@ -17,17 +17,24 @@
           .sk-flat-section { margin-bottom: 28px; }
           .sk-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
-          /* Styl dla rączek (czerwone krzyżyki) */
+          /* 
+           * ZMIANY:
+           * - width/height 64px (2x większy zasięg chwytania)
+           * - margin -32px (żeby idealnie centrować)
+           * - kolor zmieniony na var(--accent)
+           * - wizualne linie zmniejszone do 32px, wyśrodkowane w środku 64px obszaru
+           */
           .sk-handle {
-            position: absolute; width: 40px; height: 40px; margin: -20px 0 0 -20px;
+            position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px;
             z-index: 10; pointer-events: auto; touch-action: none; cursor: grab;
           }
           .sk-handle::before, .sk-handle::after {
-            content: ''; position: absolute; background-color: var(--danger);
+            content: ''; position: absolute; background-color: var(--accent);
             box-shadow: 0 0 4px rgba(0,0,0,0.8); border-radius: 2px;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
           }
-          .sk-handle::before { top: 50%; left: 0; width: 100%; height: 3px; transform: translateY(-50%); }
-          .sk-handle::after { left: 50%; top: 0; width: 3px; height: 100%; transform: translateX(-50%); }
+          .sk-handle::before { width: 32px; height: 3px; }
+          .sk-handle::after { width: 3px; height: 32px; }
           
           .sk-drop-zone { 
             border: 2px dashed var(--line); border-radius: 8px; padding: 30px 20px; 
@@ -65,9 +72,9 @@
           <div class="sk-divider"></div>
           
           <label class="sk-label">Kadrowanie i perspektywa</label>
-          <!-- Usunięto touch-action: none, aby można było przewijać stronę -->
           <div id="sk-wrapper" style="position:relative; margin-bottom: 24px;">
-            <div style="overflow:hidden; border-radius: 8px; border: 1px solid var(--line); background:#000;">
+            <!-- ZMIANA: width: 80% i margin: 0 auto, aby zmniejszyć i wyśrodkować zdjęcie -->
+            <div style="width: 80%; margin: 0 auto; overflow:hidden; border-radius: 8px; border: 1px solid var(--line); background:#000;">
               <canvas id="sk-display" style="display:block; width:100%; height:auto; transition: filter 0.1s;"></canvas>
             </div>
             <div class="sk-handle"></div>
@@ -217,7 +224,7 @@
         resetHandles();
       }, { signal });
 
-      // --- LOGIKA PRZECIĄGANIA RĄCZEK (Bindowana bezpośrednio na krzyżyki) ---
+      // --- LOGIKA PRZECIĄGANIA RĄCZEK ---
       handles.forEach(handle => {
         handle.addEventListener("pointerdown", (e) => {
           e.preventDefault();
@@ -241,7 +248,7 @@
           const touchX = e.clientX - rect.left;
           const touchY = e.clientY - rect.top;
 
-          // POPRAWKA: Przywrócono dzielenie przez 3 dla 3x większej precyzji
+          // Dzielenie przez 3 dla precyzyjnego ustawiania
           const deltaX = (touchX - dragStartTouchX) / 3;
           const deltaY = (touchY - dragStartTouchY) / 3;
 
@@ -289,7 +296,6 @@
             outCanvas.height = outH;
             const outCtx = outCanvas.getContext("2d");
             
-            // Inteligentna optymalizacja: Jeśli rogi są na swoim miejscu, nie rób homografii
             const isDefaultCorners = points.every(p => p[0] === 0 || p[0] === originalCanvas.width) && points.some(p => p[0] === originalCanvas.width);
             
             if (isDefaultCorners) {
@@ -348,7 +354,6 @@
             const jpegUrl = outCanvas.toDataURL("image/jpeg", 0.8);
             const pdfBlob = generatePDF(jpegUrl, outW, outH);
             
-            // Zapis
             const url = URL.createObjectURL(pdfBlob);
             const a = document.createElement("a");
             a.href = url;
