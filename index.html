@@ -93,18 +93,29 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .container { max-width: 600px; margin: 0 auto; padding: 20px; padding-bottom: calc(100px + var(--safe-bottom)); padding-left: max(20px, var(--safe-left)); padding-right: max(20px, var(--safe-right)); }
 .list { display: flex; flex-direction: column; gap: 12px; }
 .list.grid-view { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.tile { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+.tile { position: relative; display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; transition: background 0.15s; }
 .tile:active { background: var(--surface-hover); border-color: var(--muted); }
 .list.grid-view .tile { flex-direction: column; align-items: flex-start; padding: 16px; height: 100%; justify-content: flex-start; }
 .tile-icon { width: 36px; height: 36px; border-radius: 4px; background: var(--bg); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .tile-icon svg { width: 18px; height: 18px; stroke-width: 1.5; stroke: currentColor; fill: none; transition: stroke 0.3s; }
 .list.grid-view .tile-icon { margin-bottom: 4px; }
-.tile-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.tile-content { flex: 1; display: flex; flex-direction: column; gap: 4px; padding-right: 24px; }
 .list.grid-view .tile-content { gap: 2px; }
 .tile-title { font-weight: 500; font-size: 15px; }
 .list.grid-view .tile-title { font-size: 14px; }
 .tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
 .list.grid-view .tile-desc { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* SERDUSZKO ULUBIONYCH */
+.tile-heart {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  width: 24px; height: 24px; color: var(--muted); cursor: pointer;
+  transition: color 0.2s, fill 0.2s, transform 0.1s;
+}
+.list.grid-view .tile-heart { position: absolute; right: 12px; top: 16px; transform: none; }
+.tile-heart:active { transform: translateY(-50%) scale(0.8); }
+.list.grid-view .tile-heart:active { transform: scale(0.8); }
+.tile-heart.active { color: var(--accent); fill: var(--accent); }
 
 /* NOWE USTAWIENIA WYGLĄDU */
 body.font-small .tile-title { font-size: 13px; }
@@ -192,7 +203,7 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
 
 .hub-modal-overlay { position: fixed; inset: 0; z-index: 9100; background: rgba(0,0,0,0.95); opacity: 0; pointer-events: none; transition: opacity 0.25s; display: flex; align-items: center; justify-content: center; padding: calc(20px + var(--safe-top)) max(20px, var(--safe-right)) calc(20px + var(--safe-bottom)) max(20px, var(--safe-left)); }
 .hub-modal-overlay.open { opacity: 1; pointer-events: auto; }
-.hub-modal-content { max-width: 100%; max-height: 100%; display: flex; align-items: center; justify-content: center; }
+.hub-modal-content { max-width: 100%; max-height: 100%; display: flex; align-items: center; justify-content: center; width: 100%; }
 .hub-modal-content > * { max-width: 100%; max-height: calc(100vh - 40px - var(--safe-top) - var(--safe-bottom)); }
 .hub-modal-close { position: absolute; top: calc(16px + var(--safe-top)); right: calc(16px + var(--safe-right)); width: 40px; height: 40px; border-radius: 50%; background: rgba(24, 24, 27, 0.8); border: 1px solid var(--line); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .hub-modal-close:active { background: var(--surface-hover); }
@@ -246,6 +257,14 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
     <div class="drawer-item" onclick="Hub.refreshApp()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
       <span>Odśwież aplikację</span>
+    </div>
+    <div class="drawer-item" onclick="Hub.showSupport()" style="margin-top: auto; border-top: 1px solid var(--line);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+      <span>Wsparcie</span>
+    </div>
+    <div class="drawer-item" onclick="Hub.showInfo()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+      <span>Informacje</span>
     </div>
   </div>
 </div>
@@ -422,7 +441,8 @@ window.Hub = {
     accent: '#818cf8', menuStyle: 'bottom', gridView: false, haptics: true, 
     noAccent: false, scopeHome: false, scopeDrawer: false, scopeBtns: false,
     autoExpand: true, autoExpandLines: 50,
-    fontSize: 'medium', hideDesc: false, noAnim: false
+    fontSize: 'medium', hideDesc: false, noAnim: false,
+    favorites: []
   },
   
   db: {
@@ -712,12 +732,42 @@ window.Hub = {
       "zdjecie-dokument": `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><circle cx="9" cy="10" r="2"></circle><line x1="15" y1="8" x2="21" y2="8"></line><line x1="15" y1="12" x2="21" y2="12"></line><line x1="7" y1="16" x2="21" y2="16"></line></svg>`,
       "kalkulator-prog": `<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>`
     };
-    const sortedModules = Array.from(Hub.modules.values()).sort((a, b) => a.title.localeCompare(b.title, 'pl', { sensitivity: 'base' }));
+    
+    const sortedModules = Array.from(Hub.modules.values()).sort((a, b) => {
+      const aFav = Hub.settings.favorites.includes(a.id);
+      const bFav = Hub.settings.favorites.includes(b.id);
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      return a.title.localeCompare(b.title, 'pl', { sensitivity: 'base' });
+    });
+
     sortedModules.forEach(mod => {
       const icon = iconMap[mod.id] || `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
-      const tile = document.createElement("div"); tile.className = "tile";
-      tile.innerHTML = `<div class="tile-icon">${icon}</div><div class="tile-content"><div class="tile-title">${mod.title}</div><div class="tile-desc">${mod.desc||""}</div></div>`;
+      const isFav = Hub.settings.favorites.includes(mod.id);
+      
+      const heartSvg = isFav ? 
+        `<svg class="tile-heart active" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>` :
+        `<svg class="tile-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+
+      const tile = document.createElement("div"); 
+      tile.className = "tile";
+      tile.innerHTML = `<div class="tile-icon">${icon}</div><div class="tile-content"><div class="tile-title">${mod.title}</div><div class="tile-desc">${mod.desc||""}</div></div>${heartSvg}`;
+      
       tile.onclick = () => { Hub.haptic('medium'); Hub.openModule(mod.id, true); };
+      
+      const heartEl = tile.querySelector('.tile-heart');
+      heartEl.onclick = (e) => {
+        e.stopPropagation();
+        Hub.haptic('medium');
+        if (isFav) {
+          Hub.settings.favorites = Hub.settings.favorites.filter(id => id !== mod.id);
+        } else {
+          Hub.settings.favorites.push(mod.id);
+        }
+        Hub.db.set("favorites", Hub.settings.favorites);
+        Hub.renderGrid();
+      };
+      
       grid.appendChild(tile);
     });
   },
@@ -809,8 +859,7 @@ window.Hub = {
     chkHideDesc.onchange = (e) => { Hub.haptic('light'); Hub.settings.hideDesc = e.target.checked; Hub.applyHideDesc(e.target.checked); Hub.db.set('hide_desc', e.target.checked); };
 
     const chkNoAnim = document.getElementById("opt-no-anim");
-    // Checkbox checked = Animacje ON = noAnim false
-    chkNoAnim.checked = !Hub.settings.noAnim;
+    chkNoAnim.checked = !Hub.settings.noAnim; // Checked = Animacje ON
     chkNoAnim.onchange = (e) => { 
       Hub.haptic('light'); 
       Hub.settings.noAnim = !e.target.checked; 
@@ -914,6 +963,71 @@ window.Hub = {
           showToast("Przywrócono ustawienia domyślne");
           setTimeout(() => location.reload(), 1000);
         };
+      }
+    };
+  },
+
+  showSupport: function() {
+    Hub.cleanup();
+    document.getElementById("drawer").classList.remove("open");
+    document.getElementById("drawer-overlay").classList.remove("open");
+    Hub.showModal({ content: `
+      <div style="text-align:center; padding: 20px;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+        <h3 style="margin:0 0 8px 0; color: var(--ink);">Wsparcie</h3>
+        <p style="color: var(--muted); font-size: 14px; line-height: 1.5;">Ta sekcja jest obecnie w budowie.<br>Wkrótce pojawią się tu informacje o tym, jak wesprzeć projekt.</p>
+      </div>
+    ` });
+  },
+
+  showInfo: function() {
+    Hub.cleanup();
+    document.getElementById("drawer").classList.remove("open");
+    document.getElementById("drawer-overlay").classList.remove("open");
+    Hub.showModal({ content: `
+      <div style="text-align:center; padding: 20px;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <h3 style="margin:0 0 8px 0; color: var(--ink);">Informacje</h3>
+        <p style="color: var(--muted); font-size: 14px; line-height: 1.5;">Ta sekcja jest obecnie w budowie.<br>Wkrótce pojawią się tu informacje o wersji i twórcy aplikacji.</p>
+      </div>
+    ` });
+  },
+
+  openSuggestionModal: function() {
+    Hub.cleanup();
+    document.getElementById("drawer").classList.remove("open");
+    document.getElementById("drawer-overlay").classList.remove("open");
+    
+    const content = document.createElement('div');
+    content.style.width = '100%';
+    content.style.maxWidth = '400px';
+    content.innerHTML = `
+      <h3 style="margin-top:0; text-align:center; color: var(--ink);">Zaproponuj moduł</h3>
+      <p style="font-size: 13px; color: var(--muted); text-align:center; margin-bottom:16px;">Masz pomysł na nowe narzędzie? Wpisz go poniżej i zapisz.</p>
+      <textarea id="suggestion-text" class="n-input" style="min-height: 120px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 16px; background: var(--bg);" placeholder="Np. kalkulator BMI..."></textarea>
+      <div style="display:flex; gap:8px;">
+        <button id="suggestion-save" class="n-btn n-btn-outline" style="flex:1;">Zapisz i skopiuj</button>
+      </div>
+    `;
+
+    const modal = Hub.showModal({ content: content });
+    
+    content.querySelector('#suggestion-save').onclick = async () => {
+      const txt = content.querySelector('#suggestion-text').value.trim();
+      if (!txt) return showToast("Wpisz treść propozycji.");
+      
+      try {
+        const existing = await Hub.db.get("suggestions", []);
+        existing.push({ text: txt, date: new Date().toISOString() });
+        await Hub.db.set("suggestions", existing);
+        
+        // Kopiujemy do schowka
+        await navigator.clipboard.writeText(txt);
+        Hub.haptic('success');
+        showToast("Zapisano i skopiowano do schowka!");
+        modal.close();
+      } catch(e) {
+        showToast("Błąd zapisu.");
       }
     };
   },
@@ -1031,7 +1145,7 @@ window.Hub = {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const [accent, menuStyle, gridView, haptics, scopeData, autoExpand, autoExpandLines, fontSize, hideDesc, noAnim] = await Promise.all([
+  const [accent, menuStyle, gridView, haptics, scopeData, autoExpand, autoExpandLines, fontSize, hideDesc, noAnim, favorites] = await Promise.all([
     Hub.db.get("accent_color", "#818cf8"),
     Hub.db.get("menu_style", "bottom"),
     Hub.db.get("grid_view", false),
@@ -1041,7 +1155,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     Hub.db.get("auto_expand_lines", 50),
     Hub.db.get("font_size", "medium"),
     Hub.db.get("hide_desc", false),
-    Hub.db.get("no_anim", false)
+    Hub.db.get("no_anim", false),
+    Hub.db.get("favorites", [])
   ]);
 
   Hub.settings.accent = accent; 
@@ -1060,6 +1175,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   Hub.settings.fontSize = fontSize;
   Hub.settings.hideDesc = hideDesc;
   Hub.settings.noAnim = noAnim;
+  Hub.settings.favorites = favorites;
 
   Hub.applyAccent(accent); 
   Hub.applyGridView(gridView); 
@@ -1070,7 +1186,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   Hub.applyNoAnim(noAnim);
 
   document.getElementById('drawer-home').classList.add('active');
-  document.getElementById("fab-add").onclick = () => { Hub.haptic('light'); showToast("Wgraj plik do folderu modules i dopisz do modules.json"); };
+  document.getElementById("fab-add").onclick = () => { Hub.haptic('light'); Hub.openSuggestionModal(); };
   document.getElementById("menu-btn").onclick = () => { Hub.haptic('light'); document.getElementById("drawer").classList.add("open"); document.getElementById("drawer-overlay").classList.add("open"); };
   document.getElementById("drawer-overlay").onclick = () => { document.getElementById("drawer").classList.remove("open"); document.getElementById("drawer-overlay").classList.remove("open"); };
   
