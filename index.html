@@ -106,6 +106,23 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
 .list.grid-view .tile-desc { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
+/* NOWE USTAWIENIA WYGLĄDU */
+body.font-small .tile-title { font-size: 13px; }
+body.font-small .tile-desc { font-size: 11px; }
+body.font-small .settings-label { font-size: 13px; }
+body.font-small .settings-desc { font-size: 10px; }
+body.font-small .n-btn { font-size: 12px; }
+
+body.font-large .tile-title { font-size: 17px; }
+body.font-large .tile-desc { font-size: 15px; }
+body.font-large .settings-label { font-size: 17px; }
+body.font-large .settings-desc { font-size: 14px; }
+body.font-large .n-btn { font-size: 16px; }
+
+body.hide-desc .tile-desc { display: none; }
+
+body.no-anim * { transition: none !important; animation: none !important; }
+
 body.scope-home-icons .tile-icon svg { stroke: var(--accent); }
 body.scope-drawer-icons .drawer-item svg { color: var(--accent); }
 body.scope-action-btns .n-btn-outline { border-color: var(--accent); color: var(--accent); }
@@ -257,6 +274,22 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
         <button class="settings-opt-btn" id="opt-view-grid">Siatka (2 kolumny)</button>
       </div>
     </div>
+    <div class="settings-row" style="border-top: 1px solid var(--line);">
+      <div><div class="settings-label">Rozmiar tekstu</div><div class="settings-desc">Wpływa na czytelność całej aplikacji</div></div>
+      <div class="settings-options">
+        <button class="settings-opt-btn" id="opt-font-small">Mały</button>
+        <button class="settings-opt-btn" id="opt-font-med">Średni</button>
+        <button class="settings-opt-btn" id="opt-font-large">Duży</button>
+      </div>
+    </div>
+    <div class="settings-row" style="border-top: 1px solid var(--line); flex-direction: row; justify-content: space-between; align-items: center;">
+      <div><div class="settings-label">Ukryj opisy modułów</div><div class="settings-desc">Zostaw tylko nazwy na kafelkach</div></div>
+      <label class="switch"><input type="checkbox" id="opt-hide-desc"><span class="switch-slider"></span></label>
+    </div>
+    <div class="settings-row" style="border-top: 1px solid var(--line); flex-direction: row; justify-content: space-between; align-items: center;">
+      <div><div class="settings-label">Wyłącz animacje</div><div class="settings-desc">Oszczędza baterię i CPU</div></div>
+      <label class="switch"><input type="checkbox" id="opt-no-anim"><span class="switch-slider"></span></label>
+    </div>
   </div>
 
   <div class="settings-block">
@@ -385,7 +418,8 @@ window.Hub = {
   settings: { 
     accent: '#818cf8', menuStyle: 'bottom', gridView: false, haptics: true, 
     noAccent: false, scopeHome: false, scopeDrawer: false, scopeBtns: false,
-    autoExpand: true, autoExpandLines: 50
+    autoExpand: true, autoExpandLines: 50,
+    fontSize: 'medium', hideDesc: false, noAnim: false
   },
   
   db: {
@@ -495,6 +529,20 @@ window.Hub = {
     document.querySelectorAll('#opt-view-list, #opt-view-grid').forEach(btn => btn.classList.remove('active'));
     document.getElementById(isGrid ? 'opt-view-grid' : 'opt-view-list').classList.add('active');
     Hub.db.set("grid_view", isGrid);
+  },
+
+  applyFontSize: function(size) {
+    document.body.classList.remove('font-small', 'font-large');
+    if (size === 'small') document.body.classList.add('font-small');
+    else if (size === 'large') document.body.classList.add('font-large');
+  },
+
+  applyHideDesc: function(hide) {
+    document.body.classList.toggle('hide-desc', hide);
+  },
+
+  applyNoAnim: function(noAnim) {
+    document.body.classList.toggle('no-anim', noAnim);
   },
 
   download: function(blob, filename) {
@@ -710,7 +758,6 @@ window.Hub = {
     mod.mount(document.getElementById("view-module"), Hub.activeAbort.signal);
     document.getElementById('app-scroll').scrollTo(0, 0);
     
-    // Auto-apply resize to all textareas in the module
     setTimeout(() => {
       document.getElementById("view-module").querySelectorAll('textarea').forEach(el => {
         el.addEventListener('input', () => Hub.resizeTextarea(el));
@@ -744,6 +791,24 @@ window.Hub = {
     v1.onclick = () => { Hub.haptic('light'); Hub.applyGridView(false); };
     v2.onclick = () => { Hub.haptic('light'); Hub.applyGridView(true); };
 
+    const fs1 = document.getElementById("opt-font-small"), fs2 = document.getElementById("opt-font-med"), fs3 = document.getElementById("opt-font-large");
+    [fs1, fs2, fs3].forEach(btn => btn.classList.remove("active"));
+    if (Hub.settings.fontSize === 'small') fs1.classList.add("active");
+    else if (Hub.settings.fontSize === 'large') fs3.classList.add("active");
+    else fs2.classList.add("active");
+
+    fs1.onclick = () => { Hub.haptic('light'); Hub.settings.fontSize = 'small'; Hub.applyFontSize('small'); Hub.db.set('font_size', 'small'); [fs1, fs2, fs3].forEach(b => b.classList.remove("active")); fs1.classList.add("active"); };
+    fs2.onclick = () => { Hub.haptic('light'); Hub.settings.fontSize = 'medium'; Hub.applyFontSize('medium'); Hub.db.set('font_size', 'medium'); [fs1, fs2, fs3].forEach(b => b.classList.remove("active")); fs2.classList.add("active"); };
+    fs3.onclick = () => { Hub.haptic('light'); Hub.settings.fontSize = 'large'; Hub.applyFontSize('large'); Hub.db.set('font_size', 'large'); [fs1, fs2, fs3].forEach(b => b.classList.remove("active")); fs3.classList.add("active"); };
+
+    const chkHideDesc = document.getElementById("opt-hide-desc");
+    chkHideDesc.checked = Hub.settings.hideDesc;
+    chkHideDesc.onchange = (e) => { Hub.haptic('light'); Hub.settings.hideDesc = e.target.checked; Hub.applyHideDesc(e.target.checked); Hub.db.set('hide_desc', e.target.checked); };
+
+    const chkNoAnim = document.getElementById("opt-no-anim");
+    chkNoAnim.checked = Hub.settings.noAnim;
+    chkNoAnim.onchange = (e) => { Hub.haptic('light'); Hub.settings.noAnim = e.target.checked; Hub.applyNoAnim(e.target.checked); Hub.db.set('no_anim', e.target.checked); };
+
     const chkAutoExpand = document.getElementById("opt-auto-expand");
     const rowExpandLines = document.getElementById("row-expand-lines");
     const expandLinesTrigger = document.getElementById("opt-expand-lines-trigger");
@@ -760,7 +825,6 @@ window.Hub = {
       Hub.db.set("auto_expand", e.target.checked);
     };
 
-    // POPRAWKA: Usunięto "signal" i zrzutowano wynik na liczbę
     expandLinesTrigger.onclick = async () => {
       const opts = [
         { id: 10, label: "10 linii" },
@@ -958,14 +1022,17 @@ window.Hub = {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const [accent, menuStyle, gridView, haptics, scopeData, autoExpand, autoExpandLines] = await Promise.all([
+  const [accent, menuStyle, gridView, haptics, scopeData, autoExpand, autoExpandLines, fontSize, hideDesc, noAnim] = await Promise.all([
     Hub.db.get("accent_color", "#818cf8"),
     Hub.db.get("menu_style", "bottom"),
     Hub.db.get("grid_view", false),
     Hub.db.get("haptics", true),
     Hub.db.get("accent_scope", { noAccent: false, home: false, drawer: false, btns: false }),
     Hub.db.get("auto_expand", true),
-    Hub.db.get("auto_expand_lines", 50)
+    Hub.db.get("auto_expand_lines", 50),
+    Hub.db.get("font_size", "medium"),
+    Hub.db.get("hide_desc", false),
+    Hub.db.get("no_anim", false)
   ]);
 
   Hub.settings.accent = accent; 
@@ -981,9 +1048,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   Hub.settings.autoExpand = autoExpand;
   Hub.settings.autoExpandLines = Number(autoExpandLines);
 
+  Hub.settings.fontSize = fontSize;
+  Hub.settings.hideDesc = hideDesc;
+  Hub.settings.noAnim = noAnim;
+
   Hub.applyAccent(accent); 
   Hub.applyGridView(gridView); 
   Hub.applyScope();
+  
+  Hub.applyFontSize(fontSize);
+  Hub.applyHideDesc(hideDesc);
+  Hub.applyNoAnim(noAnim);
 
   document.getElementById('drawer-home').classList.add('active');
   document.getElementById("fab-add").onclick = () => { Hub.haptic('light'); showToast("Wgraj plik do folderu modules i dopisz do modules.json"); };
