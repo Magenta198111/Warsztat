@@ -36,7 +36,8 @@
             z-index: 5; transition: all 0.05s linear;
           }
           #sk-crop-area svg { width: 100%; height: 100%; overflow: visible; }
-          #sk-crop-area path { stroke: var(--danger); stroke-width: 2; stroke-dasharray: 8 4; fill: rgba(239, 68, 68, 0.1); }
+          /* ZMIANA: Usunięto fill, zostawiono tylko czerwoną przerywaną linię */
+          #sk-crop-area path { stroke: var(--danger); stroke-width: 2; stroke-dasharray: 8 4; fill: none; }
 
           /* Lupa */
           #sk-loupe {
@@ -385,12 +386,12 @@
           displayCanvasEl.setPointerCapture(e.pointerId);
           Hub.haptic('light');
 
-          // Lupa w przeciwnym rogu
+          // Lupa zawsze w górnym rogu
           const id = activeHandle.dataset.id;
-          if (id === "0") { loupe.style.left = "85%"; loupe.style.top = "85%"; }
-          if (id === "1") { loupe.style.left = "15%"; loupe.style.top = "85%"; }
-          if (id === "2") { loupe.style.left = "15%"; loupe.style.top = "15%"; }
-          if (id === "3") { loupe.style.left = "85%"; loupe.style.top = "15%"; }
+          if (id === "0") { loupe.style.left = "85%"; loupe.style.top = "15%"; } // Lewy górny -> Prawy górny
+          if (id === "1") { loupe.style.left = "15%"; loupe.style.top = "15%"; } // Prawy górny -> Lewy górny
+          if (id === "2") { loupe.style.left = "15%"; loupe.style.top = "15%"; } // Prawy dolny -> Lewy górny
+          if (id === "3") { loupe.style.left = "85%"; loupe.style.top = "15%"; } // Lewy dolny -> Prawy górny
           
           loupe.style.display = "block";
           updateLoupe();
@@ -456,7 +457,6 @@
             outCtx.fillStyle = "#ffffff";
             outCtx.fillRect(0, 0, outW, outH);
             
-            // NAKŁADANIE FILTRA PRZEGLĄDARKI NA UKRYTE PŁÓTNO
             const tempCanvas = document.createElement("canvas");
             tempCanvas.width = originalCanvas.width;
             tempCanvas.height = originalCanvas.height;
