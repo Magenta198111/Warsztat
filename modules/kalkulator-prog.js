@@ -9,12 +9,9 @@
         <style>
           .hidden { display: none !important; }
           
-          .cp-back-btn { width:auto; padding:8px 12px 8px 0; border:none; background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center; outline: none; margin-bottom: 16px; }
-          .cp-back-btn:active { opacity: 0.7; }
-          
           .cp-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
           
-          .cp-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+          .cp-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; margin-top: 16px; }
           .cp-input-group { display: flex; flex-direction: column; }
           
           .cp-input-wrapper {
@@ -27,7 +24,7 @@
           .cp-input { 
             width: 100%; background: transparent; border: none; 
             color: var(--ink); font-size: 18px; font-family: monospace; padding: 8px 0; 
-            outline: none;
+            outline: none; border-radius: 0;
           }
           .cp-input::placeholder { color: var(--line); font-size: 14px; }
           
@@ -41,7 +38,13 @@
           
           .cp-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
-          .cp-bit-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; margin-bottom: 24px; }
+          /* Modyfikacja siatki bitów: dodano gap i margines dla oktetów */
+          .cp-bit-grid { 
+            display: grid; 
+            grid-template-columns: repeat(8, 1fr); 
+            gap: 4px; 
+            margin-bottom: 24px; 
+          }
           .cp-bit-cell {
             aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
             border-radius: 4px; border: 1px solid var(--line); background: var(--surface);
@@ -50,6 +53,9 @@
           }
           .cp-bit-cell.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
           .cp-bit-cell:active { transform: scale(0.9); }
+          /* Wizualne oddzielenie bajtów co 8 bitów */
+          .cp-bit-cell:nth-child(8n) { margin-right: 8px; }
+          .cp-bit-cell:last-child { margin-right: 0; }
           
           .cp-op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
           .cp-op-inputs { display: flex; gap: 12px; margin-bottom: 16px; }
@@ -70,9 +76,7 @@
           .cp-result { text-align: center; font-family: monospace; font-size: 24px; font-weight: 700; color: var(--accent); }
         </style>
 
-        <button id="cp-back" class="cp-back-btn">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-        </button>
+        ${Hub.backButtonHtml}
 
         <div class="cp-inputs-grid">
           <div class="cp-input-group">
@@ -168,6 +172,7 @@
 
           if (!textToCopy) return;
 
+          Hub.haptic('light');
           navigator.clipboard.writeText(textToCopy).then(() => {
             const originalHTML = btn.innerHTML;
             btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
@@ -179,7 +184,7 @@
       let currentValue = 0n;
 
       function updateAll(val, skipInput = null) {
-        currentValue = val & 0xFFFFFFFFn;
+        currentValue = val & 0xFFFFFFFFn; // Zapewnia 32-bitowy unsigned
         
         if (skipInput !== 'hex') inHex.value = currentValue.toString(16).toUpperCase();
         if (skipInput !== 'dec') inDec.value = currentValue.toString(10);
@@ -207,6 +212,7 @@
         cell.className = "cp-bit-cell";
         cell.textContent = "0";
         cell.addEventListener("click", () => {
+          Hub.haptic('light');
           currentValue ^= (1n << BigInt(bitIndex));
           updateAll(currentValue);
         }, { signal });
@@ -243,24 +249,33 @@
 
       container.querySelectorAll(".cp-btn").forEach(btn => {
         btn.addEventListener("click", () => {
+          Hub.haptic('medium');
           const op = btn.dataset.op;
-          let valA = BigInt(parseInt(opA.value) || 0);
-          let valB = BigInt(parseInt(opB.value) || 0);
+          
+          let valA = 0n, valB = 0n;
+          try { valA = BigInt(opA.value || 0); } catch(e) { valA = 0n; }
+          try { valB = BigInt(opB.value || 0); } catch(e) { valB = 0n; }
+          
           let result = 0n;
 
           if (op === "AND") result = valA & valB;
           else if (op === "OR") result = valA | valB;
           else if (op === "XOR") result = valA ^ valB;
           else if (op === "NOT") result = ~valA & 0xFFFFFFFFn;
-          else if (op === "SHL") result = valA << valB;
-          else if (op === "SHR") result = valA >> valB;
+          else if (op === "SHL") {
+            if (valB < 0n) return showToast("Przesunięcie nie może być ujemne");
+            result = valA << valB;
+          }
+          else if (op === "SHR") {
+            if (valB < 0n) return showToast("Przesunięcie nie może być ujemne");
+            result = valA >> valB;
+          }
 
+          result = result & 0xFFFFFFFFn;
           opResult.textContent = result.toString(10);
           updateAll(result);
         }, { signal });
       });
-
-      $("cp-back").addEventListener("click", () => history.back(), { signal });
 
       updateAll(255n);
     },
