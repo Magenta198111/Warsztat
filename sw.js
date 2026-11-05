@@ -1,4 +1,4 @@
-const CACHE_NAME = "warsztat-cache-v3";
+const CACHE_NAME = "warsztat-cache";
 
 self.addEventListener("install", event => {
   self.skipWaiting();
@@ -41,22 +41,23 @@ self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
 
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      const fetchPromise = fetch(event.request, { cache: "no-store" }).then(networkResponse => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
-          });
+    fetch(event.request, { cache: "no-store" }).then(networkResponse => {
+      if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        const responseClone = networkResponse.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseClone);
+        });
+      }
+      return networkResponse;
+    }).catch(() => {
+      return caches.match(event.request, { ignoreSearch: true }).then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse;
         }
-        return networkResponse;
-      }).catch(() => {
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html');
         }
       });
-
-      return cachedResponse || fetchPromise;
     })
   );
 });
