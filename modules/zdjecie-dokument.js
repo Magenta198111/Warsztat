@@ -14,8 +14,9 @@
       let startY = 0;
       let isLoaded = false;
       let currentUnit = "cm";
+      let resultUrl = null;
+      let currentImgUrl = null;
 
-      // Baza gotowych formatów
       const docPresets = [
         { id: "dokumenty", label: "Dokumenty urzędowe (3.5 × 4.5 cm)", w: 3.5, h: 4.5, unit: "cm" },
         { id: "wiza_us", label: "Wiza USA (5 × 5 cm)", w: 5, h: 5, unit: "cm" },
@@ -24,7 +25,6 @@
         { id: "custom", label: "Własne wymiary", w: null, h: null, unit: "cm" }
       ];
 
-      // Baza limitów rozmiaru
       const sizePresets = [
         { id: "20", label: "20 KB" },
         { id: "50", label: "50 KB" },
@@ -41,7 +41,6 @@
           .zd-flat-section { margin-bottom: 28px; }
           .zd-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
-          /* NOWY PŁASKI STYL (zgodny z Oczyszczaczem) */
           .zd-trigger-btn {
             display: flex; justify-content: space-between; align-items: center;
             background: transparent; border: none; border-bottom: 1px solid var(--line);
@@ -211,6 +210,7 @@
               hInput.value = preset.h;
               currentUnit = preset.unit;
               unitTrigger.textContent = currentUnit;
+              handleDimChange();
             }
           }
         }
@@ -240,6 +240,7 @@
         if (choice) {
           currentUnit = choice;
           unitTrigger.textContent = currentUnit;
+          handleDimChange();
         }
       }, { signal });
 
@@ -259,6 +260,26 @@
         if (h < 50) h = 50;
         
         return { w, h };
+      }
+
+      function constrainTransform() {
+        const imgW = previewImg.clientWidth * scale;
+        const imgH = previewImg.clientHeight * scale;
+        const contW = cropContainer.clientWidth;
+        const contH = cropContainer.clientHeight;
+        
+        if (imgW <= contW) {
+          translateX = (contW - imgW) / 2;
+        } else {
+          translateX = Math.min(0, Math.max(translateX, contW - imgW));
+        }
+        
+        if (imgH <= contH) {
+          translateY = (contH - imgH) / 2;
+        } else {
+          translateY = Math.min(0, Math.max(translateY, contH - imgH));
+        }
+        updateImageTransform();
       }
 
       function initCropper() {
@@ -289,9 +310,37 @@
         translateY = (displayH - previewImg.clientHeight) / 2;
         scale = 1;
         
-        updateImageTransform();
-        updateZoomUI(1);
+        constrainTransform();
+        updateZoomUI(0);
       }
+
+      function handleDimChange() {
+        if (!isLoaded) return;
+        const dims = getTargetDimensions();
+        const maxWidth = container.clientWidth - 32;
+        const maxHeight = 400;
+        
+        let displayW = dims.w;
+        let displayH = dims.h;
+        const ratio = dims.w / dims.h;
+        
+        if (displayW > maxWidth) {
+          displayW = maxWidth;
+          displayH = displayW / ratio;
+        }
+        if (displayH > maxHeight) {
+          displayH = maxHeight;
+          displayW = displayH * ratio;
+        }
+        
+        cropContainer.style.width = displayW + "px";
+        cropContainer.style.height = displayH + "px";
+        
+        constrainTransform();
+      }
+
+      wInput.addEventListener('input', handleDimChange, { signal });
+      hInput.addEventListener('input', handleDimChange, { signal });
 
       function updateImageTransform() {
         previewImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
@@ -304,7 +353,7 @@
         const percent = x / rect.width;
         
         scale = 1 + percent * 2;
-        updateImageTransform();
+        constrainTransform();
         updateZoomUI(percent);
       }
 
@@ -317,36 +366,47 @@
         e.preventDefault();
         zoomWrapper.setPointerCapture(e.pointerId);
         updateZoomFromX(e.clientX);
-      });
+      }, { signal });
 
       zoomWrapper.addEventListener("pointermove", (e) => {
         if (zoomWrapper.hasPointerCapture(e.pointerId)) {
           updateZoomFromX(e.clientX);
         }
-      });
+      }, { signal });
 
       zoomWrapper.addEventListener("pointerup", (e) => {
         zoomWrapper.releasePointerCapture(e.pointerId);
-      });
+      }, { signal });
 
-      fileInput.addEventListener("change", (e) => {
+      fileInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
         
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          img.onload = () => {
-            previewImg.src = img.src;
-            setupCard.classList.add("hidden");
-            editorDiv.classList.remove("hidden");
-            resultDiv.classList.add("hidden");
-            isLoaded = true;
+        try {
+          const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+          const canvas = document.createElement('canvas');
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height;
+          canvas.getContext('2d').drawImage(bitmap, 0, 0);
+          
+          canvas.toBlob((blob) => {
+            if (currentImgUrl) URL.revokeObjectURL(currentImgUrl);
+            currentImgUrl = URL.createObjectURL(blob);
+            img.src = currentImgUrl;
             
-            setTimeout(initCropper, 50);
-          };
-          img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
+            img.onload = () => {
+              previewImg.src = img.src;
+              setupCard.classList.add("hidden");
+              editorDiv.classList.remove("hidden");
+              resultDiv.classList.add("hidden");
+              isLoaded = true;
+              
+              setTimeout(initCropper, 50);
+            };
+          }, 'image/jpeg', 0.95);
+        } catch (err) {
+          showToast("Błąd podczas odczytu zdjęcia.");
+        }
         fileInput.value = "";
       }, { signal });
 
@@ -359,8 +419,29 @@
 
       cropContainer.addEventListener("pointermove", (e) => {
         if (!isDragging) return;
-        translateX = e.clientX - startX;
-        translateY = e.clientY - startY;
+        
+        let newX = e.clientX - startX;
+        let newY = e.clientY - startY;
+        
+        const imgW = previewImg.clientWidth * scale;
+        const imgH = previewImg.clientHeight * scale;
+        const contW = cropContainer.clientWidth;
+        const contH = cropContainer.clientHeight;
+        
+        if (imgW > contW) {
+          newX = Math.min(0, Math.max(newX, contW - imgW));
+        } else {
+          newX = (contW - imgW) / 2;
+        }
+        
+        if (imgH > contH) {
+          newY = Math.min(0, Math.max(newY, contH - imgH));
+        } else {
+          newY = (contH - imgH) / 2;
+        }
+        
+        translateX = newX;
+        translateY = newY;
         updateImageTransform();
       }, { signal });
 
@@ -377,6 +458,10 @@
 
       $("zd-reset").addEventListener("click", () => {
         Hub.haptic('light');
+        if (resultUrl) {
+          URL.revokeObjectURL(resultUrl);
+          resultUrl = null;
+        }
         resultDiv.classList.add("hidden");
         setupCard.classList.remove("hidden");
       }, { signal });
@@ -430,12 +515,14 @@
               return;
             }
             
-            const url = URL.createObjectURL(blob);
-            $("zd-final-img").src = url;
+            if (resultUrl) URL.revokeObjectURL(resultUrl);
+            resultUrl = URL.createObjectURL(blob);
+            
+            $("zd-final-img").src = resultUrl;
             $("zd-final-info").textContent = `Wymiary: ${targetW} × ${targetH} px | Rozmiar: ${(blob.size / 1024).toFixed(1)} KB`;
             
             const dl = $("zd-dl");
-            dl.href = url;
+            dl.href = resultUrl;
             dl.download = `zdjecie_dokument_${targetW}x${targetH}.jpg`;
             
             editorDiv.classList.add("hidden");
@@ -452,7 +539,8 @@
       }, { signal });
 
       signal.addEventListener('abort', () => {
-        if (img.src) URL.revokeObjectURL(img.src);
+        if (resultUrl) URL.revokeObjectURL(resultUrl);
+        if (currentImgUrl) URL.revokeObjectURL(currentImgUrl);
       });
     },
 
