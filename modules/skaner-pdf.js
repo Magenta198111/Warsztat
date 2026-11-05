@@ -36,7 +36,6 @@
             z-index: 5; transition: all 0.05s linear;
           }
           #sk-crop-area svg { width: 100%; height: 100%; overflow: visible; }
-          /* ZMIANA: Usunięto fill, zostawiono tylko czerwoną przerywaną linię */
           #sk-crop-area path { stroke: var(--danger); stroke-width: 2; stroke-dasharray: 8 4; fill: none; }
 
           /* Lupa */
@@ -109,15 +108,18 @@
           </div>
           
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px;">
-            <button id="sk-rotate-btn" class="n-btn sk-btn" disabled style="padding: 12px; font-size: 13px;">Obróć zdjęcie</button>
-            <button id="sk-reset-btn" class="n-btn sk-btn" disabled style="padding: 12px; font-size: 13px;">Resetuj rogi</button>
+            <!-- ZMIANA: Dodano n-btn-outline -->
+            <button id="sk-rotate-btn" class="n-btn n-btn-outline sk-btn" disabled style="padding: 12px; font-size: 13px;">Obróć zdjęcie</button>
+            <button id="sk-reset-btn" class="n-btn n-btn-outline sk-btn" disabled style="padding: 12px; font-size: 13px;">Resetuj rogi</button>
           </div>
 
           <label class="sk-label">Popraw kontrast</label>
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
             <input type="range" id="sk-contrast" min="0" max="200" value="100" class="sk-range sk-btn" style="flex: 1; margin-bottom: 0;" disabled>
-            <button id="sk-reset-contrast" class="n-btn sk-btn" disabled style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-color: var(--line); background: transparent;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+            
+            <!-- ZMIANA: Usunięto obramowanie i tło, dodano animację ikonki -->
+            <button id="sk-reset-contrast" class="n-btn sk-btn" disabled style="padding: 0; width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: none; background: transparent;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted); transition: color 0.2s, transform 0.2s;"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
             </button>
           </div>
           
@@ -306,10 +308,19 @@
 
       contrastSlider.addEventListener("input", applyLiveFilter, { signal });
 
+      // ZMIANA: Obsługa wizualnej odpowiedzi przycisku resetu kontrastu
       $("sk-reset-contrast").addEventListener("click", () => {
         Hub.haptic('light');
         contrastSlider.value = 100;
         applyLiveFilter();
+
+        const svg = $("sk-reset-contrast").querySelector("svg");
+        svg.style.color = "var(--accent)";
+        svg.style.transform = "scale(0.85) rotate(-45deg)";
+        setTimeout(() => { 
+          svg.style.color = "var(--muted)"; 
+          svg.style.transform = "scale(1) rotate(0deg)";
+        }, 300);
       }, { signal });
 
       colorToggle.addEventListener("change", (e) => {
@@ -386,12 +397,11 @@
           displayCanvasEl.setPointerCapture(e.pointerId);
           Hub.haptic('light');
 
-          // Lupa zawsze w górnym rogu
           const id = activeHandle.dataset.id;
-          if (id === "0") { loupe.style.left = "85%"; loupe.style.top = "15%"; } // Lewy górny -> Prawy górny
-          if (id === "1") { loupe.style.left = "15%"; loupe.style.top = "15%"; } // Prawy górny -> Lewy górny
-          if (id === "2") { loupe.style.left = "15%"; loupe.style.top = "15%"; } // Prawy dolny -> Lewy górny
-          if (id === "3") { loupe.style.left = "85%"; loupe.style.top = "15%"; } // Lewy dolny -> Prawy górny
+          if (id === "0") { loupe.style.left = "85%"; loupe.style.top = "15%"; }
+          if (id === "1") { loupe.style.left = "15%"; loupe.style.top = "15%"; }
+          if (id === "2") { loupe.style.left = "15%"; loupe.style.top = "15%"; }
+          if (id === "3") { loupe.style.left = "85%"; loupe.style.top = "15%"; }
           
           loupe.style.display = "block";
           updateLoupe();
