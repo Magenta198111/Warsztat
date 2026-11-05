@@ -758,9 +758,9 @@ window.Hub = {
       Hub.settings.autoExpand = e.target.checked;
       rowExpandLines.style.display = e.target.checked ? "flex" : "none";
       Hub.db.set("auto_expand", e.target.checked);
-      // Apply to current module if open (but we are in settings, so it's fine)
     };
 
+    // POPRAWKA: Usunięto "signal" i zrzutowano wynik na liczbę
     expandLinesTrigger.onclick = async () => {
       const opts = [
         { id: 10, label: "10 linii" },
@@ -769,11 +769,12 @@ window.Hub = {
         { id: 50, label: "50 linii" },
         { id: 100, label: "100 linii" }
       ];
-      const choice = await Hub.showSelect({ title: "Maksymalna liczba linii", options: opts, current: Hub.settings.autoExpandLines, anchor: expandLinesTrigger, signal });
+      const choice = await Hub.showSelect({ title: "Maksymalna liczba linii", options: opts, current: Hub.settings.autoExpandLines, anchor: expandLinesTrigger });
       if (choice) {
-        Hub.settings.autoExpandLines = choice;
-        expandLinesText.textContent = `${choice} linii`;
-        Hub.db.set("auto_expand_lines", choice);
+        const numChoice = Number(choice);
+        Hub.settings.autoExpandLines = numChoice;
+        expandLinesText.textContent = `${numChoice} linii`;
+        Hub.db.set("auto_expand_lines", numChoice);
       }
     };
 
@@ -978,7 +979,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   Hub.settings.scopeBtns = scopeData.btns;
   
   Hub.settings.autoExpand = autoExpand;
-  Hub.settings.autoExpandLines = autoExpandLines;
+  Hub.settings.autoExpandLines = Number(autoExpandLines);
 
   Hub.applyAccent(accent); 
   Hub.applyGridView(gridView); 
