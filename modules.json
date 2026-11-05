@@ -19,5 +19,8 @@
   },
   {
     "file": "./modules/kalkulator-prog.js"
+  },
+  {
+    "file": "./modules/generator-hasel.js"
   }
 ]
