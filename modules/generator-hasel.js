@@ -33,8 +33,11 @@
           
           .gh-password-text {
             font-family: monospace; font-size: 20px; font-weight: 600; color: var(--ink);
-            text-align: center; word-break: break-all; line-height: 1.4; user-select: all;
+            text-align: center; line-height: 1.4; user-select: all;
+            white-space: nowrap; overflow-x: auto; overflow-y: hidden;
+            padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none;
           }
+          .gh-password-text::-webkit-scrollbar { display: none; }
           
           .gh-strength-bar {
             width: 100%; height: 4px; border-radius: 2px; background: var(--line);
@@ -52,20 +55,35 @@
           .gh-action-row { display: flex; gap: 12px; margin-bottom: 32px; }
           .gh-btn { flex: 1; padding: 14px; font-size: 15px; }
           
-          .gh-slider-wrapper { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
-          .gh-slider-value { font-family: monospace; font-size: 18px; font-weight: 600; color: var(--accent); min-width: 30px; text-align: right; }
+          .gh-slider-wrapper {
+            display: flex; align-items: center; height: 40px;
+            touch-action: none; cursor: pointer; margin-bottom: 8px;
+          }
+          .gh-slider-value { font-family: monospace; font-size: 18px; font-weight: 600; color: var(--accent); min-width: 30px; text-align: right; margin-left: 16px; }
           
-          .gh-range { 
-            -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; 
-            outline: none; width: 100%; flex: 1;
-            background: linear-gradient(to right, var(--accent) var(--percent, 50%), var(--line) var(--percent, 50%)); 
-            touch-action: pan-y; 
+          .gh-range-track {
+            position: relative; width: 100%; height: 6px; border-radius: 3px; flex: 1;
+            background: linear-gradient(to right, var(--accent) var(--percent, 0%), var(--line) var(--percent, 0%));
           }
-          .gh-range::-webkit-slider-thumb { 
-            -webkit-appearance: none; appearance: none; width: 22px; height: 22px; 
-            border-radius: 50%; background: var(--accent); cursor: pointer; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4); margin-top: -2px; 
+          
+          .gh-range-thumb {
+            position: absolute; top: 50%; transform: translate(-50%, -50%);
+            width: 24px; height: 24px; border-radius: 50%; background: var(--accent);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4); pointer-events: none;
+            transition: transform 0.1s;
           }
+
+          .gh-trigger { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: transparent; border: none; border-bottom: 1px solid var(--line); 
+            padding: 16px 0; color: var(--ink); font-size: 16px; font-weight: 500;
+            cursor: pointer; user-select: none; transition: color 0.2s;
+          }
+          .gh-trigger:active { color: var(--accent); }
+          .gh-trigger .icon { color: var(--muted); font-family: monospace; font-size: 20px; font-weight: 300; line-height: 1; }
+          
+          .gh-accordion { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+          .gh-accordion.open { max-height: 500px; }
           
           .gh-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
           .gh-row:last-child { border-bottom: none; }
@@ -90,37 +108,44 @@
         <div class="gh-flat-section">
           <label class="gh-label">Długość hasła</label>
           <div class="gh-slider-wrapper">
-            <input type="range" id="gh-length" min="4" max="64" value="${savedLength}" class="gh-range">
+            <div id="gh-slider-track" class="gh-range-track">
+              <div id="gh-slider-thumb" class="gh-range-thumb"></div>
+            </div>
             <div id="gh-length-val" class="gh-slider-value">${savedLength}</div>
           </div>
         </div>
 
         <div class="gh-flat-section">
-          <label class="gh-label">Uwzględnij znaki</label>
-          
-          <div class="gh-row">
-            <div class="gh-row-title">Wielkie litery (A-Z)</div>
-            <label class="switch"><input type="checkbox" id="gh-upper" ${savedOptions.upper ? 'checked' : ''}><span class="switch-slider"></span></label>
+          <div id="gh-acc-trigger" class="gh-trigger">
+            <span>Uwzględnij znaki</span>
+            <span id="gh-acc-icon" class="icon">+</span>
           </div>
           
-          <div class="gh-row">
-            <div class="gh-row-title">Małe litery (a-z)</div>
-            <label class="switch"><input type="checkbox" id="gh-lower" ${savedOptions.lower ? 'checked' : ''}><span class="switch-slider"></span></label>
-          </div>
-          
-          <div class="gh-row">
-            <div class="gh-row-title">Cyfry (0-9)</div>
-            <label class="switch"><input type="checkbox" id="gh-numbers" ${savedOptions.numbers ? 'checked' : ''}><span class="switch-slider"></span></label>
-          </div>
-          
-          <div class="gh-row">
-            <div class="gh-row-title">Znaki specjalne (!@#$...)</div>
-            <label class="switch"><input type="checkbox" id="gh-symbols" ${savedOptions.symbols ? 'checked' : ''}><span class="switch-slider"></span></label>
-          </div>
-          
-          <div class="gh-row" style="margin-top: 8px; border-top: 1px solid var(--line);">
-            <div class="gh-row-title">Wyklucz podobne (np. O, 0, l, 1)</div>
-            <label class="switch"><input type="checkbox" id="gh-exclude" ${savedOptions.excludeSimilar ? 'checked' : ''}><span class="switch-slider"></span></label>
+          <div id="gh-accordion" class="gh-accordion">
+            <div class="gh-row">
+              <div class="gh-row-title">Wielkie litery (A-Z)</div>
+              <label class="switch"><input type="checkbox" id="gh-upper" ${savedOptions.upper ? 'checked' : ''}><span class="switch-slider"></span></label>
+            </div>
+            
+            <div class="gh-row">
+              <div class="gh-row-title">Małe litery (a-z)</div>
+              <label class="switch"><input type="checkbox" id="gh-lower" ${savedOptions.lower ? 'checked' : ''}><span class="switch-slider"></span></label>
+            </div>
+            
+            <div class="gh-row">
+              <div class="gh-row-title">Cyfry (0-9)</div>
+              <label class="switch"><input type="checkbox" id="gh-numbers" ${savedOptions.numbers ? 'checked' : ''}><span class="switch-slider"></span></label>
+            </div>
+            
+            <div class="gh-row">
+              <div class="gh-row-title">Znaki specjalne (!@#$...)</div>
+              <label class="switch"><input type="checkbox" id="gh-symbols" ${savedOptions.symbols ? 'checked' : ''}><span class="switch-slider"></span></label>
+            </div>
+            
+            <div class="gh-row" style="margin-top: 8px; border-top: 1px solid var(--line);">
+              <div class="gh-row-title">Wyklucz podobne (np. O, 0, l, 1)</div>
+              <label class="switch"><input type="checkbox" id="gh-exclude" ${savedOptions.excludeSimilar ? 'checked' : ''}><span class="switch-slider"></span></label>
+            </div>
           </div>
         </div>
       `;
@@ -129,10 +154,15 @@
       const passEl = $("gh-password");
       const btnGen = $("gh-btn-gen");
       const btnCopy = $("gh-btn-copy");
-      const lengthSlider = $("gh-length");
+      const sliderTrack = $("gh-slider-track");
+      const sliderThumb = $("gh-slider-thumb");
       const lengthVal = $("gh-length-val");
       const strengthFill = $("gh-strength-fill");
       const strengthText = $("gh-strength-text");
+
+      const accTrigger = $("gh-acc-trigger");
+      const accIcon = $("gh-acc-icon");
+      const accordion = $("gh-accordion");
 
       const chkUpper = $("gh-upper");
       const chkLower = $("gh-lower");
@@ -140,11 +170,55 @@
       const chkSymbols = $("gh-symbols");
       const chkExclude = $("gh-exclude");
 
-      function updateSliderFill(el) {
-        const percent = ((el.value - el.min) / (el.max - el.min)) * 100;
-        el.style.setProperty('--percent', `${percent}%`);
+      let currentLength = savedLength;
+
+      function updateSliderUI() {
+        const min = 4;
+        const max = 64;
+        const percent = ((currentLength - min) / (max - min)) * 100;
+        sliderThumb.style.left = percent + "%";
+        sliderTrack.style.setProperty('--percent', `${percent}%`);
+        lengthVal.textContent = currentLength;
       }
-      updateSliderFill(lengthSlider);
+      updateSliderUI();
+
+      function updateLengthFromX(clientX) {
+        const rect = sliderTrack.getBoundingClientRect();
+        let x = clientX - rect.left;
+        x = Math.max(0, Math.min(x, rect.width));
+        const percent = x / rect.width;
+        
+        let newLength = Math.round(4 + percent * (64 - 4));
+        
+        if (newLength !== currentLength) {
+          currentLength = newLength;
+          updateSliderUI();
+          saveOptions();
+          generatePassword();
+        }
+      }
+
+      sliderTrack.parentElement.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        sliderTrack.parentElement.setPointerCapture(e.pointerId);
+        updateLengthFromX(e.clientX);
+      }, { signal });
+
+      sliderTrack.parentElement.addEventListener("pointermove", (e) => {
+        if (sliderTrack.parentElement.hasPointerCapture(e.pointerId)) {
+          updateLengthFromX(e.clientX);
+        }
+      }, { signal });
+
+      sliderTrack.parentElement.addEventListener("pointerup", (e) => {
+        sliderTrack.parentElement.releasePointerCapture(e.pointerId);
+      }, { signal });
+
+      accTrigger.addEventListener("click", () => {
+        Hub.haptic('light');
+        accordion.classList.toggle("open");
+        accIcon.textContent = accordion.classList.contains("open") ? "−" : "+";
+      }, { signal });
 
       function getActiveOptions() {
         return {
@@ -158,7 +232,7 @@
 
       function saveOptions() {
         const opts = getActiveOptions();
-        Hub.db.set("pass_length", Number(lengthSlider.value)).catch(()=>{});
+        Hub.db.set("pass_length", currentLength).catch(()=>{});
         Hub.db.set("pass_options", opts).catch(()=>{});
       }
 
@@ -198,7 +272,7 @@
           return;
         }
 
-        const length = Number(lengthSlider.value);
+        const length = currentLength;
         let password = "";
         const randomValues = new Uint32Array(length);
         crypto.getRandomValues(randomValues);
@@ -217,13 +291,6 @@
 
         Hub.haptic('light');
       }
-
-      lengthSlider.addEventListener("input", (e) => {
-        lengthVal.textContent = e.target.value;
-        updateSliderFill(e.target);
-        saveOptions();
-        generatePassword();
-      }, { signal });
 
       [chkUpper, chkLower, chkNumbers, chkSymbols, chkExclude].forEach(chk => {
         chk.addEventListener("change", () => {
