@@ -25,11 +25,19 @@
             content: ''; position: absolute; background-color: var(--accent);
             box-shadow: 0 0 4px rgba(0,0,0,0.8); border-radius: 1px;
             top: 50%; left: 50%; transform: translate(-50%, -50%);
-            opacity: 0.6;
+            opacity: 0.8;
           }
           .sk-handle::before { width: 32px; height: 2px; }
           .sk-handle::after { width: 2px; height: 32px; }
-          
+
+          /* Czerwona ramka łącząca krzyżyki */
+          #sk-crop-area {
+            position: absolute; inset: 0; pointer-events: none; display: none;
+            z-index: 5; transition: all 0.05s linear;
+          }
+          #sk-crop-area svg { width: 100%; height: 100%; overflow: visible; }
+          #sk-crop-area path { stroke: var(--danger); stroke-width: 2; stroke-dasharray: 8 4; fill: rgba(239, 68, 68, 0.1); }
+
           .sk-drop-zone { 
             width: 100%; aspect-ratio: 4 / 3;
             border: 2px dashed var(--line); border-radius: 8px; 
@@ -59,7 +67,6 @@
 
         <div style="margin-top: 16px;">
           
-          <!-- PRZYCISK "ZMIEŃ ZDJĘCIE" NA GÓRZE -->
           <button id="sk-change-btn" class="n-btn sk-btn" disabled style="width: 100%; padding: 12px; margin-bottom: 16px;">Zmień zdjęcie</button>
 
           <label class="sk-label">Plik źródłowy</label>
@@ -74,6 +81,13 @@
 
             <div id="sk-canvas-container" style="display:none; width: 100%; border-radius: 8px; border: 1px solid var(--line); background:#000; overflow:hidden; touch-action: none;">
               <canvas id="sk-display" style="display:block; width:100%; height:auto;"></canvas>
+              
+              <!-- SVG Ramka -->
+              <div id="sk-crop-area">
+                <svg preserveAspectRatio="none">
+                  <path d="" />
+                </svg>
+              </div>
             </div>
 
             <div class="sk-handle" data-id="0"></div>
@@ -82,7 +96,6 @@
             <div class="sk-handle" data-id="3"></div>
           </div>
           
-          <!-- OBRÓĆ I RESETUJ W DWÓCH KOLUMNACH POD ZDJĘCIEM -->
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px;">
             <button id="sk-rotate-btn" class="n-btn sk-btn" disabled style="padding: 12px; font-size: 13px;">Obróć zdjęcie</button>
             <button id="sk-reset-btn" class="n-btn sk-btn" disabled style="padding: 12px; font-size: 13px;">Resetuj rogi</button>
@@ -122,6 +135,8 @@
       const resetBtn = $("sk-reset-btn");
       const changeBtn = $("sk-change-btn");
       const colorToggle = $("sk-color-toggle");
+      const cropArea = $("sk-crop-area");
+      const cropPath = cropArea.querySelector("path");
 
       const actionBtns = [rotateBtn, resetBtn, changeBtn, contrastSlider, $("sk-reset-contrast"), colorToggle, pdfBtn];
 
@@ -129,6 +144,19 @@
       let dragStartHandleX = 0, dragStartHandleY = 0;
       let dragStartTouchX = 0, dragStartTouchY = 0;
       let moveCounter = 0;
+
+      function updateCropPath() {
+        if (!isLoaded) return;
+        const rect = displayCanvasEl.getBoundingClientRect();
+        const pts = [];
+        handles.forEach(h => {
+          const x = parseFloat(h.style.left) / 100 * rect.width;
+          const y = parseFloat(h.style.top) / 100 * rect.height;
+          pts.push(`${x},${y}`);
+        });
+        cropPath.setAttribute('d', `M${pts.join(' L')} Z`);
+        cropArea.style.display = "block";
+      }
 
       function updateSliderFill(el) {
         const percent = ((el.value - el.min) / (el.max - el.min)) * 100;
@@ -157,6 +185,7 @@
           h.dataset.lastMoved = 0;
         });
         moveCounter = 0;
+        updateCropPath();
       }
 
       function updateDisplay() {
@@ -169,6 +198,7 @@
         displayCanvasEl.getContext("2d").drawImage(originalCanvas, 0, 0, displayW, displayH);
 
         applyLiveFilter();
+        updateCropPath();
       }
 
       function setLoadedState(loaded) {
@@ -181,10 +211,13 @@
           pickBtn.style.display = "none";
           canvasContainer.style.display = "block";
           handles.forEach(h => h.style.display = "block");
+          cropArea.style.display = "block";
+          updateCropPath();
         } else {
           pickBtn.style.display = "flex";
           canvasContainer.style.display = "none";
           handles.forEach(h => h.style.display = "none");
+          cropArea.style.display = "none";
         }
       }
 
@@ -253,6 +286,7 @@
         resetHandles();
       }, { signal });
 
+      // --- LOGIKA DOTYKU ---
       displayCanvasEl.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         
@@ -316,6 +350,8 @@
 
         activeHandle.style.left = (x / rect.width * 100) + "%";
         activeHandle.style.top = (y / rect.height * 100) + "%";
+        
+        updateCropPath();
       }, { signal });
 
       displayCanvasEl.addEventListener("pointerup", (e) => {
@@ -325,6 +361,7 @@
         }
       }, { signal });
 
+      // --- GENEROWANIE PDF ---
       pdfBtn.addEventListener("click", () => {
         if (!isLoaded) return;
         
