@@ -69,6 +69,15 @@
           }
           
           .sk-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+          /* NOWA ANIMACJA CSS */
+          @keyframes sk-spin-left {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(-360deg); }
+          }
+          .sk-spin-anim {
+            animation: sk-spin-left 0.8s ease-in-out;
+          }
         </style>
 
         ${Hub.backButtonHtml}
@@ -116,8 +125,7 @@
             <input type="range" id="sk-contrast" min="0" max="200" value="100" class="sk-range sk-btn" style="flex: 1; margin-bottom: 0;" disabled>
             
             <button id="sk-reset-contrast" class="n-btn sk-btn" disabled style="padding: 0; width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: none; background: transparent;">
-              <!-- ZMIANA: transition wydłużony do 0.8s -->
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted); transition: color 0.2s, transform 0.8s ease-in-out;"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted); transition: color 0.2s;"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
             </button>
           </div>
           
@@ -313,16 +321,13 @@
 
         const svg = $("sk-reset-contrast").querySelector("svg");
         
-        // ZMIANA: Obrót w lewo (-360deg)
         svg.style.color = "var(--accent)";
-        svg.style.transform = "rotate(-360deg)";
+        svg.classList.remove("sk-spin-anim");
+        void svg.offsetWidth; // Trigger reflow, aby animacja zadziałała ponownie
+        svg.classList.add("sk-spin-anim");
         
-        // ZMIANA: Zwiększono timeout do 800ms (aby dopasować do nowej animacji)
         setTimeout(() => { 
-          svg.style.transition = "none";
-          svg.style.transform = "rotate(0deg)";
-          svg.offsetHeight;
-          svg.style.transition = "color 0.2s, transform 0.8s ease-in-out";
+          svg.classList.remove("sk-spin-anim");
           svg.style.color = "var(--muted)"; 
         }, 800);
       }, { signal });
