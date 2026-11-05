@@ -39,8 +39,6 @@
       container.innerHTML = `
         <style>
           .c-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 0; }
-          
-          /* Płaski styl - bez kart, tylko linie */
           .c-flat-section { margin-bottom: 28px; }
           .c-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
@@ -96,7 +94,6 @@
           <label class="c-label">Plik źródłowy</label>
           <input type="file" id="c-file" accept="image/*" style="display:none;">
           
-          <!-- Systemowy wybór pliku, więc styl szary -->
           <div id="c-drop-zone" class="c-drop-zone">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px; opacity:0.5;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
             <div style="font-size: 14px; font-weight: 500;">Kliknij, aby wybrać zdjęcie</div>
@@ -159,6 +156,7 @@
       let currentFile = null;
       let currentBitmap = null;
       let originalWidth = 0, originalHeight = 0;
+      let currentResultUrl = null;
 
       function updateSliderFill(el) {
         const percent = ((el.value - el.min) / (el.max - el.min)) * 100;
@@ -294,8 +292,13 @@
               
               if (!blob) return showToast("Błąd: Nie udało się przetworzyć zdjęcia.");
 
-              const outUrl = URL.createObjectURL(blob); 
-              activeUrls.push(outUrl);
+              if (currentResultUrl) {
+                URL.revokeObjectURL(currentResultUrl);
+                activeUrls = activeUrls.filter(u => u !== currentResultUrl);
+              }
+
+              currentResultUrl = URL.createObjectURL(blob); 
+              activeUrls.push(currentResultUrl);
               
               const ext = currentFmt.split("/")[1];
               const outName = currentFile.name.replace(/\.[^.]+$/, "") + "_conv." + ext;
@@ -305,10 +308,10 @@
               
               statsDiv.innerHTML = `Wymiary: ${originalWidth}x${originalHeight} px &rarr; <span>${tWidth}x${tHeight} px</span><br>Rozmiar: ${(currentFile.size / 1024).toFixed(1)} KB &rarr; <span>${(blob.size / 1024).toFixed(1)} KB</span> (${sign}${diff}%)`;
 
-              imgAfter.src = outUrl;
+              imgAfter.src = currentResultUrl;
               resultSection.classList.remove("hidden");
 
-              dlBtn.href = outUrl;
+              dlBtn.href = currentResultUrl;
               dlBtn.download = outName;
               dlBtn.textContent = `Pobierz ${outName}`;
 
