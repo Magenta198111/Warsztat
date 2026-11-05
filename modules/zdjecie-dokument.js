@@ -2,7 +2,6 @@
   Hub.register({
     id: "zdjecie-dokument",
     title: "Zdjęcie do Dokumentów",
-    icon: "🪪",
     desc: "Kadrowanie i kompresja zdjęć do dowodu, paszportu i wiz",
 
     async mount(container, signal) {
@@ -14,58 +13,109 @@
       let startX = 0;
       let startY = 0;
       let isLoaded = false;
+      let currentUnit = "cm";
 
       container.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
-          <button id="zd-back" style="width:auto; padding:10px 16px; border-radius:14px; margin:0;">Wróć</button>
-        </div>
+        <style>
+          .zd-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .zd-flat-section { margin-bottom: 28px; }
+          .zd-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
+          
+          .zd-input-row { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+          .zd-input {
+            flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--line);
+            color: var(--ink); font-size: 16px; padding: 8px 0; outline: none;
+            text-align: center; transition: border-color 0.2s; font-family: monospace;
+          }
+          .zd-input:focus { border-bottom-color: var(--accent); }
+          
+          .zd-trigger {
+            display: flex; justify-content: center; align-items: center; 
+            background: transparent; border-bottom: 1px solid var(--line); 
+            padding: 8px 0; color: var(--accent); font-size: 16px; font-weight: 600;
+            cursor: pointer; user-select: none; width: 60px; flex-shrink: 0;
+          }
+          
+          #zd-crop-container {
+            position: relative; overflow: hidden; background: #000;
+            border-radius: 8px; border: 1px solid var(--line);
+            touch-action: none; cursor: grab; margin: 0 auto;
+          }
+          
+          .zd-range { 
+            -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; 
+            outline: none; margin: 10px 0 20px 0; width: 100%; 
+            background: linear-gradient(to right, var(--accent) var(--percent, 100%), var(--line) var(--percent, 100%)); 
+            touch-action: pan-y; 
+          }
+          .zd-range::-webkit-slider-thumb { 
+            -webkit-appearance: none; appearance: none; width: 22px; height: 22px; 
+            border-radius: 50%; background: var(--accent); cursor: pointer; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4); margin-top: -2px; 
+            transition: transform 0.1s; 
+          }
 
-        <div class="card" id="zd-setup-card" style="width:100%; box-sizing:border-box; overflow:hidden;">
-          <label>Wymiary zdjęcia</label>
-          <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px; width:100%;">
-            <input type="number" id="zd-w" value="3.5" step="0.1" style="flex:1 1 0; min-width:0; padding:12px 4px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; text-align:center;">
-            <span style="color:var(--muted); flex:0 0 auto;">×</span>
-            <input type="number" id="zd-h" value="4.5" step="0.1" style="flex:1 1 0; min-width:0; padding:12px 4px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; text-align:center;">
-            <select id="zd-unit" style="flex:0 0 75px; max-width:75px; padding:12px 4px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; text-align:center;">
-              <option value="cm">cm</option>
-              <option value="px">px</option>
-            </select>
+          .zd-drop-zone { 
+            border: 2px dashed var(--line); border-radius: 8px; padding: 30px 20px; 
+            text-align: center; color: var(--muted); cursor: pointer; 
+            transition: border-color 0.2s; margin-bottom: 16px; 
+          }
+          .zd-drop-zone:active { border-color: var(--accent); }
+        </style>
+
+        ${Hub.backButtonHtml}
+
+        <div id="zd-setup-card" style="margin-top: 16px;">
+          <div class="zd-flat-section">
+            <label class="zd-label">Wymiary zdjęcia</label>
+            <div class="zd-input-row">
+              <input type="number" id="zd-w" value="3.5" step="0.1" class="zd-input" inputmode="decimal">
+              <span style="color:var(--muted);">×</span>
+              <input type="number" id="zd-h" value="4.5" step="0.1" class="zd-input" inputmode="decimal">
+              <div id="zd-unit-trigger" class="zd-trigger">cm</div>
+            </div>
           </div>
 
-          <label>Maksymalny rozmiar pliku (KB)</label>
-          <input type="number" id="zd-size" value="100" min="10" step="10" style="width:100%; box-sizing:border-box; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; margin-bottom:16px;">
+          <div class="zd-flat-section">
+            <label class="zd-label">Maksymalny rozmiar pliku (KB)</label>
+            <input type="number" id="zd-size" value="100" min="10" step="10" class="zd-input" style="width: 100%;" inputmode="numeric">
+          </div>
+
+          <div class="zd-divider"></div>
 
           <input type="file" id="zd-file" accept="image/*" style="display:none;">
-          <button id="zd-pick-btn" class="p" style="margin:0; display:flex; justify-content:center; align-items:center; gap:8px;">
-            📁 Wybierz zdjęcie
-          </button>
+          <div id="zd-pick-btn" class="zd-drop-zone">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px; opacity:0.5;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            <div style="font-size: 14px; font-weight: 500;">Kliknij, aby wybrać zdjęcie</div>
+          </div>
         </div>
 
         <div id="zd-editor" class="hidden">
-          <div style="display:flex; justify-content:center; margin:16px 0;">
-            <div id="zd-crop-container" style="position:relative; overflow:hidden; background:#000; border-radius:14px; border:1.5px solid var(--line); touch-action:none; cursor:grab;">
+          <div style="display:flex; justify-content:center; margin: 24px 0;">
+            <div id="zd-crop-container">
               <img id="zd-preview-img" style="position:absolute; transform-origin:top left; user-select:none; pointer-events:none;">
-              <div style="position:absolute; inset:0; border: 2px dashed rgba(255,255,255,0.3); pointer-events:none; box-sizing:border-box;"></div>
+              <div style="position:absolute; inset:0; border: 2px dashed var(--line); pointer-events:none; box-sizing:border-box;"></div>
             </div>
           </div>
           
-          <div class="card">
-            <label>Powiększenie</label>
-            <input type="range" id="zd-zoom" min="1" max="3" step="0.01" value="1">
-            
-            <div style="display:flex; gap:10px; margin-top:14px;">
-              <button id="zd-cancel" style="flex:1; margin:0; padding:14px; background:var(--bg);">Anuluj</button>
-              <button class="p" id="zd-save-btn" style="flex:2; margin:0; padding:14px;">Zapisz zdjęcie</button>
-            </div>
+          <div class="zd-flat-section">
+            <label class="zd-label">Powiązanie (Zoom)</label>
+            <input type="range" id="zd-zoom" min="1" max="3" step="0.01" value="1" class="zd-range">
+          </div>
+          
+          <div style="display:flex; gap:12px;">
+            <button id="zd-cancel" class="n-btn" style="flex:1; padding: 14px;">Anuluj</button>
+            <button class="n-btn n-btn-outline" id="zd-save-btn" style="flex:2; padding: 14px;">Zapisz zdjęcie</button>
           </div>
         </div>
         
-        <div id="zd-result" class="card hidden" style="text-align:center;">
-          <h3 style="color:var(--ok); margin-top:0;">Gotowe!</h3>
-          <img id="zd-final-img" style="max-width:100%; border-radius:14px; border:1.5px solid var(--line); margin-bottom:14px;">
-          <div id="zd-final-info" style="color:var(--muted); font-size:14px; margin-bottom:14px;"></div>
-          <a id="zd-dl" class="p" style="display:block; text-decoration:none; padding:14px; border-radius:14px; background:var(--accent); color:var(--accent-ink); font-weight:600;">⬇️ Pobierz zdjęcie</a>
-          <button id="zd-reset" style="width:100%; margin-top:10px; padding:14px; background:var(--bg);">Zrób kolejne</button>
+        <div id="zd-result" class="hidden" style="text-align:center; padding-top: 24px;">
+          <h3 style="color: var(--accent); margin-top:0;">Gotowe!</h3>
+          <img id="zd-final-img" style="max-width:100%; border-radius:8px; border:1px solid var(--line); margin-bottom:16px;">
+          <div id="zd-final-info" style="color:var(--muted); font-size:14px; margin-bottom:24px; font-family: monospace;"></div>
+          
+          <a id="zd-dl" class="n-btn n-btn-outline" style="display:flex; text-decoration:none; padding:14px; margin-bottom:12px;">Pobierz zdjęcie</a>
+          <button id="zd-reset" class="n-btn" style="width:100%; padding:14px;">Zrób kolejne</button>
         </div>
       `;
 
@@ -79,18 +129,26 @@
       const zoomSlider = $("zd-zoom");
       const wInput = $("zd-w");
       const hInput = $("zd-h");
-      const unitSelect = $("zd-unit");
+      const unitTrigger = $("zd-unit-trigger");
       const sizeInput = $("zd-size");
 
-      $("zd-back").addEventListener("click", () => history.back(), { signal });
-      $("zd-pick-btn").addEventListener("click", () => fileInput.click(), { signal });
+      pickBtn = $("zd-pick-btn");
+      pickBtn.addEventListener("click", () => fileInput.click(), { signal });
+      
+      unitTrigger.addEventListener("click", async () => {
+        const opts = [{ id: "cm", label: "Centymetry (cm)" }, { id: "px", label: "Piksele (px)" }];
+        const choice = await Hub.showSelect({ title: "Jednostka", options: opts, current: currentUnit, anchor: unitTrigger, signal });
+        if (choice) {
+          currentUnit = choice;
+          unitTrigger.textContent = currentUnit;
+        }
+      }, { signal });
 
       function getTargetDimensions() {
         let w = parseFloat(wInput.value) || 3.5;
         let h = parseFloat(hInput.value) || 4.5;
-        const u = unitSelect.value;
         
-        if (u === 'cm') {
+        if (currentUnit === 'cm') {
           w = Math.round(w * 118.11);
           h = Math.round(h * 118.11);
         } else {
@@ -127,12 +185,12 @@
         
         previewImg.style.width = "100%";
         previewImg.style.height = "auto";
-        previewImg.style.left = "0";
-        previewImg.style.top = "0";
         
+        // Automatyczne wyśrodkowanie obrazu
+        translateX = (displayW - previewImg.clientWidth) / 2;
+        translateY = (displayH - previewImg.clientHeight) / 2;
         scale = 1;
-        translateX = 0;
-        translateY = 0;
+        
         updateImageTransform();
       }
 
@@ -158,6 +216,7 @@
           img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
+        fileInput.value = "";
       }, { signal });
 
       cropContainer.addEventListener("pointerdown", (e) => {
@@ -182,18 +241,20 @@
       zoomSlider.addEventListener("input", (e) => {
         scale = parseFloat(e.target.value);
         updateImageTransform();
+        const percent = ((e.target.value - e.target.min) / (e.target.max - e.target.min)) * 100;
+        e.target.style.setProperty('--percent', `${percent}%`);
       }, { signal });
 
       $("zd-cancel").addEventListener("click", () => {
+        Hub.haptic('light');
         editorDiv.classList.add("hidden");
         setupCard.classList.remove("hidden");
-        fileInput.value = "";
       }, { signal });
 
       $("zd-reset").addEventListener("click", () => {
+        Hub.haptic('light');
         resultDiv.classList.add("hidden");
         setupCard.classList.remove("hidden");
-        fileInput.value = "";
       }, { signal });
 
       $("zd-save-btn").addEventListener("click", async () => {
@@ -201,6 +262,7 @@
         const btn = $("zd-save-btn");
         btn.disabled = true;
         btn.textContent = "Przetwarzanie...";
+        Hub.haptic('medium');
         
         setTimeout(async () => {
           try {
@@ -238,7 +300,7 @@
             }
             
             if (blob.size > maxSize) {
-              alert("Nie udało się zmieścić w limicie. Spróbuj mniejszego wymiaru.");
+              showToast("Nie udało się zmieścić w limicie. Spróbuj mniejszego wymiaru.");
               btn.disabled = false;
               btn.textContent = "Zapisz zdjęcie";
               return;
@@ -254,15 +316,20 @@
             
             editorDiv.classList.add("hidden");
             resultDiv.classList.remove("hidden");
+            Hub.haptic('success');
             
           } catch(err) {
-            alert("Błąd: " + err.message);
+            showToast("Błąd: " + err.message);
           } finally {
             btn.disabled = false;
             btn.textContent = "Zapisz zdjęcie";
           }
         }, 50);
       }, { signal });
+
+      signal.addEventListener('abort', () => {
+        if (img.src) URL.revokeObjectURL(img.src);
+      });
     },
 
     unmount() {}
