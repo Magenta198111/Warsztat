@@ -17,20 +17,17 @@
           .sk-flat-section { margin-bottom: 28px; }
           .sk-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
-          /* Styl dla rączek (rogi dokumentu) */
+          /* Styl dla rączek (czerwone krzyżyki) */
           .sk-handle {
-            position: absolute; width: 32px; height: 32px; margin: -16px 0 0 -16px;
-            z-index: 10; pointer-events: none; touch-action: none;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid var(--accent);
-            box-shadow: 0 0 8px rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center;
-            transition: transform 0.1s;
+            position: absolute; width: 40px; height: 40px; margin: -20px 0 0 -20px;
+            z-index: 10; pointer-events: auto; touch-action: none; cursor: grab;
           }
-          .sk-handle::after {
-            content: ''; width: 8px; height: 8px; background: var(--accent); border-radius: 50%;
+          .sk-handle::before, .sk-handle::after {
+            content: ''; position: absolute; background-color: var(--danger);
+            box-shadow: 0 0 4px rgba(0,0,0,0.8); border-radius: 2px;
           }
+          .sk-handle::before { top: 50%; left: 0; width: 100%; height: 3px; transform: translateY(-50%); }
+          .sk-handle::after { left: 50%; top: 0; width: 3px; height: 100%; transform: translateX(-50%); }
           
           .sk-drop-zone { 
             border: 2px dashed var(--line); border-radius: 8px; padding: 30px 20px; 
@@ -68,7 +65,8 @@
           <div class="sk-divider"></div>
           
           <label class="sk-label">Kadrowanie i perspektywa</label>
-          <div id="sk-wrapper" style="position:relative; margin-bottom: 24px; touch-action:none;">
+          <!-- Usunięto touch-action: none, aby można było przewijać stronę -->
+          <div id="sk-wrapper" style="position:relative; margin-bottom: 24px;">
             <div style="overflow:hidden; border-radius: 8px; border: 1px solid var(--line); background:#000;">
               <canvas id="sk-display" style="display:block; width:100%; height:auto; transition: filter 0.1s;"></canvas>
             </div>
@@ -219,62 +217,52 @@
         resetHandles();
       }, { signal });
 
-      // --- LOGIKA PRZECIĄGANIA RĄCZEK ---
-      wrapperDiv.addEventListener("pointerdown", (e) => {
-        const rect = displayCanvasEl.getBoundingClientRect();
-        const touchX = e.clientX - rect.left;
-        const touchY = e.clientY - rect.top;
-
-        let closestHandle = null;
-        let minDist = Infinity;
-
-        handles.forEach(h => {
-          const hX = parseFloat(h.style.left) / 100 * rect.width;
-          const hY = parseFloat(h.style.top) / 100 * rect.height;
-          const dist = Math.hypot(touchX - hX, touchY - hY);
-          if (dist < minDist) {
-            minDist = dist;
-            closestHandle = h;
-          }
+      // --- LOGIKA PRZECIĄGANIA RĄCZEK (Bindowana bezpośrednio na krzyżyki) ---
+      handles.forEach(handle => {
+        handle.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          activeHandle = handle;
+          
+          const rect = displayCanvasEl.getBoundingClientRect();
+          dragStartHandleX = parseFloat(handle.style.left) / 100 * rect.width;
+          dragStartHandleY = parseFloat(handle.style.top) / 100 * rect.height;
+          dragStartTouchX = e.clientX - rect.left;
+          dragStartTouchY = e.clientY - rect.top;
+          
+          handle.setPointerCapture(e.pointerId);
         });
 
-        if (closestHandle && minDist < 120) {
-          activeHandle = closestHandle;
+        handle.addEventListener("pointermove", (e) => {
+          if (activeHandle !== handle) return;
+          e.preventDefault();
           
-          dragStartHandleX = parseFloat(activeHandle.style.left) / 100 * rect.width;
-          dragStartHandleY = parseFloat(activeHandle.style.top) / 100 * rect.height;
-          
-          dragStartTouchX = touchX;
-          dragStartTouchY = touchY;
-          
-          wrapperDiv.setPointerCapture(e.pointerId);
-        }
-      }, { signal });
+          const rect = displayCanvasEl.getBoundingClientRect();
+          const touchX = e.clientX - rect.left;
+          const touchY = e.clientY - rect.top;
 
-      wrapperDiv.addEventListener("pointermove", (e) => {
-        if (!activeHandle) return;
-        const rect = displayCanvasEl.getBoundingClientRect();
-        const touchX = e.clientX - rect.left;
-        const touchY = e.clientY - rect.top;
+          // POPRAWKA: Przywrócono dzielenie przez 3 dla 3x większej precyzji
+          const deltaX = (touchX - dragStartTouchX) / 3;
+          const deltaY = (touchY - dragStartTouchY) / 3;
 
-        // Poprawka: Rączka idealnie podąża za palcem (usunięto dzielenie przez 3)
-        let x = touchX; 
-        let y = touchY;
+          let x = dragStartHandleX + deltaX;
+          let y = dragStartHandleY + deltaY;
 
-        x = Math.max(0, Math.min(x, rect.width));
-        y = Math.max(0, Math.min(y, rect.height));
+          x = Math.max(0, Math.min(x, rect.width));
+          y = Math.max(0, Math.min(y, rect.height));
 
-        activeHandle.style.left = (x / rect.width * 100) + "%";
-        activeHandle.style.top = (y / rect.height * 100) + "%";
-      }, { signal });
+          handle.style.left = (x / rect.width * 100) + "%";
+          handle.style.top = (y / rect.height * 100) + "%";
+        });
 
-      wrapperDiv.addEventListener("pointerup", (e) => {
-        if (activeHandle) {
-          wrapperDiv.releasePointerCapture(e.pointerId);
-          activeHandle = null;
-          Hub.haptic('light');
-        }
-      }, { signal });
+        handle.addEventListener("pointerup", (e) => {
+          if (activeHandle === handle) {
+            handle.releasePointerCapture(e.pointerId);
+            activeHandle = null;
+            Hub.haptic('light');
+          }
+        });
+      });
 
       // --- GENEROWANIE PDF ---
       pdfBtn.addEventListener("click", () => {
