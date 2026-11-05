@@ -18,8 +18,8 @@
           .sk-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
           .sk-handle {
-            position: absolute; width: 192px; height: 192px; margin: -96px 0 0 -96px;
-            z-index: 10; pointer-events: auto; touch-action: none; cursor: grab;
+            position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px;
+            z-index: 10; pointer-events: none; /* Wyłączone, bo logika jest na płótnie */
           }
           .sk-handle::before, .sk-handle::after {
             content: ''; position: absolute; background-color: var(--accent);
@@ -66,20 +66,23 @@
           
           <label class="sk-label">Kadrowanie i perspektywa</label>
           <div id="sk-wrapper" style="position:relative; width: 80%; margin: 0 auto; margin-bottom: 24px;">
-            <div style="border-radius: 8px; border: 1px solid var(--line); background:#000; overflow:hidden;">
+            <!-- Dodano touch-action: none, aby płynnie przeciągać po zdjęciu -->
+            <div style="border-radius: 8px; border: 1px solid var(--line); background:#000; overflow:hidden; touch-action: none;">
               <canvas id="sk-display" style="display:block; width:100%; height:auto; transition: filter 0.1s;"></canvas>
             </div>
-            <!-- Handles są bezpośrednio w kontenerze -->
             <div class="sk-handle" data-id="0"></div>
             <div class="sk-handle" data-id="1"></div>
             <div class="sk-handle" data-id="2"></div>
             <div class="sk-handle" data-id="3"></div>
           </div>
           
-          <div style="display: flex; gap: 12px; margin-bottom: 24px;">
-            <button id="sk-rotate-btn" class="n-btn" style="flex: 1; padding: 12px;">Obróć zdjęcie</button>
+          <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+            <button id="sk-rotate-btn" class="n-btn" style="flex: 1; padding: 12px;">Obróć</button>
             <button id="sk-reset-btn" class="n-btn" style="flex: 1; padding: 12px;">Resetuj rogi</button>
           </div>
+
+          <!-- NOWY PRZYCISK: Zmiana zdjęcia -->
+          <button id="sk-change-btn" class="n-btn" style="width: 100%; padding: 12px; margin-bottom: 24px;">Wybierz inne zdjęcie</button>
 
           <label class="sk-label">Popraw kontrast</label>
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
@@ -106,11 +109,11 @@
       const $ = id => container.querySelector("#" + id);
       const fileInput = $("sk-file");
       const pickBtn = $("sk-pick-btn");
+      const changeBtn = $("sk-change-btn");
       const editorDiv = $("sk-editor");
       const startCard = $("sk-start-card");
-      const wrapperDiv = $("sk-wrapper");
       const displayCanvasEl = $("sk-display");
-      const handles = wrapperDiv.querySelectorAll(".sk-handle");
+      const handles = container.querySelectorAll(".sk-handle");
       const contrastSlider = $("sk-contrast");
       const pdfBtn = $("sk-pdf-btn");
       const rotateBtn = $("sk-rotate-btn");
@@ -120,7 +123,7 @@
       let activeHandle = null;
       let dragStartHandleX = 0, dragStartHandleY = 0;
       let dragStartTouchX = 0, dragStartTouchY = 0;
-      let moveCounter = 0; // Do śledzenia, który był ruszany ostatni
+      let moveCounter = 0;
 
       function updateSliderFill(el) {
         const percent = ((el.value - el.min) / (el.max - el.min)) * 100;
@@ -146,7 +149,7 @@
         handles.forEach((h, i) => {
           h.style.left = pos[i].left;
           h.style.top = pos[i].top;
-          h.dataset.lastMoved = 0; // Reset historii
+          h.dataset.lastMoved = 0;
         });
         moveCounter = 0;
       }
@@ -164,6 +167,7 @@
       }
 
       pickBtn.addEventListener("click", () => fileInput.click(), { signal });
+      changeBtn.addEventListener("click", () => fileInput.click(), { signal });
 
       fileInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
@@ -187,6 +191,7 @@
           img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
+        fileInput.value = ""; // Reset, aby można było wybrać to samo zdjęcie ponownie
       }, { signal });
 
       contrastSlider.addEventListener("input", applyLiveFilter, { signal });
@@ -229,8 +234,8 @@
         resetHandles();
       }, { signal });
 
-      // --- NOWA LOGIKA: WYBÓR NAJBLIŻSZEGO RĄCZKI ---
-      wrapperDiv.addEventListener("pointerdown", (e) => {
+      // --- NOWA LOGIKA DOTYKU: Przypięta bezpośrednio do płótna ---
+      displayCanvasEl.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         
         const rect = displayCanvasEl.getBoundingClientRect();
@@ -251,7 +256,6 @@
             closestHandle = h;
             maxLastMoved = parseFloat(h.dataset.lastMoved || 0);
           } else if (Math.abs(dist - minDist) < 1) {
-            // Jeśli dystans jest niemal identyczny (np. nałożone na siebie), wybierz ten ruszzany później
             const lastMoved = parseFloat(h.dataset.lastMoved || 0);
             if (lastMoved > maxLastMoved) {
               closestHandle = h;
@@ -260,10 +264,10 @@
           }
         });
 
-        // Zasięg chwytania - jeśli kliknięto w promieniu 100px od środka krzyżyka
-        if (closestHandle && minDist < 100) {
+        // Zasięg 120px (wewnątrz zdjęcia)
+        if (closestHandle && minDist < 120) {
           activeHandle = closestHandle;
-          activeHandle.dataset.lastMoved = ++moveCounter; // Zapisz, że ten był ruszany jako ostatni
+          activeHandle.dataset.lastMoved = ++moveCounter;
           
           dragStartHandleX = parseFloat(activeHandle.style.left) / 100 * rect.width;
           dragStartHandleY = parseFloat(activeHandle.style.top) / 100 * rect.height;
@@ -271,12 +275,12 @@
           dragStartTouchX = touchX;
           dragStartTouchY = touchY;
           
-          wrapperDiv.setPointerCapture(e.pointerId);
+          displayCanvasEl.setPointerCapture(e.pointerId);
           Hub.haptic('light');
         }
       }, { signal });
 
-      wrapperDiv.addEventListener("pointermove", (e) => {
+      displayCanvasEl.addEventListener("pointermove", (e) => {
         if (!activeHandle) return;
         e.preventDefault();
         
@@ -297,9 +301,9 @@
         activeHandle.style.top = (y / rect.height * 100) + "%";
       }, { signal });
 
-      wrapperDiv.addEventListener("pointerup", (e) => {
+      displayCanvasEl.addEventListener("pointerup", (e) => {
         if (activeHandle) {
-          wrapperDiv.releasePointerCapture(e.pointerId);
+          displayCanvasEl.releasePointerCapture(e.pointerId);
           activeHandle = null;
         }
       }, { signal });
