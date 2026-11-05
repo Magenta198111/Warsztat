@@ -21,7 +21,6 @@
           .o-flat-section { margin-bottom: 28px; }
           .o-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
-          /* Textarea gets standard styling, JS in index.html handles auto-resize if enabled */
           .o-textarea {
             width: 100%; padding: 12px 0; background: transparent; border: none;
             border-bottom: 1px solid var(--line); color: var(--ink); font-size: 16px; 
@@ -215,7 +214,6 @@
         </div>
 
         <div class="o-action-row">
-          <button id="o-undo" class="n-btn n-btn-outline" style="flex: 1; opacity: 0.4;" disabled>Cofnij</button>
           <button id="o-clear" class="n-btn" style="flex: 1; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);">Wyczyść</button>
           <button id="o-copy" class="n-btn n-btn-outline" style="flex: 2;">Kopiuj wynik</button>
         </div>
@@ -228,9 +226,6 @@
       
       const cleanTrigger = $("o-clean-trigger"), cleanAccordion = $("o-clean-accordion"), cleanIcon = $("o-clean-icon");
       const statChars = $("o-stat-chars"), statWords = $("o-stat-words");
-      const undoBtn = $("o-undo");
-
-      let history = [];
 
       // --- OBSŁUGA PRZYCISKU SEGMENTOWEGO (MYŚLNIKI) ---
       const segBtns = container.querySelectorAll('#dash-segmented .o-segment');
@@ -310,15 +305,6 @@
         cleanAccordion.classList.toggle("open");
         cleanIcon.textContent = cleanAccordion.classList.contains("open") ? "−" : "+";
       }, { signal });
-
-      function saveHistory() {
-        if (inputEl.value !== history[history.length - 1]) {
-          history.push(inputEl.value);
-          if (history.length > 20) history.shift();
-          undoBtn.disabled = false;
-          undoBtn.style.opacity = "1";
-        }
-      }
 
       function updateStats(text) {
         if (!text) { statChars.textContent = "Znaki: 0"; statWords.textContent = "Słowa: 0"; return; }
@@ -402,8 +388,6 @@
 
       inputEl.addEventListener("input", () => {
         processText();
-        clearTimeout(inputEl._historyTimer);
-        inputEl._historyTimer = setTimeout(saveHistory, 1000);
       }, { signal });
 
       caseTrigger.addEventListener("click", async () => {
@@ -413,17 +397,6 @@
           currentCaseMode = choice;
           caseText.textContent = caseNames[currentCaseMode];
           processText();
-        }
-      }, { signal });
-
-      undoBtn.addEventListener("click", () => {
-        if (history.length > 1) {
-          history.pop();
-          inputEl.value = history[history.length - 1];
-          processText();
-          Hub.resizeTextarea(inputEl);
-          Hub.haptic('light');
-          if (history.length <= 1) { undoBtn.disabled = true; undoBtn.style.opacity = "0.4"; }
         }
       }, { signal });
 
@@ -457,7 +430,7 @@
       }, { signal });
 
       $("o-clear").addEventListener("click", () => {
-        Hub.haptic('medium'); saveHistory();
+        Hub.haptic('medium');
         inputEl.value = ""; outputEl.value = ""; updateStats(""); 
         Hub.resizeTextarea(inputEl); Hub.resizeTextarea(outputEl);
         inputEl.focus();
