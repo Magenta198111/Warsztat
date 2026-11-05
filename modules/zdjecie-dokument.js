@@ -38,19 +38,19 @@
       container.innerHTML = `
         <style>
           .zd-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
-          .zd-flat-section { margin-bottom: 24px; }
+          .zd-flat-section { margin-bottom: 28px; }
           .zd-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
+          /* NOWY PŁASKI STYL (zgodny z Oczyszczaczem) */
           .zd-trigger-btn {
-            display: flex; justify-content: space-between; align-items: center; gap: 12px;
-            background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
-            padding: 14px 16px; color: var(--ink); font-size: 14px; 
-            cursor: pointer; user-select: none; margin-bottom: 16px;
-            transition: background 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+            background: transparent; border: none; border-bottom: 1px solid var(--line);
+            padding: 16px 0; color: var(--ink); font-size: 16px; font-weight: 500;
+            cursor: pointer; user-select: none; transition: color 0.2s; margin-bottom: 16px;
           }
-          .zd-trigger-btn:active { background: var(--surface-hover); }
-          .zd-trigger-btn span { flex: 1; text-align: left; line-height: 1.4; }
+          .zd-trigger-btn:active { color: var(--accent); }
           .zd-trigger-btn svg { color: var(--muted); flex-shrink: 0; }
+          .zd-trigger-btn span { flex: 1; text-align: left; line-height: 1.4; }
 
           .zd-input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; width: 100%; }
           .zd-input {
@@ -73,27 +73,22 @@
             touch-action: none; cursor: grab; margin: 0 auto;
           }
           
-          /* ZMIANA: Zwiększony zasięg chwytania suwaka (wysokość 32px, wizualnie pasek 6px) */
-          .zd-range { 
-            -webkit-appearance: none; appearance: none; 
-            width: 100%; height: 32px; /* Większy offset */
-            background: transparent;
-            margin: 5px 0 15px 0; 
-            cursor: pointer;
-            touch-action: pan-y; 
+          .zd-range-wrapper {
+            display: flex; align-items: center; height: 40px;
+            touch-action: none; cursor: pointer;
           }
-          .zd-range::-webkit-slider-runnable-track {
-            width: 100%; height: 6px;
+
+          .zd-range-track {
+            position: relative; width: 100%; height: 6px; border-radius: 3px;
             background: linear-gradient(to right, var(--accent) var(--percent, 100%), var(--line) var(--percent, 100%));
-            border-radius: 3px;
           }
-          .zd-range::-webkit-slider-thumb { 
-            -webkit-appearance: none; appearance: none; 
-            width: 24px; height: 24px; 
-            border-radius: 50%; background: var(--accent); cursor: pointer; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4); 
-            margin-top: -9px; /* Centrowanie kropki na pasku 6px */
-            transition: transform 0.1s; 
+
+          .zd-range-thumb {
+            position: absolute; top: 50%; transform: translate(-50%, -50%);
+            width: 24px; height: 24px; border-radius: 50%; background: var(--accent);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            pointer-events: none;
+            transition: transform 0.1s;
           }
 
           .zd-drop-zone { 
@@ -155,7 +150,11 @@
           
           <div class="zd-flat-section">
             <label class="zd-label">Powiązanie (Zoom)</label>
-            <input type="range" id="zd-zoom" min="1" max="3" step="0.01" value="1" class="zd-range">
+            <div id="zd-zoom-wrapper" class="zd-range-wrapper">
+              <div class="zd-range-track" id="zd-zoom-track">
+                <div class="zd-range-thumb" id="zd-zoom-thumb"></div>
+              </div>
+            </div>
           </div>
           
           <div style="display:flex; gap:12px;">
@@ -181,7 +180,11 @@
       const fileInput = $("zd-file");
       const cropContainer = $("zd-crop-container");
       const previewImg = $("zd-preview-img");
-      const zoomSlider = $("zd-zoom");
+      
+      const zoomWrapper = $("zd-zoom-wrapper");
+      const zoomTrack = $("zd-zoom-track");
+      const zoomThumb = $("zd-zoom-thumb");
+      
       const wInput = $("zd-w");
       const hInput = $("zd-h");
       const unitTrigger = $("zd-unit-trigger");
@@ -287,11 +290,44 @@
         scale = 1;
         
         updateImageTransform();
+        updateZoomUI(1);
       }
 
       function updateImageTransform() {
         previewImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
       }
+
+      function updateZoomFromX(clientX) {
+        const rect = zoomTrack.getBoundingClientRect();
+        let x = clientX - rect.left;
+        x = Math.max(0, Math.min(x, rect.width));
+        const percent = x / rect.width;
+        
+        scale = 1 + percent * 2;
+        updateImageTransform();
+        updateZoomUI(percent);
+      }
+
+      function updateZoomUI(percent) {
+        zoomThumb.style.left = (percent * 100) + "%";
+        zoomTrack.style.setProperty('--percent', `${percent * 100}%`);
+      }
+
+      zoomWrapper.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        zoomWrapper.setPointerCapture(e.pointerId);
+        updateZoomFromX(e.clientX);
+      });
+
+      zoomWrapper.addEventListener("pointermove", (e) => {
+        if (zoomWrapper.hasPointerCapture(e.pointerId)) {
+          updateZoomFromX(e.clientX);
+        }
+      });
+
+      zoomWrapper.addEventListener("pointerup", (e) => {
+        zoomWrapper.releasePointerCapture(e.pointerId);
+      });
 
       fileInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
@@ -331,13 +367,6 @@
       cropContainer.addEventListener("pointerup", (e) => {
         isDragging = false;
         cropContainer.releasePointerCapture(e.pointerId);
-      }, { signal });
-
-      zoomSlider.addEventListener("input", (e) => {
-        scale = parseFloat(e.target.value);
-        updateImageTransform();
-        const percent = ((e.target.value - e.target.min) / (e.target.max - e.target.min)) * 100;
-        e.target.style.setProperty('--percent', `${percent}%`);
       }, { signal });
 
       $("zd-cancel").addEventListener("click", () => {
