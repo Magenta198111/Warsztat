@@ -2,7 +2,6 @@
   Hub.register({
     id: "skaner-pdf",
     title: "Skaner do PDF",
-    icon: "📄",
     desc: "Skanowanie dokumentów z prostowaniem perspektywy i PDF",
     
     async mount(container, signal) {
@@ -14,46 +13,63 @@
 
       container.innerHTML = `
         <style>
+          .sk-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .sk-flat-section { margin-bottom: 28px; }
+          .sk-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
+          
+          /* Styl dla rączek (rogi dokumentu) */
           .sk-handle {
-            position: absolute;
-            width: 26px; height: 26px;
-            margin: -13px 0 0 -13px;
-            z-index: 10;
-            pointer-events: none;
-            touch-action: none;
-            opacity: 0.5;
-          }
-          .sk-handle::before, .sk-handle::after {
-            content: '';
-            position: absolute;
-            background-color: #ff3b30;
-            box-shadow: 0 0 3px rgba(0,0,0,0.8);
-          }
-          .sk-handle::before {
-            top: 50%; left: 0; width: 100%; height: 2px;
-            transform: translateY(-50%);
+            position: absolute; width: 32px; height: 32px; margin: -16px 0 0 -16px;
+            z-index: 10; pointer-events: none; touch-action: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 8px rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s;
           }
           .sk-handle::after {
-            left: 50%; top: 0; width: 2px; height: 100%;
-            transform: translateX(-50%);
+            content: ''; width: 8px; height: 8px; background: var(--accent); border-radius: 50%;
+          }
+          
+          .sk-drop-zone { 
+            border: 2px dashed var(--line); border-radius: 8px; padding: 30px 20px; 
+            text-align: center; color: var(--muted); cursor: pointer; 
+            transition: border-color 0.2s; margin-bottom: 16px; 
+          }
+          .sk-drop-zone:active { border-color: var(--accent); }
+
+          .sk-range { 
+            -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; 
+            outline: none; margin: 10px 0 20px 0; width: 100%; 
+            background: linear-gradient(to right, var(--accent) var(--percent, 100%), var(--line) var(--percent, 100%)); 
+            touch-action: pan-y; 
+          }
+          .sk-range::-webkit-slider-thumb { 
+            -webkit-appearance: none; appearance: none; width: 22px; height: 22px; 
+            border-radius: 50%; background: var(--accent); cursor: pointer; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4); margin-top: -2px; 
+            transition: transform 0.1s; 
           }
         </style>
 
-        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
-          <button id="sk-back" style="width:auto; padding:10px 16px; border-radius:14px; margin:0;">Wróć</button>
-        </div>
+        ${Hub.backButtonHtml}
 
-        <div class="card" id="sk-start-card">
-          <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">Wybierz zdjęcie z galerii lub zrób nowe. Następnie przeciągnij czerwone krzyżyki na rogi dokumentu.</p>
+        <div id="sk-start-card" class="sk-flat-section" style="margin-top: 16px;">
+          <label class="sk-label">Plik źródłowy</label>
           <input type="file" id="sk-file" accept="image/*" style="display:none;">
-          <button id="sk-pick-btn" class="p" style="margin:0; display:flex; justify-content:center; align-items:center; gap:8px;">
-            📁 Wybierz zdjęcie
-          </button>
+          <div id="sk-pick-btn" class="sk-drop-zone">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px; opacity:0.5;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            <div style="font-size: 14px; font-weight: 500;">Kliknij, aby wybrać zdjęcie</div>
+          </div>
         </div>
 
         <div id="sk-editor" class="hidden">
-          <div id="sk-wrapper" style="position:relative; margin:16px 0; touch-action:none;">
-            <div style="overflow:hidden; border-radius:14px; border:1.5px solid var(--line); background:#000;">
+          <div class="sk-divider"></div>
+          
+          <label class="sk-label">Kadrowanie i perspektywa</label>
+          <div id="sk-wrapper" style="position:relative; margin-bottom: 24px; touch-action:none;">
+            <div style="overflow:hidden; border-radius: 8px; border: 1px solid var(--line); background:#000;">
               <canvas id="sk-display" style="display:block; width:100%; height:auto; transition: filter 0.1s;"></canvas>
             </div>
             <div class="sk-handle"></div>
@@ -62,16 +78,25 @@
             <div class="sk-handle"></div>
           </div>
           
-          <div class="card" style="margin-top:16px;">
-            <label>Popraw kontrast (Skan)</label>
-            <input type="range" id="sk-contrast" min="0" max="200" value="100">
-            
-            <div style="display:flex; gap:10px; margin-top:14px;">
-              <button id="sk-rotate-btn" style="flex:1; margin:0; padding:14px; background:var(--bg);">🔄 Obróć</button>
-              <button id="sk-color-btn" style="flex:1; margin:0; padding:14px; background:var(--bg);">🎨 Kolor: TAK</button>
-            </div>
-            <button class="p" id="sk-pdf-btn" style="width:100%; margin-top:10px; padding:14px;">Zapisz PDF</button>
+          <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <button id="sk-rotate-btn" class="n-btn" style="flex: 1; padding: 12px;">Obróć zdjęcie</button>
+            <button id="sk-reset-btn" class="n-btn" style="flex: 1; padding: 12px;">Resetuj rogi</button>
           </div>
+
+          <label class="sk-label">Popraw kontrast</label>
+          <input type="range" id="sk-contrast" min="0" max="200" value="100" class="sk-range">
+          
+          <div class="settings-row" style="padding: 12px 0; border-bottom: none; margin-bottom: 24px;">
+            <div style="flex: 1; padding-right: 12px;">
+              <div class="settings-label" style="font-size: 15px;">Tryb skanu (CZ-B)</div>
+              <div class="settings-desc">Zamienia kolory na odcienie szarości</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="sk-color-toggle"><span class="switch-slider"></span></label>
+          </div>
+          
+          <div class="sk-divider"></div>
+
+          <button class="n-btn n-btn-outline" id="sk-pdf-btn" style="width:100%; padding: 14px; font-size: 15px;">Zapisz jako PDF</button>
         </div>
       `;
 
@@ -86,20 +111,25 @@
       const contrastSlider = $("sk-contrast");
       const pdfBtn = $("sk-pdf-btn");
       const rotateBtn = $("sk-rotate-btn");
-      const colorBtn = $("sk-color-btn");
-
-      $("sk-back").addEventListener("click", () => history.back(), { signal });
-      pickBtn.addEventListener("click", () => fileInput.click(), { signal });
+      const resetBtn = $("sk-reset-btn");
+      const colorToggle = $("sk-color-toggle");
 
       let activeHandle = null;
       let dragStartHandleX = 0, dragStartHandleY = 0;
       let dragStartTouchX = 0, dragStartTouchY = 0;
+
+      function updateSliderFill(el) {
+        const percent = ((el.value - el.min) / (el.max - el.min)) * 100;
+        el.style.setProperty('--percent', `${percent}%`);
+      }
+      updateSliderFill(contrastSlider);
 
       function applyLiveFilter() {
         const contrast = contrastSlider.value;
         let filter = `contrast(${contrast}%)`;
         if (!isColor) filter += ` grayscale(100%)`;
         displayCanvasEl.style.filter = filter;
+        updateSliderFill(contrastSlider);
       }
 
       function resetHandles() {
@@ -127,10 +157,13 @@
         applyLiveFilter();
       }
 
+      pickBtn.addEventListener("click", () => fileInput.click(), { signal });
+
       fileInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
+        Hub.haptic('light');
         const reader = new FileReader();
         reader.onload = (ev) => {
           img.onload = () => {
@@ -150,16 +183,19 @@
         reader.readAsDataURL(file);
       }, { signal });
 
-      contrastSlider.addEventListener("input", applyLiveFilter, { signal });
+      contrastSlider.addEventListener("input", () => {
+        applyLiveFilter();
+      }, { signal });
 
-      colorBtn.addEventListener("click", () => {
-        isColor = !isColor;
-        colorBtn.textContent = isColor ? "🎨 Kolor: TAK" : "🎨 Kolor: NIE";
+      colorToggle.addEventListener("change", (e) => {
+        Hub.haptic('light');
+        isColor = !e.target.checked;
         applyLiveFilter();
       }, { signal });
 
       rotateBtn.addEventListener("click", () => {
         if (!isLoaded) return;
+        Hub.haptic('medium');
         
         const tempCanvas = document.createElement("canvas");
         tempCanvas.width = originalCanvas.height;
@@ -178,6 +214,12 @@
         resetHandles();
       }, { signal });
 
+      resetBtn.addEventListener("click", () => {
+        Hub.haptic('medium');
+        resetHandles();
+      }, { signal });
+
+      // --- LOGIKA PRZECIĄGANIA RĄCZEK ---
       wrapperDiv.addEventListener("pointerdown", (e) => {
         const rect = displayCanvasEl.getBoundingClientRect();
         const touchX = e.clientX - rect.left;
@@ -215,11 +257,9 @@
         const touchX = e.clientX - rect.left;
         const touchY = e.clientY - rect.top;
 
-        const deltaX = (touchX - dragStartTouchX) / 3;
-        const deltaY = (touchY - dragStartTouchY) / 3;
-
-        let x = dragStartHandleX + deltaX;
-        let y = dragStartHandleY + deltaY;
+        // Poprawka: Rączka idealnie podąża za palcem (usunięto dzielenie przez 3)
+        let x = touchX; 
+        let y = touchY;
 
         x = Math.max(0, Math.min(x, rect.width));
         y = Math.max(0, Math.min(y, rect.height));
@@ -232,9 +272,11 @@
         if (activeHandle) {
           wrapperDiv.releasePointerCapture(e.pointerId);
           activeHandle = null;
+          Hub.haptic('light');
         }
       }, { signal });
 
+      // --- GENEROWANIE PDF ---
       pdfBtn.addEventListener("click", () => {
         if (!isLoaded) return;
         
@@ -247,6 +289,7 @@
 
         pdfBtn.disabled = true;
         pdfBtn.textContent = "Przetwarzanie...";
+        Hub.haptic('medium');
 
         setTimeout(() => {
           try {
@@ -257,71 +300,80 @@
             outCanvas.width = outW;
             outCanvas.height = outH;
             const outCtx = outCanvas.getContext("2d");
-            const srcCtx = originalCanvas.getContext("2d");
-            const srcData = srcCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height).data;
-            const outImgData = outCtx.createImageData(outW, outH);
-            const outData = outImgData.data;
+            
+            // Inteligentna optymalizacja: Jeśli rogi są na swoim miejscu, nie rób homografii
+            const isDefaultCorners = points.every(p => p[0] === 0 || p[0] === originalCanvas.width) && points.some(p => p[0] === originalCanvas.width);
+            
+            if (isDefaultCorners) {
+               outCtx.drawImage(originalCanvas, 0, 0, outW, outH);
+            } else {
+               const srcCtx = originalCanvas.getContext("2d");
+               const srcData = srcCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height).data;
+               const outImgData = outCtx.createImageData(outW, outH);
+               const outData = outImgData.data;
 
-            const src = points;
-            const dst = [[0,0], [outW,0], [outW,outH], [0,outH]];
-            const H = solveHomography(dst, src);
+               const src = points;
+               const dst = [[0,0], [outW,0], [outW,outH], [0,outH]];
+               const H = solveHomography(dst, src);
 
-            const sliderVal = parseFloat(contrastSlider.value);
-            const contrastValue = (sliderVal - 100) * 2.55;
-            const factor = (259 * (contrastValue + 255)) / (255 * (259 - contrastValue));
-            const isColorMode = isColor;
+               const sliderVal = parseFloat(contrastSlider.value);
+               const contrastValue = (sliderVal - 100) * 2.55;
+               const factor = (259 * (contrastValue + 255)) / (255 * (259 - contrastValue));
+               const isColorMode = isColor;
 
-            for (let y = 0; y < outH; y++) {
-              for (let x = 0; x < outW; x++) {
-                const w = H[6]*x + H[7]*y + 1;
-                const srcX = Math.round((H[0]*x + H[1]*y + H[2]) / w);
-                const srcY = Math.round((H[3]*x + H[4]*y + H[5]) / w);
+               for (let y = 0; y < outH; y++) {
+                 for (let x = 0; x < outW; x++) {
+                   const w = H[6]*x + H[7]*y + 1;
+                   const srcX = Math.round((H[0]*x + H[1]*y + H[2]) / w);
+                   const srcY = Math.round((H[3]*x + H[4]*y + H[5]) / w);
 
-                if (srcX >= 0 && srcX < originalCanvas.width && srcY >= 0 && srcY < originalCanvas.height) {
-                  const srcIdx = (srcY * originalCanvas.width + srcX) * 4;
-                  const dstIdx = (y * outW + x) * 4;
+                   if (srcX >= 0 && srcX < originalCanvas.width && srcY >= 0 && srcY < originalCanvas.height) {
+                     const srcIdx = (srcY * originalCanvas.width + srcX) * 4;
+                     const dstIdx = (y * outW + x) * 4;
 
-                  let r = srcData[srcIdx];
-                  let g = srcData[srcIdx+1];
-                  let b = srcData[srcIdx+2];
+                     let r = srcData[srcIdx];
+                     let g = srcData[srcIdx+1];
+                     let b = srcData[srcIdx+2];
 
-                  if (!isColorMode) {
-                    let gray = 0.299*r + 0.587*g + 0.114*b;
-                    gray = factor * (gray - 128) + 128;
-                    gray = Math.max(0, Math.min(255, gray));
-                    outData[dstIdx] = gray;
-                    outData[dstIdx+1] = gray;
-                    outData[dstIdx+2] = gray;
-                  } else {
-                    r = factor * (r - 128) + 128;
-                    g = factor * (g - 128) + 128;
-                    b = factor * (b - 128) + 128;
-                    outData[dstIdx] = Math.max(0, Math.min(255, r));
-                    outData[dstIdx+1] = Math.max(0, Math.min(255, g));
-                    outData[dstIdx+2] = Math.max(0, Math.min(255, b));
-                  }
-                  outData[dstIdx+3] = 255;
-                }
-              }
+                     if (!isColorMode) {
+                       let gray = 0.299*r + 0.587*g + 0.114*b;
+                       gray = factor * (gray - 128) + 128;
+                       gray = Math.max(0, Math.min(255, gray));
+                       outData[dstIdx] = gray;
+                       outData[dstIdx+1] = gray;
+                       outData[dstIdx+2] = gray;
+                     } else {
+                       r = factor * (r - 128) + 128;
+                       g = factor * (g - 128) + 128;
+                       b = factor * (b - 128) + 128;
+                       outData[dstIdx] = Math.max(0, Math.min(255, r));
+                       outData[dstIdx+1] = Math.max(0, Math.min(255, g));
+                       outData[dstIdx+2] = Math.max(0, Math.min(255, b));
+                     }
+                     outData[dstIdx+3] = 255;
+                   }
+                 }
+               }
+               outCtx.putImageData(outImgData, 0, 0);
             }
-            outCtx.putImageData(outImgData, 0, 0);
 
             const jpegUrl = outCanvas.toDataURL("image/jpeg", 0.8);
             const pdfBlob = generatePDF(jpegUrl, outW, outH);
-            const url = URL.createObjectURL(pdfBlob);
             
+            // Zapis
+            const url = URL.createObjectURL(pdfBlob);
             const a = document.createElement("a");
             a.href = url;
             a.download = "skan.pdf";
             a.click();
-            
             setTimeout(() => URL.revokeObjectURL(url), 1000);
+            Hub.haptic('success');
 
           } catch(err) {
-            alert("Błąd: " + err.message);
+            showToast("Błąd: " + err.message);
           } finally {
             pdfBtn.disabled = false;
-            pdfBtn.textContent = "Zapisz PDF";
+            pdfBtn.textContent = "Zapisz jako PDF";
           }
         }, 50);
       }, { signal });
