@@ -36,7 +36,6 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 
 .hidden { display: none !important; }
 
-/* --- GLOBALNE KOMPONENTY UI --- */
 .n-btn {
   padding: 12px 16px; border-radius: 6px; font-weight: 500; font-size: 14px;
   cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -70,7 +69,6 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 }
 .n-back:active { opacity: 0.7; }
 
-/* --- TOPBAR I MENU --- */
 .topbar { position: sticky; top: 0; z-index: 100; padding: 16px 20px; padding-top: calc(16px + var(--safe-top)); background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
 .topbar-title { font-size: 14px; font-weight: 600; letter-spacing: 0.05em; margin: 0; text-transform: uppercase; }
 .menu-btn { position: absolute; left: 16px; background: none; border: none; color: var(--ink); padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; }
@@ -89,7 +87,6 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .drawer-item svg { width: 20px; height: 20px; color: var(--muted); stroke-width: 1.5; transition: color 0.2s; }
 .drawer-item.active svg { color: var(--accent); }
 
-/* --- SIATKA GŁÓWNA --- */
 .container { max-width: 600px; margin: 0 auto; padding: 20px; padding-bottom: calc(100px + var(--safe-bottom)); padding-left: max(20px, var(--safe-left)); padding-right: max(20px, var(--safe-right)); }
 .list { display: flex; flex-direction: column; gap: 12px; }
 .list.grid-view { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -106,7 +103,6 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
 .list.grid-view .tile-desc { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-/* SERDUSZKO ULUBIONYCH */
 .tile-heart {
   position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
   width: 24px; height: 24px; color: var(--muted); cursor: pointer;
@@ -117,7 +113,6 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .list.grid-view .tile-heart:active { transform: scale(0.8); }
 .tile-heart.active { color: var(--accent); fill: var(--accent); }
 
-/* NOWE USTAWIENIA WYGLĄDU */
 body.font-small .tile-title { font-size: 13px; }
 body.font-small .tile-desc { font-size: 11px; }
 body.font-small .settings-label { font-size: 13px; }
@@ -280,6 +275,14 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
 <main class="container" id="view-module"></main>
 
 <main class="container" id="view-settings">
+  <div class="settings-block" id="install-block" style="display: none;">
+    <div class="settings-header">Aplikacja</div>
+    <div class="settings-row">
+      <div><div class="settings-label">Zainstaluj na telefonie</div><div class="settings-desc">Dodaj skrót do pulpitu i uruchamiaj bez przeglądarki</div></div>
+      <button class="n-btn n-btn-outline" id="btn-install-pwa" style="width: 100%;">Zainstaluj aplikację</button>
+    </div>
+  </div>
+
   <div class="settings-block">
     <div class="settings-header">Wygląd i Układ</div>
     <div class="settings-row">
@@ -465,12 +468,12 @@ window.Hub = {
 
   resizeTextarea: function(el) {
     if (!Hub.settings.autoExpand) {
-      el.style.height = ''; // Reset to CSS default
+      el.style.height = '';
       el.style.overflowY = 'auto';
       return;
     }
     el.style.height = 'auto';
-    const lineHeight = 24; // 16px font * 1.5 line-height
+    const lineHeight = 24;
     const maxHeight = (Hub.settings.autoExpandLines + 1) * lineHeight; 
     
     if (el.scrollHeight > maxHeight) {
@@ -859,7 +862,7 @@ window.Hub = {
     chkHideDesc.onchange = (e) => { Hub.haptic('light'); Hub.settings.hideDesc = e.target.checked; Hub.applyHideDesc(e.target.checked); Hub.db.set('hide_desc', e.target.checked); };
 
     const chkNoAnim = document.getElementById("opt-no-anim");
-    chkNoAnim.checked = !Hub.settings.noAnim; // Checked = Animacje ON
+    chkNoAnim.checked = !Hub.settings.noAnim;
     chkNoAnim.onchange = (e) => { 
       Hub.haptic('light'); 
       Hub.settings.noAnim = !e.target.checked; 
@@ -1021,7 +1024,6 @@ window.Hub = {
         existing.push({ text: txt, date: new Date().toISOString() });
         await Hub.db.set("suggestions", existing);
         
-        // Kopiujemy do schowka
         await navigator.clipboard.writeText(txt);
         Hub.haptic('success');
         showToast("Zapisano i skopiowano do schowka!");
@@ -1201,7 +1203,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       const s = document.createElement('script');
       s.src = mod.file;
       s.onload = resolve;
-      s.onerror = () => { console.error("Błąd ładowania: " + mod.file); resolve(); };
+      s.onerror = () => {
+        const modId = mod.file.split('/').pop().replace('.js', '');
+        Hub.register({
+          id: modId,
+          title: "Błąd modułu",
+          desc: "Nie udało się wczytać: " + modId,
+          mount: (c) => { c.innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd wczytywania modułu. Spróbuj odświeżyć aplikację.</div>'; },
+          unmount: () => {}
+        });
+        resolve();
+      };
       document.body.appendChild(s);
     }));
     return Promise.all(promises);
@@ -1210,6 +1222,40 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (initHash === "settings") Hub.openSettings(false);
     else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
   }).catch(e => { document.getElementById('modules-grid').innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd modules.json</div>'; });
+});
+
+let deferredPrompt;
+const installBlock = document.getElementById('install-block');
+const btnInstall = document.getElementById('btn-install-pwa');
+
+if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    if (installBlock) installBlock.style.display = 'none';
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (installBlock && !window.matchMedia('(display-mode: standalone)').matches && !window.navigator.standalone) {
+        installBlock.style.display = 'block';
+    }
+});
+
+if (btnInstall) {
+    btnInstall.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            installBlock.style.display = 'none';
+            showToast("Zainstalowano pomyślnie!");
+        }
+        deferredPrompt = null;
+    });
+}
+
+window.addEventListener('appinstalled', () => {
+    if (installBlock) installBlock.style.display = 'none';
+    deferredPrompt = null;
 });
 
 if ("serviceWorker" in navigator) {
