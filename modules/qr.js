@@ -192,98 +192,17 @@
     desc: "Tworzenie kodów QR oraz skanowanie aparatem i z plików",
 
     async mount(container, signal) {
-      let menuStyle = "bottom";
-      try { menuStyle = await Hub.db.get("menu_style", "bottom"); } catch(e) {}
-
-      let selectorHtml = "";
-      if (menuStyle === "bottom") {
-        selectorHtml = `
-          <div id="qr-mode-trigger" class="uc-top-trigger">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <div class="uc-top-icon" id="qr-mode-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-              </div>
-              <span id="qr-mode-text">Generator</span>
-            </div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div id="qr-mode-modal" class="uc-modal-overlay bottom-mode">
-            <div class="uc-modal-sheet">
-              <div class="uc-modal-title">Tryb pracy</div>
-              <div class="uc-modal-item active" data-mode="gen">
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:18px;height:18px;opacity:0.7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div>
-                  <span>Generator</span>
-                </div>
-                <span class="check">✓</span>
-              </div>
-              <div class="uc-modal-item" data-mode="scan">
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:18px;height:18px;opacity:0.7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></div>
-                  <span>Skaner</span>
-                </div>
-                <span class="check">✓</span>
-              </div>
-            </div>
-          </div>
-        `;
-      } else {
-        selectorHtml = `
-          <div style="position: relative;">
-            <div id="qr-mode-trigger" class="uc-top-trigger">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <div class="uc-top-icon" id="qr-mode-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                </div>
-                <span id="qr-mode-text">Generator</span>
-              </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </div>
-            <div id="qr-mode-dropdown" class="uc-dropdown">
-              <div class="uc-dropdown-item active" data-mode="gen">
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:18px;height:18px;opacity:0.7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div>
-                  <span>Generator</span>
-                </div>
-              </div>
-              <div class="uc-dropdown-item" data-mode="scan">
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:18px;height:18px;opacity:0.7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></div>
-                  <span>Skaner</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      }
-
       container.innerHTML = `
         <style>
-          .hidden { display: none !important; }
-          .uc-top-trigger { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--ink); cursor: pointer; margin-bottom: 24px; }
-          .uc-top-icon { width: 20px; height: 20px; color: var(--accent); display: flex; align-items: center; justify-content: center; }
-          .uc-dropdown { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); z-index: 100; overflow: hidden; opacity: 0; transform: translateY(-5px); pointer-events: none; transition: opacity 0.15s, transform 0.15s; }
-          .uc-dropdown.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
-          .uc-dropdown-item { padding: 14px 16px; font-size: 14px; color: var(--ink); display: flex; align-items: center; cursor: pointer; border-bottom: 1px solid var(--line); }
-          .uc-dropdown-item:last-child { border-bottom: none; }
-          .uc-dropdown-item.active { color: var(--accent); font-weight: 600; background: rgba(129, 140, 248, 0.05); }
-          .uc-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-          .uc-modal-overlay.open { opacity: 1; pointer-events: auto; }
-          .uc-modal-sheet { background: var(--surface); width: 100%; max-width: 600px; border: 1px solid var(--line); padding: 24px 16px; }
-          .uc-modal-overlay.bottom-mode { align-items: flex-end; }
-          .uc-modal-overlay.bottom-mode .uc-modal-sheet { border-top-left-radius: 16px; border-top-right-radius: 16px; border-bottom: none; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); max-height: 80vh; overflow-y: auto; }
-          .uc-modal-overlay.bottom-mode.open .uc-modal-sheet { transform: translateY(0); }
-          .uc-modal-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 16px; letter-spacing: 0.5px; }
-          .uc-modal-item { padding: 16px; border-radius: 6px; margin-bottom: 4px; font-size: 15px; color: var(--ink); display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: var(--bg); }
-          .uc-modal-item:active { background: var(--line); }
-          .uc-modal-item.active { color: var(--accent); font-weight: 600; }
-          .uc-modal-item .check { opacity: 0; color: var(--accent); }
-          .uc-modal-item.active .check { opacity: 1; }
-          .qr-input-wrapper { margin-bottom: 24px; }
-          .qr-input-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
-          .qr-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 20px; padding: 12px 0; text-align: center; transition: border-color 0.2s; outline: none; }
-          .qr-input:focus { border-bottom-color: var(--accent); outline: none !important; }
-          .qr-input::placeholder { color: var(--line); font-size: 16px; }
+          .qr-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .qr-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 20px; padding: 12px 0; text-align: center; transition: border-color 0.2s; outline: none; margin-bottom: 24px; }
+          .qr-input:focus { border-bottom-color: var(--accent); }
+          .qr-input::placeholder { color: var(--muted); font-size: 16px; }
+          
+          .qr-trigger { display: flex; justify-content: space-between; align-items: center; background: transparent; border-bottom: 1px solid var(--line); padding: 16px 0; color: var(--ink); font-size: 16px; font-weight: 500; cursor: pointer; margin-bottom: 24px; }
+          .qr-trigger .icon-wrap { display: flex; align-items: center; gap: 8px; }
+          .qr-trigger .icon-wrap svg { width: 20px; height: 20px; color: var(--accent); }
+          
           .qr-divider-line { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           .qr-canvas-box { display: flex; justify-content: center; align-items: center; min-height: 150px; transition: all 0.3s ease; position: relative; }
           .qr-canvas-box.has-canvas { background: #ffffff; padding: 8px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-height: auto; width: 40%; margin: 0 auto; cursor: pointer; }
@@ -295,37 +214,43 @@
           .qr-canvas-box.has-canvas canvas { display: block; }
           .qr-close-fullscreen-btn { display: none; position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.1); border: none; border-radius: 50%; width: 48px; height: 48px; align-items: center; justify-content: center; color: #333; cursor: pointer; z-index: 10000; }
           .qr-canvas-box.fullscreen .qr-close-fullscreen-btn { display: flex; }
-          .qr-cam-wrapper { width: 100%; aspect-ratio: 1; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; margin-top: 8px; position: relative; }
-          .qr-cam-icon { color: var(--line); }
-          .qr-cam-text { color: var(--muted); font-size: 13px; font-weight: 500; }
+          
+          .qr-cam-wrapper { width: 100%; aspect-ratio: 1; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; margin-top: 8px; margin-bottom: 24px; position: relative; }
           .qr-cam-wrapper video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
           .qr-cam-wrapper video.active { display: block; }
           .qr-cam-overlay { position: absolute; inset: 15%; border: 2px solid var(--accent); border-radius: 12px; pointer-events: none; display: none; }
           .qr-cam-overlay.active { display: block; }
-          .qr-result-box { background: var(--surface); border: 1px solid var(--accent); border-radius: 8px; padding: 16px; margin-top: 16px; }
+          
+          .qr-status { text-align: center; color: var(--muted); font-size: 13px; font-family: monospace; margin-bottom: 24px; min-height: 18px; word-break: break-all; line-height: 1.4; }
+          
+          .qr-result-box { background: var(--surface); border: 1px solid var(--accent); border-radius: 8px; padding: 16px; margin-bottom: 24px; }
           .qr-result-header { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; letter-spacing: 0.5px; }
           .qr-result-body { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
           .qr-result-text { font-family: monospace; font-size: 14px; color: var(--ink); word-break: break-all; line-height: 1.5; flex: 1; }
-          .qr-copy-btn { background: transparent; border: none; padding: 4px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color 0.2s; outline: none; }
-          .qr-copy-btn:active { transform: scale(0.9); }
-          .qr-copy-btn svg { width: 18px; height: 18px; }
-          .qr-status { text-align: center; color: var(--muted); font-size: 12px; font-family: monospace; margin-top: 16px; min-height: 18px; word-break: break-all; line-height: 1.4; }
-          .qr-divider { text-align: center; color: var(--line); font-size: 11px; font-weight: 600; margin: 24px 0; letter-spacing: 1px; }
+          
+          .qr-divider-text { text-align: center; color: var(--line); font-size: 11px; font-weight: 600; margin: 24px 0; letter-spacing: 1px; }
         </style>
 
-        <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:16px;">
-          ${Hub.backButtonHtml}
+        ${Hub.backButtonHtml}
+
+        <div id="qr-mode-trigger" class="qr-trigger" style="margin-top: 16px;">
+          <div class="icon-wrap">
+            <div id="qr-mode-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            </div>
+            <span id="qr-mode-text">Generator</span>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </div>
 
-        ${selectorHtml}
-
         <div id="view-gen">
-          <div class="qr-input-wrapper">
-            <label class="qr-input-label">Tekst lub link do zakodowania</label>
-            <input type="text" id="q-text" class="qr-input" placeholder="Wpisz coś..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-          </div>
-          <button id="q-gen-btn" class="n-btn n-btn-outline" style="width:100%; padding:14px; font-size:15px; margin-top:8px;">Wygeneruj kod QR</button>
+          <label class="qr-label">Tekst lub link do zakodowania</label>
+          <input type="text" id="q-text" class="qr-input" placeholder="Wpisz coś..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+          
+          <button id="q-gen-btn" class="n-btn n-btn-outline" style="width:100%; padding:14px; font-size:15px; margin-bottom: 24px;">Wygeneruj kod QR</button>
+          
           <div class="qr-divider-line"></div>
+          
           <div id="q-canvas-container" class="qr-canvas-box">
             <canvas id="q-canvas"></canvas>
             <div id="q-placeholder" class="qr-placeholder">Miejsce na kod QR</div>
@@ -333,7 +258,9 @@
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
+          
           <div class="qr-divider-line"></div>
+          
           <button id="q-dl" class="n-btn n-btn-outline" disabled style="width:100%; padding:14px; font-size:15px; opacity: 0.5;">Pobierz kod QR</button>
         </div>
 
@@ -341,23 +268,29 @@
           <div id="q-cam-container" class="qr-cam-wrapper">
             <video id="q-video" autoplay playsinline muted></video>
             <div id="q-cam-overlay" class="qr-cam-overlay"></div>
+            
             <div id="q-cam-placeholder" style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
-              <svg class="qr-cam-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-              <span class="qr-cam-text">Kamera jest wyłączona</span>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              <span style="color: var(--muted); font-size: 13px; font-weight: 500;">Kamera jest wyłączona</span>
             </div>
           </div>
+          
           <div id="q-scan-status" class="qr-status">Gotowy do skanowania</div>
+          
           <div id="q-scan-result" class="qr-result-box hidden">
             <div class="qr-result-header">Znaleziono kod QR</div>
             <div class="qr-result-body">
               <span id="q-scan-result-text" class="qr-result-text"></span>
-              <button id="q-scan-copy-btn" class="qr-copy-btn" title="Kopiuj">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <button id="q-scan-copy-btn" style="background: transparent; border: none; padding: 4px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; outline: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               </button>
             </div>
           </div>
-          <button id="q-scan-toggle" class="n-btn n-btn-outline" style="width:100%; padding:14px; font-size:15px; margin-top:16px;">Uruchom kamerę</button>
-          <div class="qr-divider">LUB</div>
+          
+          <button id="q-scan-toggle" class="n-btn n-btn-outline" style="width:100%; padding:14px; font-size:15px; margin-bottom: 24px;">Uruchom kamerę</button>
+          
+          <div class="qr-divider-text">LUB</div>
+          
           <input type="file" id="q-scan-file" accept="image/*" style="display:none;">
           <button id="q-scan-file-btn" class="n-btn" style="width:100%; padding:14px; font-size:15px;">Wybierz zdjęcie z kodem QR</button>
           <div id="q-scan-file-name" style="font-size:12px; color:var(--muted); margin-top:12px; text-align:center; word-break:break-all;"></div>
@@ -365,20 +298,38 @@
       `;
 
       const $ = id => container.querySelector("#" + id);
-      const modeTrigger = $("qr-mode-trigger");
-      const modeText = $("qr-mode-text");
-      const modeIcon = $("qr-mode-icon");
+      const modeTrigger = $("qr-mode-trigger"), modeText = $("qr-mode-text"), modeIcon = $("qr-mode-icon");
       const viewGen = $("view-gen"), viewScan = $("view-scan");
-      const canvasContainer = $("q-canvas-container"), canvas = $("q-canvas");
-      const dlBtn = $("q-dl");
+      const canvasContainer = $("q-canvas-container"), canvas = $("q-canvas"), dlBtn = $("q-dl");
       const camContainer = $("q-cam-container"), camPlaceholder = $("q-cam-placeholder"), camOverlay = $("q-cam-overlay");
       const scanFileBtn = $("q-scan-file-btn"), scanFileInput = $("q-scan-file"), scanFileName = $("q-scan-file-name");
-      const modeOptions = container.querySelectorAll(".uc-modal-item, .uc-dropdown-item");
-      const status = $("q-scan-status");
-      const resultBox = $("q-scan-result");
-      const resultText = $("q-scan-result-text");
-      const copyBtn = $("q-scan-copy-btn");
-      const closeFullscreenBtn = $("q-close-fullscreen-btn");
+      const status = $("q-scan-status"), resultBox = $("q-scan-result"), resultText = $("q-scan-result-text");
+      const copyBtn = $("q-scan-copy-btn"), closeFullscreenBtn = $("q-close-fullscreen-btn");
+
+      // ZMIANA: Używamy Hub.showSelect zamiast własnych okienek
+      modeTrigger.addEventListener("click", async () => {
+        const opts = [
+          { id: "gen", label: "Generator", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>` },
+          { id: "scan", label: "Skaner", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>` }
+        ];
+        const currentMode = viewGen.classList.contains("hidden") ? "scan" : "gen";
+        
+        const choice = await Hub.showSelect({ title: "Tryb pracy", options: opts, current: currentMode, anchor: modeTrigger, signal });
+        
+        if (choice && choice !== currentMode) {
+          if (choice === "gen") {
+            modeText.textContent = "Generator";
+            modeIcon.innerHTML = opts[0].icon;
+            viewGen.classList.remove("hidden"); viewScan.classList.add("hidden");
+            resetScanUI();
+          } else {
+            modeText.textContent = "Skaner";
+            modeIcon.innerHTML = opts[1].icon;
+            viewScan.classList.remove("hidden"); viewGen.classList.add("hidden");
+            resetScanUI();
+          }
+        }
+      }, { signal });
 
       canvasContainer.addEventListener("click", (e) => {
         if (canvasContainer.classList.contains("has-canvas") && !e.target.closest('.qr-close-fullscreen-btn')) {
@@ -417,50 +368,11 @@
         Hub.copy(resultText.textContent, copyBtn);
       }, { signal });
 
-      if (menuStyle === "bottom") {
-        const modal = $("qr-mode-modal");
-        modeTrigger.addEventListener("click", () => modal.classList.add("open"), { signal });
-        modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); }, { signal });
-      } else {
-        const dropdown = $("qr-mode-dropdown");
-        modeTrigger.addEventListener("click", (e) => {
-          e.stopPropagation();
-          dropdown.classList.toggle("open");
-        }, { signal });
-        document.addEventListener("click", (e) => {
-          if (!modeTrigger.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove("open");
-        }, { signal });
-      }
-
-      modeOptions.forEach(opt => {
-        opt.addEventListener("click", () => {
-          const mode = opt.dataset.mode;
-          modeOptions.forEach(o => o.classList.remove("active"));
-          opt.classList.add("active");
-          
-          if (menuStyle === "bottom") $("qr-mode-modal").classList.remove("open");
-          else $("qr-mode-dropdown").classList.remove("open");
-
-          if (mode === "gen") {
-            modeText.textContent = "Generator";
-            modeIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
-            viewGen.classList.remove("hidden"); viewScan.classList.add("hidden");
-            resetScanUI();
-          } else {
-            modeText.textContent = "Skaner";
-            modeIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`;
-            viewScan.classList.remove("hidden"); viewGen.classList.add("hidden");
-            resetScanUI();
-          }
-        }, { signal });
-      });
-
       $("q-gen-btn").addEventListener("click", () => {
         const text = $("q-text").value.trim();
         if (!text) return showToast("Wpisz tekst do wygenerowania!");
         
-        canvasContainer.classList.remove("has-canvas");
-        canvasContainer.classList.remove("fullscreen");
+        canvasContainer.classList.remove("has-canvas", "fullscreen");
         dlBtn.disabled = true;
         dlBtn.style.opacity = "0.5";
 
