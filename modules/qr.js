@@ -195,7 +195,15 @@
       container.innerHTML = `
         <style>
           .qr-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
-          .qr-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 20px; padding: 12px 0; text-align: center; transition: border-color 0.2s; outline: none; margin-bottom: 24px; }
+          
+          /* Zmienione na textarea, dodane resize i overflow dla auto-dopasowania */
+          .qr-input { 
+            width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); 
+            color: var(--ink); font-size: 20px; padding: 12px 0; text-align: center; 
+            transition: border-color 0.2s; outline: none; margin-bottom: 24px; 
+            font-family: inherit; resize: vertical; min-height: 44px; 
+            overflow-y: hidden; line-height: 1.5; 
+          }
           .qr-input:focus { border-bottom-color: var(--accent); }
           .qr-input::placeholder { color: var(--muted); font-size: 16px; }
           
@@ -245,9 +253,13 @@
 
         <div id="view-gen">
           <label class="qr-label">Tekst lub link do zakodowania</label>
-          <input type="text" id="q-text" class="qr-input" placeholder="Wpisz coś..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+          <textarea id="q-text" class="qr-input" placeholder="Wpisz coś..." rows="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
           
-          <button id="q-gen-btn" class="n-btn n-btn-outline" style="width:100%; padding:14px; font-size:15px; margin-bottom: 24px;">Wygeneruj kod QR</button>
+          <!-- ZMIANA: Przyciski obok siebie -->
+          <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <button id="q-gen-btn" class="n-btn n-btn-outline" style="flex: 1; padding: 14px; font-size: 14px;">Wygeneruj</button>
+            <button id="q-dl" class="n-btn n-btn-outline" disabled style="flex: 1; padding: 14px; font-size: 14px; opacity: 0.5;">Pobierz</button>
+          </div>
           
           <div class="qr-divider-line"></div>
           
@@ -258,10 +270,6 @@
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
-          
-          <div class="qr-divider-line"></div>
-          
-          <button id="q-dl" class="n-btn n-btn-outline" disabled style="width:100%; padding:14px; font-size:15px; opacity: 0.5;">Pobierz kod QR</button>
         </div>
 
         <div id="view-scan" class="hidden">
@@ -306,7 +314,6 @@
       const status = $("q-scan-status"), resultBox = $("q-scan-result"), resultText = $("q-scan-result-text");
       const copyBtn = $("q-scan-copy-btn"), closeFullscreenBtn = $("q-close-fullscreen-btn");
 
-      // ZMIANA: Używamy Hub.showSelect zamiast własnych okienek
       modeTrigger.addEventListener("click", async () => {
         const opts = [
           { id: "gen", label: "Generator", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>` },
