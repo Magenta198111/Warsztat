@@ -10,6 +10,7 @@
       let displayCanvas = document.createElement("canvas");
       let isLoaded = false;
       let isColor = true;
+      let originalFileName = "skan";
 
       container.innerHTML = `
         <style>
@@ -30,13 +31,21 @@
           .sk-handle::before { width: 32px; height: 2px; }
           .sk-handle::after { width: 2px; height: 32px; }
 
-          /* Czerwona ramka łącząca krzyżyki */
           #sk-crop-area {
             position: absolute; inset: 0; pointer-events: none; display: none;
             z-index: 5; transition: all 0.05s linear;
           }
           #sk-crop-area svg { width: 100%; height: 100%; overflow: visible; }
           #sk-crop-area path { stroke: var(--danger); stroke-width: 2; stroke-dasharray: 8 4; fill: rgba(239, 68, 68, 0.1); }
+
+          /* Lupa */
+          #sk-loupe {
+            position: absolute; width: 120px; height: 120px; border-radius: 50%;
+            border: 2px solid var(--accent); overflow: hidden; pointer-events: none;
+            z-index: 20; display: none; background: #000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            transform: translate(-50%, -50%);
+          }
 
           .sk-drop-zone { 
             width: 100%; aspect-ratio: 4 / 3;
@@ -81,13 +90,16 @@
 
             <div id="sk-canvas-container" style="display:none; width: 100%; border-radius: 8px; border: 1px solid var(--line); background:#000; overflow:hidden; touch-action: none;">
               <canvas id="sk-display" style="display:block; width:100%; height:auto;"></canvas>
-              
-              <!-- SVG Ramka -->
               <div id="sk-crop-area">
                 <svg preserveAspectRatio="none">
                   <path d="" />
                 </svg>
               </div>
+            </div>
+
+            <!-- Lupa -->
+            <div id="sk-loupe">
+              <canvas id="sk-loupe-canvas" width="120" height="120"></canvas>
             </div>
 
             <div class="sk-handle" data-id="0"></div>
@@ -119,7 +131,10 @@
           
           <div class="sk-divider"></div>
 
-          <button class="n-btn n-btn-outline sk-btn" id="sk-pdf-btn" disabled style="width:100%; padding: 14px; font-size: 15px;">Zapisz jako PDF</button>
+          <label class="sk-label">Nazwa pliku PDF</label>
+          <input type="text" id="sk-pdf-name" class="n-input" placeholder="Nazwa pliku..." style="margin-bottom: 16px;" disabled>
+
+          <button class="n-btn n-btn-outline sk-btn" id="sk-pdf-btn" disabled style="width:100%; padding: 14px; font-size: 15px;">Pobierz PDF</button>
         </div>
       `;
 
@@ -137,8 +152,12 @@
       const colorToggle = $("sk-color-toggle");
       const cropArea = $("sk-crop-area");
       const cropPath = cropArea.querySelector("path");
+      const loupe = $("sk-loupe");
+      const loupeCanvas = $("sk-loupe-canvas");
+      const loupeCtx = loupeCanvas.getContext("2d");
+      const pdfNameInput = $("sk-pdf-name");
 
-      const actionBtns = [rotateBtn, resetBtn, changeBtn, contrastSlider, $("sk-reset-contrast"), colorToggle, pdfBtn];
+      const actionBtns = [rotateBtn, resetBtn, changeBtn, contrastSlider, $("sk-reset-contrast"), colorToggle, pdfBtn, pdfNameInput];
 
       let activeHandle = null;
       let dragStartHandleX = 0, dragStartHandleY = 0;
@@ -156,6 +175,33 @@
         });
         cropPath.setAttribute('d', `M${pts.join(' L')} Z`);
         cropArea.style.display = "block";
+      }
+
+      function updateLoupe() {
+        if (!activeHandle) return;
+        const zoom = 4;
+        const w = loupeCanvas.width;
+        const h = loupeCanvas.height;
+        const viewW = w / zoom;
+        const viewH = h / zoom;
+
+        const rect = displayCanvasEl.getBoundingClientRect();
+        const handleX = parseFloat(activeHandle.style.left) / 100 * rect.width;
+        const handleY = parseFloat(activeHandle.style.top) / 100 * rect.height;
+
+        const srcX = (handleX / rect.width) * originalCanvas.width;
+        const srcY = (handleY / rect.height) * originalCanvas.height;
+
+        loupeCtx.fillStyle = "#000";
+        loupeCtx.fillRect(0, 0, w, h);
+        loupeCtx.drawImage(originalCanvas, srcX - viewW/2, srcY - viewH/2, viewW, viewH, 0, 0, w, h);
+
+        loupeCtx.strokeStyle = "var(--accent)";
+        loupeCtx.lineWidth = 2;
+        loupeCtx.beginPath();
+        loupeCtx.moveTo(w/2, 0); loupeCtx.lineTo(w/2, h);
+        loupeCtx.moveTo(0, h/2); loupeCtx.lineTo(w, h/2);
+        loupeCtx.stroke();
       }
 
       function updateSliderFill(el) {
@@ -218,6 +264,7 @@
           canvasContainer.style.display = "none";
           handles.forEach(h => h.style.display = "none");
           cropArea.style.display = "none";
+          loupe.style.display = "none";
         }
       }
 
@@ -228,13 +275,21 @@
         const file = e.target.files[0];
         if (!file) return;
 
+        originalFileName = file.name.replace(/\.[^.]+$/, "");
+        pdfNameInput.value = originalFileName;
+
         Hub.haptic('light');
         const reader = new FileReader();
         reader.onload = (ev) => {
           img.onload = () => {
             originalCanvas.width = img.width;
             originalCanvas.height = img.height;
-            originalCanvas.getContext("2d").drawImage(img, 0, 0);
+            const ctx = originalCanvas.getContext("2d");
+            
+            // POPRAWKA PRZEŚWIETLENIA: Białe tło pod obrazem zapobiega problemom z kanałem alfa w JPEG
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, originalCanvas.width, originalCanvas.height);
+            ctx.drawImage(img, 0, 0);
 
             updateDisplay();
             resetHandles();
@@ -286,7 +341,6 @@
         resetHandles();
       }, { signal });
 
-      // --- LOGIKA DOTYKU ---
       displayCanvasEl.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         
@@ -328,6 +382,13 @@
           
           displayCanvasEl.setPointerCapture(e.pointerId);
           Hub.haptic('light');
+
+          // Lupa pojawia się w przeciwnym rogu
+          const oppositeIndex = (parseInt(activeHandle.dataset.id) + 2) % 4;
+          loupe.style.left = handles[oppositeIndex].style.left;
+          loupe.style.top = handles[oppositeIndex].style.top;
+          loupe.style.display = "block";
+          updateLoupe();
         }
       }, { signal });
 
@@ -352,16 +413,17 @@
         activeHandle.style.top = (y / rect.height * 100) + "%";
         
         updateCropPath();
+        updateLoupe();
       }, { signal });
 
       displayCanvasEl.addEventListener("pointerup", (e) => {
         if (activeHandle) {
           displayCanvasEl.releasePointerCapture(e.pointerId);
           activeHandle = null;
+          loupe.style.display = "none";
         }
       }, { signal });
 
-      // --- GENEROWANIE PDF ---
       pdfBtn.addEventListener("click", () => {
         if (!isLoaded) return;
         
@@ -385,6 +447,10 @@
             outCanvas.width = outW;
             outCanvas.height = outH;
             const outCtx = outCanvas.getContext("2d");
+            
+            // POPRAWKA PRZEŚWIETLENIA: Białe tło
+            outCtx.fillStyle = "#ffffff";
+            outCtx.fillRect(0, 0, outW, outH);
             
             const isDefaultCorners = points.every(p => p[0] === 0 || p[0] === originalCanvas.width) && points.some(p => p[0] === originalCanvas.width);
             
@@ -411,9 +477,10 @@
                    const srcX = Math.round((H[0]*x + H[1]*y + H[2]) / w);
                    const srcY = Math.round((H[3]*x + H[4]*y + H[5]) / w);
 
+                   const dstIdx = (y * outW + x) * 4;
+
                    if (srcX >= 0 && srcX < originalCanvas.width && srcY >= 0 && srcY < originalCanvas.height) {
                      const srcIdx = (srcY * originalCanvas.width + srcX) * 4;
-                     const dstIdx = (y * outW + x) * 4;
 
                      let r = srcData[srcIdx];
                      let g = srcData[srcIdx+1];
@@ -435,19 +502,30 @@
                        outData[dstIdx+2] = Math.max(0, Math.min(255, b));
                      }
                      outData[dstIdx+3] = 255;
+                   } else {
+                     // POPRAWKA PRZEŚWIETLENIA: Wypełnianie dziur na biało
+                     outData[dstIdx] = 255;
+                     outData[dstIdx+1] = 255;
+                     outData[dstIdx+2] = 255;
+                     outData[dstIdx+3] = 255;
                    }
                  }
                }
                outCtx.putImageData(outImgData, 0, 0);
             }
 
-            const jpegUrl = outCanvas.toDataURL("image/jpeg", 0.8);
+            // POPRAWKA PRZEŚWIETLENIA: Zwiększona jakość JPEG do 95%
+            const jpegUrl = outCanvas.toDataURL("image/jpeg", 0.95);
             const pdfBlob = generatePDF(jpegUrl, outW, outH);
             
             const url = URL.createObjectURL(pdfBlob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = "skan.pdf";
+            
+            let finalName = pdfNameInput.value.trim();
+            if (!finalName) finalName = originalFileName;
+            a.download = finalName + ".pdf";
+            
             a.click();
             setTimeout(() => URL.revokeObjectURL(url), 1000);
             Hub.haptic('success');
@@ -456,7 +534,7 @@
             showToast("Błąd: " + err.message);
           } finally {
             pdfBtn.disabled = false;
-            pdfBtn.textContent = "Zapisz jako PDF";
+            pdfBtn.textContent = "Pobierz PDF";
           }
         }, 50);
       }, { signal });
