@@ -17,7 +17,6 @@
           .sk-flat-section { margin-bottom: 28px; }
           .sk-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
-          /* ZMIANA: Zasięg chwytania 3x większy (192px zamiast 64px) */
           .sk-handle {
             position: absolute; width: 192px; height: 192px; margin: -96px 0 0 -96px;
             z-index: 10; pointer-events: auto; touch-action: none; cursor: grab;
@@ -66,16 +65,15 @@
           <div class="sk-divider"></div>
           
           <label class="sk-label">Kadrowanie i perspektywa</label>
-          
-          <!-- ZMIANA: Usunięto wewnętrzny div. Handles są teraz bezpośrednio na wrapperze, który ma dokładnie szerokość 80% i wyśrodkowanie -->
           <div id="sk-wrapper" style="position:relative; width: 80%; margin: 0 auto; margin-bottom: 24px;">
             <div style="border-radius: 8px; border: 1px solid var(--line); background:#000; overflow:hidden;">
               <canvas id="sk-display" style="display:block; width:100%; height:auto; transition: filter 0.1s;"></canvas>
             </div>
-            <div class="sk-handle"></div>
-            <div class="sk-handle"></div>
-            <div class="sk-handle"></div>
-            <div class="sk-handle"></div>
+            <!-- Handles są bezpośrednio w kontenerze -->
+            <div class="sk-handle" data-id="0"></div>
+            <div class="sk-handle" data-id="1"></div>
+            <div class="sk-handle" data-id="2"></div>
+            <div class="sk-handle" data-id="3"></div>
           </div>
           
           <div style="display: flex; gap: 12px; margin-bottom: 24px;">
@@ -84,8 +82,6 @@
           </div>
 
           <label class="sk-label">Popraw kontrast</label>
-          
-          <!-- ZMIANA: Suwak i przycisk resetu w jednym rzędzie -->
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
             <input type="range" id="sk-contrast" min="0" max="200" value="100" class="sk-range" style="flex: 1; margin-bottom: 0;">
             <button id="sk-reset-contrast" class="n-btn" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-color: var(--line); background: transparent;">
@@ -124,6 +120,7 @@
       let activeHandle = null;
       let dragStartHandleX = 0, dragStartHandleY = 0;
       let dragStartTouchX = 0, dragStartTouchY = 0;
+      let moveCounter = 0; // Do śledzenia, który był ruszany ostatni
 
       function updateSliderFill(el) {
         const percent = ((el.value - el.min) / (el.max - el.min)) * 100;
@@ -149,7 +146,9 @@
         handles.forEach((h, i) => {
           h.style.left = pos[i].left;
           h.style.top = pos[i].top;
+          h.dataset.lastMoved = 0; // Reset historii
         });
+        moveCounter = 0;
       }
 
       function updateDisplay() {
@@ -190,11 +189,8 @@
         reader.readAsDataURL(file);
       }, { signal });
 
-      contrastSlider.addEventListener("input", () => {
-        applyLiveFilter();
-      }, { signal });
+      contrastSlider.addEventListener("input", applyLiveFilter, { signal });
 
-      // NOWOŚĆ: Obsługa przycisku resetu kontrastu
       $("sk-reset-contrast").addEventListener("click", () => {
         Hub.haptic('light');
         contrastSlider.value = 100;
@@ -233,52 +229,80 @@
         resetHandles();
       }, { signal });
 
-      // --- LOGIKA PRZECIĄGANIA RĄCZEK ---
-      handles.forEach(handle => {
-        handle.addEventListener("pointerdown", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          activeHandle = handle;
+      // --- NOWA LOGIKA: WYBÓR NAJBLIŻSZEGO RĄCZKI ---
+      wrapperDiv.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        
+        const rect = displayCanvasEl.getBoundingClientRect();
+        const touchX = e.clientX - rect.left;
+        const touchY = e.clientY - rect.top;
+
+        let closestHandle = null;
+        let minDist = Infinity;
+        let maxLastMoved = -1;
+
+        handles.forEach(h => {
+          const hx = parseFloat(h.style.left) / 100 * rect.width;
+          const hy = parseFloat(h.style.top) / 100 * rect.height;
+          const dist = Math.hypot(touchX - hx, touchY - hy);
           
-          const rect = displayCanvasEl.getBoundingClientRect();
-          dragStartHandleX = parseFloat(handle.style.left) / 100 * rect.width;
-          dragStartHandleY = parseFloat(handle.style.top) / 100 * rect.height;
-          dragStartTouchX = e.clientX - rect.left;
-          dragStartTouchY = e.clientY - rect.top;
-          
-          handle.setPointerCapture(e.pointerId);
-        });
-
-        handle.addEventListener("pointermove", (e) => {
-          if (activeHandle !== handle) return;
-          e.preventDefault();
-          
-          const rect = displayCanvasEl.getBoundingClientRect();
-          const touchX = e.clientX - rect.left;
-          const touchY = e.clientY - rect.top;
-
-          // Precyzja: 3x wolniej
-          const deltaX = (touchX - dragStartTouchX) / 3;
-          const deltaY = (touchY - dragStartTouchY) / 3;
-
-          let x = dragStartHandleX + deltaX;
-          let y = dragStartHandleY + deltaY;
-
-          x = Math.max(0, Math.min(x, rect.width));
-          y = Math.max(0, Math.min(y, rect.height));
-
-          handle.style.left = (x / rect.width * 100) + "%";
-          handle.style.top = (y / rect.height * 100) + "%";
-        });
-
-        handle.addEventListener("pointerup", (e) => {
-          if (activeHandle === handle) {
-            handle.releasePointerCapture(e.pointerId);
-            activeHandle = null;
-            Hub.haptic('light');
+          if (dist < minDist) {
+            minDist = dist;
+            closestHandle = h;
+            maxLastMoved = parseFloat(h.dataset.lastMoved || 0);
+          } else if (Math.abs(dist - minDist) < 1) {
+            // Jeśli dystans jest niemal identyczny (np. nałożone na siebie), wybierz ten ruszzany później
+            const lastMoved = parseFloat(h.dataset.lastMoved || 0);
+            if (lastMoved > maxLastMoved) {
+              closestHandle = h;
+              maxLastMoved = lastMoved;
+            }
           }
         });
-      });
+
+        // Zasięg chwytania - jeśli kliknięto w promieniu 100px od środka krzyżyka
+        if (closestHandle && minDist < 100) {
+          activeHandle = closestHandle;
+          activeHandle.dataset.lastMoved = ++moveCounter; // Zapisz, że ten był ruszany jako ostatni
+          
+          dragStartHandleX = parseFloat(activeHandle.style.left) / 100 * rect.width;
+          dragStartHandleY = parseFloat(activeHandle.style.top) / 100 * rect.height;
+          
+          dragStartTouchX = touchX;
+          dragStartTouchY = touchY;
+          
+          wrapperDiv.setPointerCapture(e.pointerId);
+          Hub.haptic('light');
+        }
+      }, { signal });
+
+      wrapperDiv.addEventListener("pointermove", (e) => {
+        if (!activeHandle) return;
+        e.preventDefault();
+        
+        const rect = displayCanvasEl.getBoundingClientRect();
+        const touchX = e.clientX - rect.left;
+        const touchY = e.clientY - rect.top;
+
+        const deltaX = (touchX - dragStartTouchX) / 3;
+        const deltaY = (touchY - dragStartTouchY) / 3;
+
+        let x = dragStartHandleX + deltaX;
+        let y = dragStartHandleY + deltaY;
+
+        x = Math.max(0, Math.min(x, rect.width));
+        y = Math.max(0, Math.min(y, rect.height));
+
+        activeHandle.style.left = (x / rect.width * 100) + "%";
+        activeHandle.style.top = (y / rect.height * 100) + "%";
+      }, { signal });
+
+      wrapperDiv.addEventListener("pointerup", (e) => {
+        if (activeHandle) {
+          wrapperDiv.releasePointerCapture(e.pointerId);
+          activeHandle = null;
+        }
+      }, { signal });
 
       // --- GENEROWANIE PDF ---
       pdfBtn.addEventListener("click", () => {
