@@ -25,23 +25,31 @@
           .gh-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 0; }
           .gh-flat-section { margin-bottom: 28px; }
           
-          .gh-display-box {
-            background: var(--surface); border: 1px solid var(--line);
-            border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
-            margin-top: 16px; margin-bottom: 24px;
+          /* Płaski wygląd hasła - bez ramki i tła */
+          .gh-display-area {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--line);
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
           }
           
           .gh-password-text {
-            font-family: monospace; font-size: 20px; font-weight: 600; color: var(--ink);
+            font-family: monospace; font-size: 22px; font-weight: 600; color: var(--ink);
             text-align: center; line-height: 1.4; user-select: all;
             white-space: nowrap; overflow-x: auto; overflow-y: hidden;
-            padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none;
+            width: 100%; padding-bottom: 8px;
+            scrollbar-width: none; -ms-overflow-style: none;
+            touch-action: pan-x; /* Pozwala na przewijanie palcem w bok */
+            -webkit-overflow-scrolling: touch;
           }
           .gh-password-text::-webkit-scrollbar { display: none; }
           
           .gh-strength-bar {
             width: 100%; height: 4px; border-radius: 2px; background: var(--line);
-            position: relative; overflow: hidden; margin-top: 8px;
+            position: relative; overflow: hidden;
           }
           .gh-strength-fill {
             position: absolute; top: 0; left: 0; bottom: 0; width: 0%; 
@@ -73,6 +81,7 @@
             transition: transform 0.1s;
           }
 
+          /* Styl akordeonu zgodny z resztą aplikacji */
           .gh-trigger { 
             display: flex; justify-content: space-between; align-items: center; 
             background: transparent; border: none; border-bottom: 1px solid var(--line); 
@@ -92,9 +101,9 @@
 
         ${Hub.backButtonHtml}
 
-        <div class="gh-display-box">
+        <div class="gh-display-area">
           <div id="gh-password" class="gh-password-text">...</div>
-          <div>
+          <div style="width: 100%;">
             <div class="gh-strength-bar"><div id="gh-strength-fill" class="gh-strength-fill"></div></div>
             <div id="gh-strength-text" class="gh-strength-text" style="margin-top: 8px;">Siła: -</div>
           </div>
@@ -282,6 +291,7 @@
         }
 
         passEl.textContent = password;
+        passEl.scrollLeft = 0; // Przewija do początku przy nowym haśle
         
         const strength = calculateStrength(length, chars.length);
         strengthFill.style.width = strength.percent + "%";
