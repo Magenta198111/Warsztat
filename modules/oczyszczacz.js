@@ -6,7 +6,7 @@
 
     async mount(container, signal) {
       let currentCaseMode = "sentence";
-      let dashMode = "leave"; // 'leave' lub 'remove'
+      let dashMode = "leave"; 
 
       const caseNames = {
         "sentence": "Zdania (Duża po kropce)",
@@ -62,13 +62,11 @@
           .o-sub-arrow.open { transform: rotate(180deg); }
           .o-sub-arrow svg { width: 16px; height: 16px; }
 
-          /* ZMIENIONO: Usunięto border-left, dodano czyste wcięcie */
           .o-sub-options { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 32px; }
           .o-sub-options.open { max-height: 400px; margin-bottom: 12px; }
           .o-sub-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
           .o-sub-title { font-size: 13px; color: var(--muted); }
 
-          /* NOWY: Przycisk segmentowy (Lewo/Prawo) */
           .o-segmented-control { 
             display: flex; background: var(--bg); border: 1px solid var(--line); 
             border-radius: 6px; overflow: hidden; width: 100%; margin-top: 8px; margin-bottom: 8px;
@@ -123,8 +121,8 @@
                 <label class="switch" id="sw-url-group"><input type="checkbox" id="o-clean-url" data-group="url"><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-url">
-                <div class="o-sub-row"><span class="o-sub-title">Usuwaj https://</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url"><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Usuwaj www.</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: https://</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: www.</span><label class="switch"><input type="checkbox" class="sub-url-opt" data-parent="o-clean-url"><span class="switch-slider"></span></label></div>
               </div>
             </div>
 
@@ -141,9 +139,9 @@
                 <label class="switch" id="sw-md-group"><input type="checkbox" id="o-clean-md" data-group="md"><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-md">
-                <div class="o-sub-row"><span class="o-sub-title">Usuwaj # (nagłówki)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Usuwaj * i _ (pogrubienie)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Usuwaj > (cytaty)</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: #</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: * i _</span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: ></span><label class="switch"><input type="checkbox" class="sub-md-opt" data-parent="o-clean-md"><span class="switch-slider"></span></label></div>
               </div>
             </div>
 
@@ -160,8 +158,8 @@
                 <label class="switch" id="sw-space-group"><input type="checkbox" id="o-clean-space" data-group="space" checked><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-space">
-                <div class="o-sub-row"><span class="o-sub-title">Usuwaj spację przed . ,</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Usuwaj spację przed ! ?</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj spację przed: . i ,</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj spację przed: ! i ?</span><label class="switch"><input type="checkbox" class="sub-space-opt" data-parent="o-clean-space" checked><span class="switch-slider"></span></label></div>
               </div>
             </div>
 
@@ -172,19 +170,19 @@
                   <button class="o-sub-arrow" data-target="sub-brackets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
                   <div class="o-option-text">
                     <div class="o-option-title">Usuwaj nawiasy i cudzysłowy</div>
-                    <div class="o-option-desc">Usuwa [], {}, "", ''</div>
+                    <div class="o-option-desc">Usuwa () [], {}, "", ''</div>
                   </div>
                 </div>
                 <label class="switch" id="sw-brackets-group"><input type="checkbox" id="o-clean-brackets" data-group="brackets"><span class="switch-slider"></span></label>
               </div>
               <div class="o-sub-options" id="sub-brackets">
-                <div class="o-sub-row"><span class="o-sub-title">Usuwaj () i []</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Usuwaj klamrowe {}</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
-                <div class="o-sub-row"><span class="o-sub-title">Usuwaj cudzysłowy "" ''</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: () i []</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: {}</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
+                <div class="o-sub-row"><span class="o-sub-title">Usuwaj: "" i ''</span><label class="switch"><input type="checkbox" class="sub-brackets-opt" data-parent="o-clean-brackets"><span class="switch-slider"></span></label></div>
               </div>
             </div>
 
-            <!-- GRUPA 5: MYŚLNIKI (PRZYCISK LEWO/PRAWO) -->
+            <!-- GRUPA 5: MYŚLNIKI -->
             <div class="o-option-group">
               <div class="o-option-row">
                 <div class="o-option-left">
@@ -261,7 +259,6 @@
         const parentLabel = parentInput.closest('.switch');
         const group = parentInput.dataset.group;
         
-        // Grupa "dash" ma przycisk segmentowy zamiast switchy, więc ją pomijamy
         if (group === "dash") return;
 
         const subOpts = container.querySelectorAll(`.sub-${group}-opt`);
