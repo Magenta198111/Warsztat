@@ -15,25 +15,53 @@
       let isLoaded = false;
       let currentUnit = "cm";
 
+      // Baza gotowych formatów
+      const docPresets = [
+        { id: "dowod", label: "Dowód osobisty (3.5 × 4.5 cm)", w: 3.5, h: 4.5, unit: "cm" },
+        { id: "paszport", label: "Paszport (3.5 × 4.5 cm)", w: 3.5, h: 4.5, unit: "cm" },
+        { id: "wiza_us", label: "Wiza USA (5 × 5 cm)", w: 5, h: 5, unit: "cm" },
+        { id: "prawo_jazdy", label: "Prawo jazdy (3.5 × 4.5 cm)", w: 3.5, h: 4.5, unit: "cm" },
+        { id: "custom", label: "Własne wymiary", w: null, h: null, unit: "cm" }
+      ];
+
+      // Baza limitów rozmiaru
+      const sizePresets = [
+        { id: "20", label: "20 KB (małe zdjęcia)" },
+        { id: "50", label: "50 KB" },
+        { id: "100", label: "100 KB (standard)" },
+        { id: "200", label: "200 KB" },
+        { id: "500", label: "500 KB" },
+        { id: "custom", label: "Inny (wpisz ręcznie)" }
+      ];
+
       container.innerHTML = `
         <style>
           .zd-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
-          .zd-flat-section { margin-bottom: 28px; }
+          .zd-flat-section { margin-bottom: 24px; }
           .zd-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
-          .zd-input-row { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+          .zd-trigger-btn {
+            display: flex; justify-content: space-between; align-items: center; 
+            background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+            padding: 14px 16px; color: var(--ink); font-size: 15px; 
+            cursor: pointer; user-select: none; margin-bottom: 16px;
+          }
+          .zd-trigger-btn:active { background: var(--surface-hover); }
+          .zd-trigger-btn svg { color: var(--muted); }
+
+          .zd-input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; width: 100%; }
           .zd-input {
-            flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--line);
+            flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 1px solid var(--line);
             color: var(--ink); font-size: 16px; padding: 8px 0; outline: none;
             text-align: center; transition: border-color 0.2s; font-family: monospace;
           }
           .zd-input:focus { border-bottom-color: var(--accent); }
           
-          .zd-trigger {
-            display: flex; justify-content: center; align-items: center; 
+          .zd-unit-trigger {
+            flex-shrink: 0; width: 50px; display: flex; justify-content: center; align-items: center; 
             background: transparent; border-bottom: 1px solid var(--line); 
             padding: 8px 0; color: var(--accent); font-size: 16px; font-weight: 600;
-            cursor: pointer; user-select: none; width: 60px; flex-shrink: 0;
+            cursor: pointer; user-select: none;
           }
           
           #zd-crop-container {
@@ -66,19 +94,33 @@
         ${Hub.backButtonHtml}
 
         <div id="zd-setup-card" style="margin-top: 16px;">
+          
           <div class="zd-flat-section">
+            <label class="zd-label">Format dokumentu</label>
+            <div id="zd-preset-trigger" class="zd-trigger-btn">
+              <span id="zd-preset-text">Własne wymiary</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+
             <label class="zd-label">Wymiary zdjęcia</label>
             <div class="zd-input-row">
               <input type="number" id="zd-w" value="3.5" step="0.1" class="zd-input" inputmode="decimal">
-              <span style="color:var(--muted);">×</span>
+              <span style="color:var(--muted); flex-shrink: 0;">×</span>
               <input type="number" id="zd-h" value="4.5" step="0.1" class="zd-input" inputmode="decimal">
-              <div id="zd-unit-trigger" class="zd-trigger">cm</div>
+              <div id="zd-unit-trigger" class="zd-unit-trigger">cm</div>
             </div>
           </div>
 
           <div class="zd-flat-section">
-            <label class="zd-label">Maksymalny rozmiar pliku (KB)</label>
-            <input type="number" id="zd-size" value="100" min="10" step="10" class="zd-input" style="width: 100%;" inputmode="numeric">
+            <label class="zd-label">Limit rozmiaru pliku</label>
+            <div id="zd-size-trigger" class="zd-trigger-btn">
+              <span id="zd-size-text">100 KB (standard)</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div id="zd-custom-size-wrapper" class="hidden">
+              <label class="zd-label" style="margin-top: 12px;">Wpisz własny limit (KB)</label>
+              <input type="number" id="zd-size" value="100" min="10" step="10" class="zd-input" style="width: 100%;" inputmode="numeric">
+            </div>
           </div>
 
           <div class="zd-divider"></div>
@@ -131,10 +173,53 @@
       const hInput = $("zd-h");
       const unitTrigger = $("zd-unit-trigger");
       const sizeInput = $("zd-size");
-
-      pickBtn = $("zd-pick-btn");
-      pickBtn.addEventListener("click", () => fileInput.click(), { signal });
       
+      const presetTrigger = $("zd-preset-trigger");
+      const presetText = $("zd-preset-text");
+      const sizeTrigger = $("zd-size-trigger");
+      const sizeText = $("zd-size-text");
+      const customSizeWrapper = $("zd-custom-size-wrapper");
+
+      $("zd-pick-btn").addEventListener("click", () => fileInput.click(), { signal });
+
+      // Logika wyboru formatu dokumentu
+      presetTrigger.addEventListener("click", async () => {
+        const opts = docPresets.map(p => ({ id: p.id, label: p.label }));
+        const choice = await Hub.showSelect({ title: "Wybierz format", options: opts, current: "custom", anchor: presetTrigger, signal });
+        
+        if (choice) {
+          const preset = docPresets.find(p => p.id === choice);
+          if (preset) {
+            presetText.textContent = preset.label;
+            if (preset.w !== null) {
+              wInput.value = preset.w;
+              hInput.value = preset.h;
+              currentUnit = preset.unit;
+              unitTrigger.textContent = currentUnit;
+            }
+          }
+        }
+      }, { signal });
+
+      // Logika wyboru limitu rozmiaru
+      sizeTrigger.addEventListener("click", async () => {
+        const opts = sizePresets.map(s => ({ id: s.id, label: s.label }));
+        const choice = await Hub.showSelect({ title: "Wybierz limit", options: opts, current: "100", anchor: sizeTrigger, signal });
+        
+        if (choice) {
+          const preset = sizePresets.find(s => s.id === choice);
+          if (preset) {
+            sizeText.textContent = preset.label;
+            if (preset.id === "custom") {
+              customSizeWrapper.classList.remove("hidden");
+            } else {
+              customSizeWrapper.classList.add("hidden");
+              sizeInput.value = preset.id;
+            }
+          }
+        }
+      }, { signal });
+
       unitTrigger.addEventListener("click", async () => {
         const opts = [{ id: "cm", label: "Centymetry (cm)" }, { id: "px", label: "Piksele (px)" }];
         const choice = await Hub.showSelect({ title: "Jednostka", options: opts, current: currentUnit, anchor: unitTrigger, signal });
@@ -186,7 +271,6 @@
         previewImg.style.width = "100%";
         previewImg.style.height = "auto";
         
-        // Automatyczne wyśrodkowanie obrazu
         translateX = (displayW - previewImg.clientWidth) / 2;
         translateY = (displayH - previewImg.clientHeight) / 2;
         scale = 1;
@@ -300,7 +384,7 @@
             }
             
             if (blob.size > maxSize) {
-              showToast("Nie udało się zmieścić w limicie. Spróbuj mniejszego wymiaru.");
+              showToast(`Nie udało się zmieścić w limicie ${Math.round(maxSize/1024)} KB. Spróbuj mniejszego wymiaru.`);
               btn.disabled = false;
               btn.textContent = "Zapisz zdjęcie";
               return;
