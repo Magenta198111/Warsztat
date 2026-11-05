@@ -41,23 +41,34 @@ self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
 
   event.respondWith(
-    fetch(event.request, { cache: "no-store" }).then(networkResponse => {
-      if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-        const responseClone = networkResponse.clone();
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, responseClone);
+    (async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+      try {
+        const networkResponse = await fetch(event.request, { 
+          cache: "no-store", 
+          signal: controller.signal 
         });
-      }
-      return networkResponse;
-    }).catch(() => {
-      return caches.match(event.request, { ignoreSearch: true }).then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
+        clearTimeout(timeoutId);
+
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
         }
+        return networkResponse;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        const cachedResponse = await caches.match(event.request, { ignoreSearch: true });
+        if (cachedResponse) return cachedResponse;
+        
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html');
         }
-      });
-    })
+        return new Response("", { status: 404, statusText: "Not Found" });
+      }
+    })()
   );
 });
