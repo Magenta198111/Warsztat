@@ -1,8 +1,8 @@
 (() => {
   Hub.register({
     id: "zdjecie-dokument",
-    title: "Zdjęcie do Dokumentów",
-    desc: "Kadrowanie i kompresja zdjęć do dowodu, paszportu i wiz",
+    title: "Przycinanie Zdjęć",
+    desc: "Kadruj, przycinaj i kompresuj zdjęcia do dowolnych formatów i limitów rozmiaru",
 
     async mount(container, signal) {
       let img = new Image();
@@ -17,20 +17,21 @@
 
       // Baza gotowych formatów
       const docPresets = [
-        { id: "dowod", label: "Dowód osobisty (3.5 × 4.5 cm)", w: 3.5, h: 4.5, unit: "cm" },
-        { id: "paszport", label: "Paszport (3.5 × 4.5 cm)", w: 3.5, h: 4.5, unit: "cm" },
+        { id: "dokumenty", label: "Dokumenty urzędowe (3.5 × 4.5 cm) – dowód, paszport, wiza Schengen, CV", w: 3.5, h: 4.5, unit: "cm" },
         { id: "wiza_us", label: "Wiza USA (5 × 5 cm)", w: 5, h: 5, unit: "cm" },
-        { id: "prawo_jazdy", label: "Prawo jazdy (3.5 × 4.5 cm)", w: 3.5, h: 4.5, unit: "cm" },
+        { id: "social", label: "Post / Instagram (10 × 10 cm)", w: 10, h: 10, unit: "cm" },
+        { id: "print", label: "Odbitka zdjęciowa (10 × 15 cm)", w: 10, h: 15, unit: "cm" },
         { id: "custom", label: "Własne wymiary", w: null, h: null, unit: "cm" }
       ];
 
       // Baza limitów rozmiaru
       const sizePresets = [
-        { id: "20", label: "20 KB (małe zdjęcia)" },
+        { id: "20", label: "20 KB" },
         { id: "50", label: "50 KB" },
-        { id: "100", label: "100 KB (standard)" },
+        { id: "100", label: "100 KB" },
         { id: "200", label: "200 KB" },
         { id: "500", label: "500 KB" },
+        { id: "1000", label: "1 MB (1024 KB)" },
         { id: "custom", label: "Inny (wpisz ręcznie)" }
       ];
 
@@ -41,13 +42,15 @@
           .zd-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
           .zd-trigger-btn {
-            display: flex; justify-content: space-between; align-items: center; 
+            display: flex; justify-content: space-between; align-items: center; gap: 12px;
             background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
-            padding: 14px 16px; color: var(--ink); font-size: 15px; 
+            padding: 14px 16px; color: var(--ink); font-size: 14px; 
             cursor: pointer; user-select: none; margin-bottom: 16px;
+            transition: background 0.2s;
           }
           .zd-trigger-btn:active { background: var(--surface-hover); }
-          .zd-trigger-btn svg { color: var(--muted); }
+          .zd-trigger-btn span { flex: 1; text-align: left; line-height: 1.4; }
+          .zd-trigger-btn svg { color: var(--muted); flex-shrink: 0; }
 
           .zd-input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; width: 100%; }
           .zd-input {
@@ -96,13 +99,13 @@
         <div id="zd-setup-card" style="margin-top: 16px;">
           
           <div class="zd-flat-section">
-            <label class="zd-label">Format dokumentu</label>
+            <label class="zd-label">Format zdjęcia</label>
             <div id="zd-preset-trigger" class="zd-trigger-btn">
-              <span id="zd-preset-text">Własne wymiary</span>
+              <span id="zd-preset-text">Dokumenty urzędowe (3.5 × 4.5 cm) – dowód, paszport, wiza Schengen, CV</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
 
-            <label class="zd-label">Wymiary zdjęcia</label>
+            <label class="zd-label">Wymiary</label>
             <div class="zd-input-row">
               <input type="number" id="zd-w" value="3.5" step="0.1" class="zd-input" inputmode="decimal">
               <span style="color:var(--muted); flex-shrink: 0;">×</span>
@@ -114,7 +117,7 @@
           <div class="zd-flat-section">
             <label class="zd-label">Limit rozmiaru pliku</label>
             <div id="zd-size-trigger" class="zd-trigger-btn">
-              <span id="zd-size-text">100 KB (standard)</span>
+              <span id="zd-size-text">100 KB</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
             <div id="zd-custom-size-wrapper" class="hidden">
@@ -182,10 +185,9 @@
 
       $("zd-pick-btn").addEventListener("click", () => fileInput.click(), { signal });
 
-      // Logika wyboru formatu dokumentu
       presetTrigger.addEventListener("click", async () => {
         const opts = docPresets.map(p => ({ id: p.id, label: p.label }));
-        const choice = await Hub.showSelect({ title: "Wybierz format", options: opts, current: "custom", anchor: presetTrigger, signal });
+        const choice = await Hub.showSelect({ title: "Wybierz format", options: opts, current: "dokumenty", anchor: presetTrigger, signal });
         
         if (choice) {
           const preset = docPresets.find(p => p.id === choice);
@@ -201,7 +203,6 @@
         }
       }, { signal });
 
-      // Logika wyboru limitu rozmiaru
       sizeTrigger.addEventListener("click", async () => {
         const opts = sizePresets.map(s => ({ id: s.id, label: s.label }));
         const choice = await Hub.showSelect({ title: "Wybierz limit", options: opts, current: "100", anchor: sizeTrigger, signal });
