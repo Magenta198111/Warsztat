@@ -25,7 +25,6 @@
           .gh-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 0; }
           .gh-flat-section { margin-bottom: 28px; }
           
-          /* Płaski wygląd hasła - bez ramki i tła */
           .gh-display-area {
             padding: 20px 0;
             border-bottom: 1px solid var(--line);
@@ -40,9 +39,11 @@
             font-family: monospace; font-size: 22px; font-weight: 600; color: var(--ink);
             text-align: center; line-height: 1.4; user-select: all;
             white-space: nowrap; overflow-x: auto; overflow-y: hidden;
-            width: 100%; padding-bottom: 8px;
+            width: 100%; 
+            padding: 0 24px 8px 24px; 
+            box-sizing: border-box;
             scrollbar-width: none; -ms-overflow-style: none;
-            touch-action: pan-x; /* Pozwala na przewijanie palcem w bok */
+            touch-action: pan-x;
             -webkit-overflow-scrolling: touch;
           }
           .gh-password-text::-webkit-scrollbar { display: none; }
@@ -81,7 +82,6 @@
             transition: transform 0.1s;
           }
 
-          /* Styl akordeonu zgodny z resztą aplikacji */
           .gh-trigger { 
             display: flex; justify-content: space-between; align-items: center; 
             background: transparent; border: none; border-bottom: 1px solid var(--line); 
@@ -291,7 +291,7 @@
         }
 
         passEl.textContent = password;
-        passEl.scrollLeft = 0; // Przewija do początku przy nowym haśle
+        passEl.scrollLeft = 0;
         
         const strength = calculateStrength(length, chars.length);
         strengthFill.style.width = strength.percent + "%";
