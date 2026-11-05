@@ -17,15 +17,9 @@
           .sk-flat-section { margin-bottom: 28px; }
           .sk-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
-          /* 
-           * ZMIANY:
-           * - width/height 64px (2x większy zasięg chwytania)
-           * - margin -32px (żeby idealnie centrować)
-           * - kolor zmieniony na var(--accent)
-           * - wizualne linie zmniejszone do 32px, wyśrodkowane w środku 64px obszaru
-           */
+          /* ZMIANA: Zasięg chwytania 3x większy (192px zamiast 64px) */
           .sk-handle {
-            position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px;
+            position: absolute; width: 192px; height: 192px; margin: -96px 0 0 -96px;
             z-index: 10; pointer-events: auto; touch-action: none; cursor: grab;
           }
           .sk-handle::before, .sk-handle::after {
@@ -72,9 +66,10 @@
           <div class="sk-divider"></div>
           
           <label class="sk-label">Kadrowanie i perspektywa</label>
-          <div id="sk-wrapper" style="position:relative; margin-bottom: 24px;">
-            <!-- ZMIANA: width: 80% i margin: 0 auto, aby zmniejszyć i wyśrodkować zdjęcie -->
-            <div style="width: 80%; margin: 0 auto; overflow:hidden; border-radius: 8px; border: 1px solid var(--line); background:#000;">
+          
+          <!-- ZMIANA: Usunięto wewnętrzny div. Handles są teraz bezpośrednio na wrapperze, który ma dokładnie szerokość 80% i wyśrodkowanie -->
+          <div id="sk-wrapper" style="position:relative; width: 80%; margin: 0 auto; margin-bottom: 24px;">
+            <div style="border-radius: 8px; border: 1px solid var(--line); background:#000; overflow:hidden;">
               <canvas id="sk-display" style="display:block; width:100%; height:auto; transition: filter 0.1s;"></canvas>
             </div>
             <div class="sk-handle"></div>
@@ -89,7 +84,14 @@
           </div>
 
           <label class="sk-label">Popraw kontrast</label>
-          <input type="range" id="sk-contrast" min="0" max="200" value="100" class="sk-range">
+          
+          <!-- ZMIANA: Suwak i przycisk resetu w jednym rzędzie -->
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+            <input type="range" id="sk-contrast" min="0" max="200" value="100" class="sk-range" style="flex: 1; margin-bottom: 0;">
+            <button id="sk-reset-contrast" class="n-btn" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-color: var(--line); background: transparent;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+            </button>
+          </div>
           
           <div class="settings-row" style="padding: 12px 0; border-bottom: none; margin-bottom: 24px;">
             <div style="flex: 1; padding-right: 12px;">
@@ -192,6 +194,13 @@
         applyLiveFilter();
       }, { signal });
 
+      // NOWOŚĆ: Obsługa przycisku resetu kontrastu
+      $("sk-reset-contrast").addEventListener("click", () => {
+        Hub.haptic('light');
+        contrastSlider.value = 100;
+        applyLiveFilter();
+      }, { signal });
+
       colorToggle.addEventListener("change", (e) => {
         Hub.haptic('light');
         isColor = !e.target.checked;
@@ -248,7 +257,7 @@
           const touchX = e.clientX - rect.left;
           const touchY = e.clientY - rect.top;
 
-          // Dzielenie przez 3 dla precyzyjnego ustawiania
+          // Precyzja: 3x wolniej
           const deltaX = (touchX - dragStartTouchX) / 3;
           const deltaY = (touchY - dragStartTouchY) / 3;
 
