@@ -26,7 +26,7 @@
           .gh-flat-section { margin-bottom: 28px; }
           
           .gh-display-area {
-            padding: 20px 0;
+            padding: 20px 0 10px 0;
             border-bottom: 1px solid var(--line);
             margin-bottom: 24px;
             display: flex;
@@ -35,16 +35,27 @@
             gap: 12px;
           }
           
+          /* Styl textarea dopasowany do wyglądu aplikacji */
           .gh-password-text {
             font-family: monospace; font-size: 22px; font-weight: 600; color: var(--ink);
-            text-align: center; line-height: 1.4; user-select: all;
-            white-space: nowrap; overflow-x: auto; overflow-y: hidden;
+            text-align: center; line-height: 1.4; 
+            white-space: pre; /* Zapobiega zawijaniu */
+            overflow-x: auto; 
+            overflow-y: auto;
+            resize: vertical; /* Rączka do rozciągania w pionie */
             width: 100%; 
-            padding: 0 24px 8px 24px; 
+            padding: 12px 24px; 
             box-sizing: border-box;
+            min-height: 60px;
+            max-height: 300px;
+            background: transparent;
+            border: none;
+            outline: none;
             scrollbar-width: none; -ms-overflow-style: none;
-            touch-action: pan-x;
+            touch-action: pan-x pan-y;
             -webkit-overflow-scrolling: touch;
+            display: block;
+            margin: 0 auto;
           }
           .gh-password-text::-webkit-scrollbar { display: none; }
           
@@ -102,7 +113,7 @@
         ${Hub.backButtonHtml}
 
         <div class="gh-display-area">
-          <div id="gh-password" class="gh-password-text">...</div>
+          <textarea id="gh-password" class="gh-password-text" readonly rows="1" wrap="off" spellcheck="false">...</textarea>
           <div style="width: 100%;">
             <div class="gh-strength-bar"><div id="gh-strength-fill" class="gh-strength-fill"></div></div>
             <div id="gh-strength-text" class="gh-strength-text" style="margin-top: 8px;">Siła: -</div>
@@ -275,7 +286,7 @@
         }
 
         if (chars.length === 0) {
-          passEl.textContent = "Wybierz co najmniej jedną opcję";
+          passEl.value = "Wybierz co najmniej jedną opcję";
           strengthFill.style.width = "0%";
           strengthText.textContent = "Siła: -";
           return;
@@ -290,7 +301,7 @@
           password += chars[randomValues[i] % chars.length];
         }
 
-        passEl.textContent = password;
+        passEl.value = password;
         passEl.scrollLeft = 0;
         
         const strength = calculateStrength(length, chars.length);
@@ -316,7 +327,7 @@
       }, { signal });
 
       btnCopy.addEventListener("click", () => {
-        const txt = passEl.textContent;
+        const txt = passEl.value;
         if (txt && txt !== "..." && txt !== "Wybierz co najmniej jedną opcję") {
           Hub.copy(txt, btnCopy);
         } else {
