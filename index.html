@@ -46,7 +46,6 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .n-btn:active { background: var(--surface-hover); border-color: var(--muted); }
 .n-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* NOWY PRZYCISK: Outline (czarne tło, kolorowa ramka i tekst) */
 .n-btn-outline {
   background: transparent !important;
   border: 1px solid var(--accent) !important;
@@ -107,18 +106,15 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
 .list.grid-view .tile-desc { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-/* ZASIĘG KOLORU AKCENTU */
 body.scope-home-icons .tile-icon svg { stroke: var(--accent); }
 body.scope-drawer-icons .drawer-item svg { color: var(--accent); }
 body.scope-action-btns .n-btn-outline { border-color: var(--accent); color: var(--accent); }
 
-/* TRYB MONOCHROMATYCZNY */
 body.no-accent { --accent: #52525b !important; --accent-ink: #ffffff !important; }
 body.no-accent .accent-layout-wrapper { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
 body.no-accent .cp-square-wrap, body.no-accent .cp-hue-slider { filter: grayscale(1); pointer-events: none; }
 body.no-accent .cp-preview-color { background: #52525b !important; }
 
-/* --- PRZEŁĄCZNIK (SWITCH) --- */
 .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
 .switch input { opacity: 0; width: 0; height: 0; }
 .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--line); transition: .3s; border-radius: 24px; }
@@ -139,7 +135,6 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
 
 .empty-state { border: 1px dashed var(--line); border-radius: 6px; padding: 40px 20px; text-align: center; color: var(--muted); background: var(--surface); }
 
-/* --- USTAWIENIA I TOAST --- */
 #error-bar { position: fixed; top: 0; left: 0; width: 100%; background: var(--danger); color: #fff; padding: 10px; padding-top: calc(10px + var(--safe-top)); font-size: 12px; z-index: 9999; display: none; text-align: center; font-weight: bold; }
 .settings-block { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
 .settings-header { padding: 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); }
@@ -150,7 +145,6 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
 .settings-opt-btn { padding: 8px 16px; font-size: 13px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); cursor: pointer; }
 .settings-opt-btn.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 
-/* --- PALETA AKCENTÓW --- */
 .accent-layout-wrapper { display: flex; gap: 16px; align-items: center; width: 100%; margin-top: 4px; }
 .accent-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex: 1; }
 .accent-swatch { width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; transition: transform 0.2s; box-shadow: 0 0 0 0 transparent; }
@@ -159,108 +153,40 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
 .rgb-wheel-wrapper.active { box-shadow: inset 0 0 0 3px var(--bg), inset 0 0 0 5px var(--ink); transform: scale(1.05); }
 .rgb-wheel-bg { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(from 90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000); }
 
-/* --- HUB: SELEKTOR (bottom-sheet / dropdown) --- */
-.hub-select-overlay {
-  position: fixed; inset: 0; z-index: 9000;
-  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
-  opacity: 0; pointer-events: none; transition: opacity 0.25s;
-  display: flex; align-items: flex-end; justify-content: center;
-}
+.hub-select-overlay { position: fixed; inset: 0; z-index: 9000; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.25s; display: flex; align-items: flex-end; justify-content: center; }
 .hub-select-overlay.open { opacity: 1; pointer-events: auto; }
 .hub-select-overlay.dropdown-mode { background: transparent; backdrop-filter: none; }
-
-.hub-select-sheet {
-  width: 100%; max-width: 600px;
-  background: var(--surface); border: 1px solid var(--line);
-  border-top-left-radius: 16px; border-top-right-radius: 16px;
-  padding: 24px 16px calc(24px + var(--safe-bottom));
-  max-height: 80vh; overflow-y: auto; overscroll-behavior: contain;
-  transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
+.hub-select-sheet { width: 100%; max-width: 600px; background: var(--surface); border: 1px solid var(--line); border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 24px 16px calc(24px + var(--safe-bottom)); max-height: 80vh; overflow-y: auto; overscroll-behavior: contain; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .hub-select-overlay.open .hub-select-sheet { transform: translateY(0); }
-
-.hub-select-title {
-  font-size: 12px; font-weight: 600; text-transform: uppercase;
-  color: var(--muted); text-align: center; margin-bottom: 16px; letter-spacing: 0.5px;
-}
-.hub-select-item {
-  padding: 16px; border-radius: 6px; margin-bottom: 4px;
-  font-size: 15px; color: var(--ink);
-  display: flex; align-items: center; gap: 12px; cursor: pointer;
-  background: var(--bg);
-}
+.hub-select-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 16px; letter-spacing: 0.5px; }
+.hub-select-item { padding: 16px; border-radius: 6px; margin-bottom: 4px; font-size: 15px; color: var(--ink); display: flex; align-items: center; gap: 12px; cursor: pointer; background: var(--bg); }
 .hub-select-item:active { background: var(--line); }
 .hub-select-item.active { color: var(--accent); font-weight: 600; }
 .hub-select-item.centered { justify-content: center; text-align: center; gap: 0; }
-
-.hub-select-dropdown {
-  position: fixed;
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8);
-  overflow: hidden; opacity: 0; transform: translateY(-4px);
-  transition: opacity 0.15s, transform 0.15s;
-  max-height: 60vh; overflow-y: auto; overscroll-behavior: contain;
-}
+.hub-select-dropdown { position: fixed; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); overflow: hidden; opacity: 0; transform: translateY(-4px); transition: opacity 0.15s, transform 0.15s; max-height: 60vh; overflow-y: auto; overscroll-behavior: contain; }
 .hub-select-overlay.open .hub-select-dropdown { opacity: 1; transform: translateY(0); }
-.hub-select-dd-item {
-  padding: 14px 16px; font-size: 14px; color: var(--ink);
-  display: flex; align-items: center; gap: 12px; cursor: pointer;
-  border-bottom: 1px solid var(--line);
-}
+.hub-select-dd-item { padding: 14px 16px; font-size: 14px; color: var(--ink); display: flex; align-items: center; gap: 12px; cursor: pointer; border-bottom: 1px solid var(--line); }
 .hub-select-dd-item:last-child { border-bottom: none; }
 .hub-select-dd-item.active { color: var(--accent); font-weight: 600; background: rgba(129, 140, 248, 0.05); }
 .hub-select-dd-item.centered { justify-content: center; text-align: center; gap: 0; }
 
-/* --- HUB: MODAL (pełnoekranowy podgląd) --- */
-.hub-modal-overlay {
-  position: fixed; inset: 0; z-index: 9100;
-  background: rgba(0,0,0,0.95);
-  opacity: 0; pointer-events: none; transition: opacity 0.25s;
-  display: flex; align-items: center; justify-content: center;
-  padding: calc(20px + var(--safe-top)) max(20px, var(--safe-right)) calc(20px + var(--safe-bottom)) max(20px, var(--safe-left));
-}
+.hub-modal-overlay { position: fixed; inset: 0; z-index: 9100; background: rgba(0,0,0,0.95); opacity: 0; pointer-events: none; transition: opacity 0.25s; display: flex; align-items: center; justify-content: center; padding: calc(20px + var(--safe-top)) max(20px, var(--safe-right)) calc(20px + var(--safe-bottom)) max(20px, var(--safe-left)); }
 .hub-modal-overlay.open { opacity: 1; pointer-events: auto; }
 .hub-modal-content { max-width: 100%; max-height: 100%; display: flex; align-items: center; justify-content: center; }
 .hub-modal-content > * { max-width: 100%; max-height: calc(100vh - 40px - var(--safe-top) - var(--safe-bottom)); }
-.hub-modal-close {
-  position: absolute; top: calc(16px + var(--safe-top)); right: calc(16px + var(--safe-right));
-  width: 40px; height: 40px; border-radius: 50%;
-  background: rgba(24, 24, 27, 0.8); border: 1px solid var(--line);
-  color: var(--ink); cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
+.hub-modal-close { position: absolute; top: calc(16px + var(--safe-top)); right: calc(16px + var(--safe-right)); width: 40px; height: 40px; border-radius: 50%; background: rgba(24, 24, 27, 0.8); border: 1px solid var(--line); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .hub-modal-close:active { background: var(--surface-hover); }
 
-/* --- HUB: CONFIRM --- */
-.hub-confirm-overlay {
-  position: fixed; inset: 0; z-index: 9200;
-  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-  opacity: 0; pointer-events: none; transition: opacity 0.25s;
-  display: flex; align-items: center; justify-content: center; padding: 20px;
-}
+.hub-confirm-overlay { position: fixed; inset: 0; z-index: 9200; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.25s; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .hub-confirm-overlay.open { opacity: 1; pointer-events: auto; }
 .hub-confirm-box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 24px; width: 100%; max-width: 400px; }
 .hub-confirm-msg { font-size: 15px; color: var(--ink); margin-bottom: 20px; line-height: 1.5; }
 .hub-confirm-btns { display: flex; gap: 8px; }
 .hub-confirm-btns .n-btn { flex: 1; }
 
-/* --- NOWY, DOPRACOWANY WYBÓR KOLORU --- */
-.color-picker-overlay { 
-  position: fixed; inset: 0; z-index: 9500; 
-  background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); 
-  opacity: 0; pointer-events: none; transition: opacity 0.25s; 
-  display: flex; align-items: center; justify-content: center; 
-  padding: 20px; 
-}
+.color-picker-overlay { position: fixed; inset: 0; z-index: 9500; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.25s; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .color-picker-overlay.open { opacity: 1; pointer-events: auto; }
-.color-picker-box { 
-  background: var(--surface); border: 1px solid var(--line); 
-  border-radius: 12px; padding: 20px; width: 100%; max-width: 340px; 
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-  display: flex; flex-direction: column; gap: 16px; 
-  max-height: 90vh; overflow-y: auto;
-}
+.color-picker-box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; width: 100%; max-width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto; }
 .cp-header { font-size: 16px; font-weight: 600; color: var(--ink); text-align: center; margin-bottom: 4px; }
 .cp-square-wrap { position: relative; width: 100%; aspect-ratio: 1.2; border-radius: 8px; overflow: hidden; cursor: crosshair; border: 1px solid var(--line); }
 .cp-square-bg { position: absolute; inset: 0; }
@@ -329,6 +255,21 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
       <div class="settings-options">
         <button class="settings-opt-btn" id="opt-view-list">Lista</button>
         <button class="settings-opt-btn" id="opt-view-grid">Siatka (2 kolumny)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-block">
+    <div class="settings-header">Pola tekstowe</div>
+    <div class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
+      <div><div class="settings-label">Auto-dopasowanie wysokości</div><div class="settings-desc">Rozciągaj pole wraz z wpisywanym tekstem</div></div>
+      <label class="switch"><input type="checkbox" id="opt-auto-expand"><span class="switch-slider"></span></label>
+    </div>
+    <div class="settings-row" id="row-expand-lines" style="border-top: 1px solid var(--line);">
+      <div><div class="settings-label">Maksymalna liczba linii</div><div class="settings-desc">Po ilu linijkach pojawi się wewnętrzny pasek przewijania</div></div>
+      <div id="opt-expand-lines-trigger" class="n-btn" style="width: 100%; justify-content: space-between; padding: 10px 16px;">
+        <span id="opt-expand-lines-text">50 linii</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </div>
     </div>
   </div>
@@ -410,6 +351,7 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
 
 <div id="toast-container"></div>
 </div>
+
 <script>
 window.addEventListener('error', e => { const b = document.getElementById('error-bar'); if(b){ b.style.display='block'; b.textContent = 'BŁĄD: ' + e.message; } });
 
@@ -440,7 +382,11 @@ window.Hub = {
   modules: new Map(),
   activeModule: null,
   activeAbort: null,
-  settings: { accent: '#818cf8', menuStyle: 'bottom', gridView: false, haptics: true, noAccent: false, scopeHome: false, scopeDrawer: false, scopeBtns: false },
+  settings: { 
+    accent: '#818cf8', menuStyle: 'bottom', gridView: false, haptics: true, 
+    noAccent: false, scopeHome: false, scopeDrawer: false, scopeBtns: false,
+    autoExpand: true, autoExpandLines: 50
+  },
   
   db: {
     open: () => new Promise((res, rej) => { const r = indexedDB.open("WarsztatDB", 1); r.onupgradeneeded = e => { if(!e.target.result.objectStoreNames.contains("kv")) e.target.result.createObjectStore("kv"); }; r.onsuccess = e => res(e.target.result); r.onerror = e => rej(e.target.error); }),
@@ -457,6 +403,25 @@ window.Hub = {
       else if (style === 'medium') navigator.vibrate(20);
       else if (style === 'success') navigator.vibrate([10, 50, 20]);
       else navigator.vibrate(15);
+    }
+  },
+
+  resizeTextarea: function(el) {
+    if (!Hub.settings.autoExpand) {
+      el.style.height = ''; // Reset to CSS default
+      el.style.overflowY = 'auto';
+      return;
+    }
+    el.style.height = 'auto';
+    const lineHeight = 24; // 16px font * 1.5 line-height
+    const maxHeight = (Hub.settings.autoExpandLines + 1) * lineHeight; 
+    
+    if (el.scrollHeight > maxHeight) {
+      el.style.height = maxHeight + 'px';
+      el.style.overflowY = 'auto';
+    } else {
+      el.style.height = (el.scrollHeight + lineHeight) + 'px';
+      el.style.overflowY = 'hidden';
     }
   },
 
@@ -531,218 +496,229 @@ window.Hub = {
     document.getElementById(isGrid ? 'opt-view-grid' : 'opt-view-list').classList.add('active');
     Hub.db.set("grid_view", isGrid);
   },
-download: function(blob, filename) {
-  Hub.haptic('success');
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-},
 
-debounce: function(fn, delay = 200) {
-  let timer;
-  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
-},
+  download: function(blob, filename) {
+    Hub.haptic('success');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
 
-throttle: function(fn, delay = 200) {
-  let last = 0, timer;
-  return (...args) => {
-    const now = Date.now(); const remaining = delay - (now - last);
-    if (remaining <= 0) { last = now; fn(...args); }
-    else if (!timer) {
-      timer = setTimeout(() => { last = Date.now(); timer = null; fn(...args); }, remaining);
-    }
-  };
-},
+  debounce: function(fn, delay = 200) {
+    let timer;
+    return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
+  },
 
-copy: function(text, btnEl) {
-  if (!text) return;
-  Hub.haptic('light');
-  navigator.clipboard.writeText(text).then(() => {
-    const originalHTML = btnEl.innerHTML;
-    btnEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-    setTimeout(() => { btnEl.innerHTML = originalHTML; }, 1500);
-  }).catch(() => showToast("Błąd kopiowania"));
-},
-
-backButtonHtml: `<button class="n-back" onclick="history.back()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>`,
-
-showSelect: async function({ title, options, current, anchor, signal, center = false }) {
-  const style = Hub.settings.menuStyle;
-  const useDropdown = (style === "dropdown") && anchor;
-
-  return new Promise(resolve => {
-    const overlay = document.createElement('div');
-    overlay.className = 'hub-select-overlay' + (useDropdown ? ' dropdown-mode' : '');
-
-    if (useDropdown) {
-      const rect = anchor.getBoundingClientRect();
-      const ddWidth = Math.max(rect.width, 200);
-      let ddLeft = rect.left + rect.width / 2 - ddWidth / 2;
-      ddLeft = Math.max(10, Math.min(ddLeft, window.innerWidth - ddWidth - 10));
-      const itemStyle = center ? 'justify-content: center; text-align: center; gap: 0;' : '';
-      overlay.innerHTML = `
-        <div class="hub-select-dropdown" style="top:${rect.bottom + 4}px; left:${ddLeft}px; width:${ddWidth}px;">
-          ${options.map(o => `
-            <div class="hub-select-dd-item ${o.id === current ? 'active' : ''}" data-id="${o.id}" style="${itemStyle}">
-              ${(!center && o.icon) ? `<div style="width:16px;height:16px;opacity:0.7;">${o.icon}</div>` : ''}
-              <span>${o.label}</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    } else {
-      overlay.innerHTML = `
-        <div class="hub-select-sheet">
-          ${title ? `<div class="hub-select-title">${title}</div>` : ''}
-          ${options.map(o => `
-            <div class="hub-select-item ${o.id === current ? 'active' : ''} ${center ? 'centered' : ''}" data-id="${o.id}">
-              ${(!center && o.icon) ? `<div style="width:18px;height:18px;opacity:0.7;">${o.icon}</div>` : ''}
-              <span>${o.label}</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-
-    document.body.appendChild(overlay);
-    
-    if (useDropdown) {
-      const dd = overlay.querySelector('.hub-select-dropdown');
-      const ddRect = dd.getBoundingClientRect();
-      const rect = anchor.getBoundingClientRect();
-      if (ddRect.bottom > window.innerHeight - 10) {
-        dd.style.top = Math.max(10, rect.top - ddRect.height - 4) + 'px';
+  throttle: function(fn, delay = 200) {
+    let last = 0, timer;
+    return (...args) => {
+      const now = Date.now(); const remaining = delay - (now - last);
+      if (remaining <= 0) { last = now; fn(...args); }
+      else if (!timer) {
+        timer = setTimeout(() => { last = Date.now(); timer = null; fn(...args); }, remaining);
       }
-    }
-    
-    requestAnimationFrame(() => overlay.classList.add('open'));
-
-    const close = (val) => {
-      overlay.classList.remove('open');
-      setTimeout(() => overlay.remove(), 300);
-      resolve(val);
     };
+  },
 
-    overlay.addEventListener('click', (e) => {
-      const item = e.target.closest('[data-id]');
-      if (item) { Hub.haptic('light'); return close(item.dataset.id); }
-      if (e.target === overlay) close(null);
+  copy: function(text, btnEl) {
+    if (!text) return;
+    Hub.haptic('light');
+    navigator.clipboard.writeText(text).then(() => {
+      const originalHTML = btnEl.innerHTML;
+      btnEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+      setTimeout(() => { btnEl.innerHTML = originalHTML; }, 1500);
+    }).catch(() => showToast("Błąd kopiowania"));
+  },
+
+  backButtonHtml: `<button class="n-back" onclick="history.back()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>`,
+
+  showSelect: async function({ title, options, current, anchor, signal, center = false }) {
+    const style = Hub.settings.menuStyle;
+    const useDropdown = (style === "dropdown") && anchor;
+
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.className = 'hub-select-overlay' + (useDropdown ? ' dropdown-mode' : '');
+
+      if (useDropdown) {
+        const rect = anchor.getBoundingClientRect();
+        const ddWidth = Math.max(rect.width, 200);
+        let ddLeft = rect.left + rect.width / 2 - ddWidth / 2;
+        ddLeft = Math.max(10, Math.min(ddLeft, window.innerWidth - ddWidth - 10));
+        const itemStyle = center ? 'justify-content: center; text-align: center; gap: 0;' : '';
+        overlay.innerHTML = `
+          <div class="hub-select-dropdown" style="top:${rect.bottom + 4}px; left:${ddLeft}px; width:${ddWidth}px;">
+            ${options.map(o => `
+              <div class="hub-select-dd-item ${o.id === current ? 'active' : ''}" data-id="${o.id}" style="${itemStyle}">
+                ${(!center && o.icon) ? `<div style="width:16px;height:16px;opacity:0.7;">${o.icon}</div>` : ''}
+                <span>${o.label}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        overlay.innerHTML = `
+          <div class="hub-select-sheet">
+            ${title ? `<div class="hub-select-title">${title}</div>` : ''}
+            ${options.map(o => `
+              <div class="hub-select-item ${o.id === current ? 'active' : ''} ${center ? 'centered' : ''}" data-id="${o.id}">
+                ${(!center && o.icon) ? `<div style="width:18px;height:18px;opacity:0.7;">${o.icon}</div>` : ''}
+                <span>${o.label}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      document.body.appendChild(overlay);
+      
+      if (useDropdown) {
+        const dd = overlay.querySelector('.hub-select-dropdown');
+        const ddRect = dd.getBoundingClientRect();
+        const rect = anchor.getBoundingClientRect();
+        if (ddRect.bottom > window.innerHeight - 10) {
+          dd.style.top = Math.max(10, rect.top - ddRect.height - 4) + 'px';
+        }
+      }
+      
+      requestAnimationFrame(() => overlay.classList.add('open'));
+
+      const close = (val) => {
+        overlay.classList.remove('open');
+        setTimeout(() => overlay.remove(), 300);
+        resolve(val);
+      };
+
+      overlay.addEventListener('click', (e) => {
+        const item = e.target.closest('[data-id]');
+        if (item) { Hub.haptic('light'); return close(item.dataset.id); }
+        if (e.target === overlay) close(null);
+      });
+      if (signal) signal.addEventListener('abort', () => close(null), { once: true });
     });
-    if (signal) signal.addEventListener('abort', () => close(null), { once: true });
-  });
-},
+  },
 
-showModal: function({ content }) {
-  const overlay = document.createElement('div');
-  overlay.className = 'hub-modal-overlay';
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'hub-modal-close';
-  closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-  const contentWrap = document.createElement('div');
-  contentWrap.className = 'hub-modal-content';
-  if (typeof content === 'string') contentWrap.innerHTML = content;
-  else contentWrap.appendChild(content);
-  overlay.appendChild(closeBtn); overlay.appendChild(contentWrap);
-  document.body.appendChild(overlay);
-  requestAnimationFrame(() => overlay.classList.add('open'));
-  const close = () => { overlay.classList.remove('open'); setTimeout(() => overlay.remove(), 300); };
-  closeBtn.addEventListener('click', () => { Hub.haptic('light'); close(); });
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-  return { close, element: overlay, content: contentWrap };
-},
-
-showConfirm: function(message, { okLabel = "OK", cancelLabel = "Anuluj" } = {}) {
-  return new Promise(resolve => {
+  showModal: function({ content }) {
     const overlay = document.createElement('div');
-    overlay.className = 'hub-confirm-overlay';
-    overlay.innerHTML = `
-      <div class="hub-confirm-box">
-        <div class="hub-confirm-msg">${message}</div>
-        <div class="hub-confirm-btns">
-          <button class="n-btn" data-action="cancel">${cancelLabel}</button>
-          <button class="n-btn" data-action="ok" style="border-color:var(--accent); color:var(--accent);">${okLabel}</button>
-        </div>
-      </div>
-    `;
+    overlay.className = 'hub-modal-overlay';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'hub-modal-close';
+    closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+    const contentWrap = document.createElement('div');
+    contentWrap.className = 'hub-modal-content';
+    if (typeof content === 'string') contentWrap.innerHTML = content;
+    else contentWrap.appendChild(content);
+    overlay.appendChild(closeBtn); overlay.appendChild(contentWrap);
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.classList.add('open'));
-    const close = (val) => { overlay.classList.remove('open'); setTimeout(() => overlay.remove(), 300); resolve(val); };
-    overlay.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-action]');
-      if (btn) {
-        Hub.haptic(btn.dataset.action === 'ok' ? 'medium' : 'light');
-        return close(btn.dataset.action === 'ok');
-      }
-      if (e.target === overlay) close(false);
+    const close = () => { overlay.classList.remove('open'); setTimeout(() => overlay.remove(), 300); };
+    closeBtn.addEventListener('click', () => { Hub.haptic('light'); close(); });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    return { close, element: overlay, content: contentWrap };
+  },
+
+  showConfirm: function(message, { okLabel = "OK", cancelLabel = "Anuluj" } = {}) {
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.className = 'hub-confirm-overlay';
+      overlay.innerHTML = `
+        <div class="hub-confirm-box">
+          <div class="hub-confirm-msg">${message}</div>
+          <div class="hub-confirm-btns">
+            <button class="n-btn" data-action="cancel">${cancelLabel}</button>
+            <button class="n-btn" data-action="ok" style="border-color:var(--accent); color:var(--accent);">${okLabel}</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      requestAnimationFrame(() => overlay.classList.add('open'));
+      const close = (val) => { overlay.classList.remove('open'); setTimeout(() => overlay.remove(), 300); resolve(val); };
+      overlay.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (btn) {
+          Hub.haptic(btn.dataset.action === 'ok' ? 'medium' : 'light');
+          return close(btn.dataset.action === 'ok');
+        }
+        if (e.target === overlay) close(false);
+      });
     });
-  });
-},
-renderGrid: function() {
-  const grid = document.getElementById("modules-grid");
-  grid.innerHTML = "";
-  if (Hub.modules.size === 0) { grid.innerHTML = '<div class="empty-state">Brak modułów w systemie.</div>'; return; }
-  
-  const iconMap = {
-    "konwerter": `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
-    "qr": `<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`,
-    "jednostki": `<svg viewBox="0 0 24 24"><path d="M12 3v18"></path><path d="M3 7h18"></path><path d="M6 7l-3 7h6l-3-7z"></path><path d="M18 7l-3 7h6l-3-7z"></path></svg>`,
-    "skaner-pdf": `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
-    "oczyszczacz": `<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
-    "zdjecie-dokument": `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><circle cx="9" cy="10" r="2"></circle><line x1="15" y1="8" x2="21" y2="8"></line><line x1="15" y1="12" x2="21" y2="12"></line><line x1="7" y1="16" x2="21" y2="16"></line></svg>`,
-    "kalkulator-prog": `<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>`
-  };
-  const sortedModules = Array.from(Hub.modules.values()).sort((a, b) => a.title.localeCompare(b.title, 'pl', { sensitivity: 'base' }));
-  sortedModules.forEach(mod => {
-    const icon = iconMap[mod.id] || `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
-    const tile = document.createElement("div"); tile.className = "tile";
-    tile.innerHTML = `<div class="tile-icon">${icon}</div><div class="tile-content"><div class="tile-title">${mod.title}</div><div class="tile-desc">${mod.desc||""}</div></div>`;
-    tile.onclick = () => { Hub.haptic('medium'); Hub.openModule(mod.id, true); };
-    grid.appendChild(tile);
-  });
-},
+  },
 
-cleanup: function() {
-  if (Hub.activeAbort) { Hub.activeAbort.abort(); Hub.activeAbort = null; }
-  if (Hub.activeModule && Hub.activeModule.unmount) { try { Hub.activeModule.unmount(); } catch(e){} }
-  Hub.activeModule = null;
-  document.getElementById("view-module").innerHTML = "";
-  document.querySelectorAll('.hub-select-overlay, .hub-modal-overlay, .hub-confirm-overlay').forEach(el => el.remove());
-},
+  renderGrid: function() {
+    const grid = document.getElementById("modules-grid");
+    grid.innerHTML = "";
+    if (Hub.modules.size === 0) { grid.innerHTML = '<div class="empty-state">Brak modułów w systemie.</div>'; return; }
+    
+    const iconMap = {
+      "konwerter": `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
+      "qr": `<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`,
+      "jednostki": `<svg viewBox="0 0 24 24"><path d="M12 3v18"></path><path d="M3 7h18"></path><path d="M6 7l-3 7h6l-3-7z"></path><path d="M18 7l-3 7h6l-3-7z"></path></svg>`,
+      "skaner-pdf": `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
+      "oczyszczacz": `<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
+      "zdjecie-dokument": `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><circle cx="9" cy="10" r="2"></circle><line x1="15" y1="8" x2="21" y2="8"></line><line x1="15" y1="12" x2="21" y2="12"></line><line x1="7" y1="16" x2="21" y2="16"></line></svg>`,
+      "kalkulator-prog": `<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>`
+    };
+    const sortedModules = Array.from(Hub.modules.values()).sort((a, b) => a.title.localeCompare(b.title, 'pl', { sensitivity: 'base' }));
+    sortedModules.forEach(mod => {
+      const icon = iconMap[mod.id] || `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
+      const tile = document.createElement("div"); tile.className = "tile";
+      tile.innerHTML = `<div class="tile-icon">${icon}</div><div class="tile-content"><div class="tile-title">${mod.title}</div><div class="tile-desc">${mod.desc||""}</div></div>`;
+      tile.onclick = () => { Hub.haptic('medium'); Hub.openModule(mod.id, true); };
+      grid.appendChild(tile);
+    });
+  },
 
-showHome: function(push = false) {
-  Hub.cleanup();
-  document.getElementById("drawer").classList.remove("open");
-  document.getElementById("drawer-overlay").classList.remove("open");
-  document.getElementById("view-module").classList.remove("active");
-  document.getElementById("view-settings").classList.remove("active");
-  document.getElementById("view-home").classList.remove("hidden");
-  document.getElementById("app-title").textContent = "Workspace";
-  document.getElementById("fab-add").classList.remove("hidden");
-  document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
-  document.getElementById('drawer-home').classList.add('active');
-  if (push) { if (location.hash !== '' && location.hash !== '#') history.pushState(null, "", "./"); }
-  else { history.replaceState(null, "", "./"); }
-},
+  cleanup: function() {
+    if (Hub.activeAbort) { Hub.activeAbort.abort(); Hub.activeAbort = null; }
+    if (Hub.activeModule && Hub.activeModule.unmount) { try { Hub.activeModule.unmount(); } catch(e){} }
+    Hub.activeModule = null;
+    document.getElementById("view-module").innerHTML = "";
+    document.querySelectorAll('.hub-select-overlay, .hub-modal-overlay, .hub-confirm-overlay').forEach(el => el.remove());
+  },
 
-openModule: function(id, push = true) {
-  const mod = Hub.modules.get(id); if(!mod) return Hub.showHome();
-  Hub.cleanup();
-  document.getElementById("drawer").classList.remove("open");
-  document.getElementById("drawer-overlay").classList.remove("open");
-  document.getElementById("view-home").classList.add("hidden");
-  document.getElementById("view-settings").classList.remove("active");
-  document.getElementById("view-module").classList.add("active");
-  document.getElementById("app-title").textContent = mod.title.toUpperCase();
-  document.getElementById("fab-add").classList.add("hidden");
-  document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
-  Hub.activeModule = mod; Hub.activeAbort = new AbortController();
-  if (push && location.hash !== `#${id}`) history.pushState(null, "", `#${id}`);
-  mod.mount(document.getElementById("view-module"), Hub.activeAbort.signal);
-  document.getElementById('app-scroll').scrollTo(0, 0);
-},
+  showHome: function(push = false) {
+    Hub.cleanup();
+    document.getElementById("drawer").classList.remove("open");
+    document.getElementById("drawer-overlay").classList.remove("open");
+    document.getElementById("view-module").classList.remove("active");
+    document.getElementById("view-settings").classList.remove("active");
+    document.getElementById("view-home").classList.remove("hidden");
+    document.getElementById("app-title").textContent = "Workspace";
+    document.getElementById("fab-add").classList.remove("hidden");
+    document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('drawer-home').classList.add('active');
+    if (push) { if (location.hash !== '' && location.hash !== '#') history.pushState(null, "", "./"); }
+    else { history.replaceState(null, "", "./"); }
+  },
+
+  openModule: function(id, push = true) {
+    const mod = Hub.modules.get(id); if(!mod) return Hub.showHome();
+    Hub.cleanup();
+    document.getElementById("drawer").classList.remove("open");
+    document.getElementById("drawer-overlay").classList.remove("open");
+    document.getElementById("view-home").classList.add("hidden");
+    document.getElementById("view-settings").classList.remove("active");
+    document.getElementById("view-module").classList.add("active");
+    document.getElementById("app-title").textContent = mod.title.toUpperCase();
+    document.getElementById("fab-add").classList.add("hidden");
+    document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
+    Hub.activeModule = mod; Hub.activeAbort = new AbortController();
+    if (push && location.hash !== `#${id}`) history.pushState(null, "", `#${id}`);
+    mod.mount(document.getElementById("view-module"), Hub.activeAbort.signal);
+    document.getElementById('app-scroll').scrollTo(0, 0);
+    
+    // Auto-apply resize to all textareas in the module
+    setTimeout(() => {
+      document.getElementById("view-module").querySelectorAll('textarea').forEach(el => {
+        el.addEventListener('input', () => Hub.resizeTextarea(el));
+        Hub.resizeTextarea(el);
+      });
+    }, 50);
+  },
+
   openSettings: async function(push = true) {
     Hub.cleanup();
     document.getElementById("drawer").classList.remove("open");
@@ -756,21 +732,51 @@ openModule: function(id, push = true) {
     document.getElementById('drawer-settings').classList.add('active');
     if (push && location.hash !== '#settings') history.pushState(null, "", `#settings`);
 
-    // 1. Menu wyboru
     const b1 = document.getElementById("opt-bottom"), b2 = document.getElementById("opt-dropdown");
     if(Hub.settings.menuStyle === "bottom") { b1.classList.add("active"); b2.classList.remove("active"); }
     else { b2.classList.add("active"); b1.classList.remove("active"); }
     b1.onclick = () => { Hub.haptic('light'); Hub.settings.menuStyle = "bottom"; Hub.db.set("menu_style", "bottom"); b1.classList.add("active"); b2.classList.remove("active"); };
     b2.onclick = () => { Hub.haptic('light'); Hub.settings.menuStyle = "dropdown"; Hub.db.set("menu_style", "dropdown"); b2.classList.add("active"); b1.classList.remove("active"); };
 
-    // 2. Gęstość widoku
     const v1 = document.getElementById("opt-view-list"), v2 = document.getElementById("opt-view-grid");
     if(!Hub.settings.gridView) { v1.classList.add("active"); v2.classList.remove("active"); }
     else { v2.classList.add("active"); v1.classList.remove("active"); }
     v1.onclick = () => { Hub.haptic('light'); Hub.applyGridView(false); };
     v2.onclick = () => { Hub.haptic('light'); Hub.applyGridView(true); };
 
-    // 3. Paleta Akcentów
+    const chkAutoExpand = document.getElementById("opt-auto-expand");
+    const rowExpandLines = document.getElementById("row-expand-lines");
+    const expandLinesTrigger = document.getElementById("opt-expand-lines-trigger");
+    const expandLinesText = document.getElementById("opt-expand-lines-text");
+
+    chkAutoExpand.checked = Hub.settings.autoExpand;
+    rowExpandLines.style.display = Hub.settings.autoExpand ? "flex" : "none";
+    expandLinesText.textContent = `${Hub.settings.autoExpandLines} linii`;
+
+    chkAutoExpand.onchange = (e) => {
+      Hub.haptic('medium');
+      Hub.settings.autoExpand = e.target.checked;
+      rowExpandLines.style.display = e.target.checked ? "flex" : "none";
+      Hub.db.set("auto_expand", e.target.checked);
+      // Apply to current module if open (but we are in settings, so it's fine)
+    };
+
+    expandLinesTrigger.onclick = async () => {
+      const opts = [
+        { id: 10, label: "10 linii" },
+        { id: 20, label: "20 linii" },
+        { id: 30, label: "30 linii" },
+        { id: 50, label: "50 linii" },
+        { id: 100, label: "100 linii" }
+      ];
+      const choice = await Hub.showSelect({ title: "Maksymalna liczba linii", options: opts, current: Hub.settings.autoExpandLines, anchor: expandLinesTrigger, signal });
+      if (choice) {
+        Hub.settings.autoExpandLines = choice;
+        expandLinesText.textContent = `${choice} linii`;
+        Hub.db.set("auto_expand_lines", choice);
+      }
+    };
+
     const presets = [
       { name: 'Indygo', hex: '#818cf8' }, { name: 'Błękit', hex: '#38bdf8' },
       { name: 'Szmaragd', hex: '#34d399' }, { name: 'Róż', hex: '#f472b6' },
@@ -796,7 +802,6 @@ openModule: function(id, push = true) {
       Hub.openColorPicker(Hub.settings.accent);
     };
 
-    // 4. Zasięg koloru (Nowe Przełączniki)
     const chkMaster = document.getElementById('opt-accent-master');
     const chkHome = document.getElementById('opt-scope-home');
     const chkDrawer = document.getElementById('opt-scope-drawer');
@@ -816,7 +821,6 @@ openModule: function(id, push = true) {
     chkDrawer.onchange = (e) => { Hub.haptic('light'); Hub.settings.scopeDrawer = e.target.checked; Hub.applyScope(); };
     chkBtns.onchange = (e) => { Hub.haptic('light'); Hub.settings.scopeBtns = e.target.checked; Hub.applyScope(); };
 
-    // 5. Wibracje
     const hapticToggle = document.getElementById('opt-haptics');
     hapticToggle.checked = Hub.settings.haptics;
     hapticToggle.onchange = (e) => {
@@ -825,7 +829,6 @@ openModule: function(id, push = true) {
       if (e.target.checked) Hub.haptic('medium');
     };
 
-    // 6. Reset
     document.getElementById('btn-reset-settings').onclick = async () => {
       Hub.haptic('medium');
       const confirm = await Hub.showConfirm("Czy na pewno chcesz przywrócić wszystkie ustawienia domyślne? Twoje moduły i dane w nich pozostaną nietknięte.", { okLabel: "Resetuj", cancelLabel: "Anuluj" });
@@ -954,13 +957,14 @@ openModule: function(id, push = true) {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Odczyt nowych ustawień z bazy danych przy starcie
-  const [accent, menuStyle, gridView, haptics, scopeData] = await Promise.all([
+  const [accent, menuStyle, gridView, haptics, scopeData, autoExpand, autoExpandLines] = await Promise.all([
     Hub.db.get("accent_color", "#818cf8"),
     Hub.db.get("menu_style", "bottom"),
     Hub.db.get("grid_view", false),
     Hub.db.get("haptics", true),
-    Hub.db.get("accent_scope", { noAccent: false, home: false, drawer: false, btns: false })
+    Hub.db.get("accent_scope", { noAccent: false, home: false, drawer: false, btns: false }),
+    Hub.db.get("auto_expand", true),
+    Hub.db.get("auto_expand_lines", 50)
   ]);
 
   Hub.settings.accent = accent; 
@@ -972,6 +976,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   Hub.settings.scopeHome = scopeData.home;
   Hub.settings.scopeDrawer = scopeData.drawer;
   Hub.settings.scopeBtns = scopeData.btns;
+  
+  Hub.settings.autoExpand = autoExpand;
+  Hub.settings.autoExpandLines = autoExpandLines;
 
   Hub.applyAccent(accent); 
   Hub.applyGridView(gridView); 
