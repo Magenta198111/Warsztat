@@ -1,11 +1,13 @@
 {
-  "name": "Warsztat",
-  "short_name": "Warsztat",
+  "name": "Workspace",
+  "short_name": "Workspace",
+  "description": "Twój osobisty hub z narzędziami offline.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#14171c",
-  "theme_color": "#14171c",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "./icon-192.png",
