@@ -9,13 +9,27 @@
         <style>
           .pal-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 12px; }
           
-          .pal-drop-zone { 
-            border: 2px dashed var(--line); border-radius: 8px; padding: 40px 20px; 
-            text-align: center; color: var(--muted); cursor: pointer; 
-            transition: border-color 0.2s; margin-top: 16px; margin-bottom: 24px;
+          .pal-intro-box {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 32px 20px;
+            text-align: center;
+            margin-top: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
           }
-          .pal-drop-zone:active { border-color: var(--accent); }
-          
+
+          .pal-icon-wrapper {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: var(--bg); border: 1px solid var(--line);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent);
+          }
+
           .pal-preview-img {
             width: 100%; border-radius: 8px; border: 1px solid var(--line);
             display: block; object-fit: contain; max-height: 300px; background: var(--surface);
@@ -48,10 +62,16 @@
 
         <div id="pal-setup-card" style="margin-top: 16px;">
           <input type="file" id="pal-file" accept="image/*" style="display:none;">
-          <div id="pal-drop-zone" class="pal-drop-zone">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px; opacity:0.5;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-            <div style="font-size: 15px; font-weight: 500;">Kliknij, aby wybrać zdjęcie</div>
-            <div style="font-size: 13px; margin-top: 6px; opacity: 0.7;">Wyciągniemy z niego dominujące kolory</div>
+          
+          <div class="pal-intro-box">
+            <div class="pal-icon-wrapper">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </div>
+            <div>
+              <div style="font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 8px;">Wyciągnij paletę barw</div>
+              <div style="font-size: 14px; color: var(--muted); line-height: 1.5;">Wybierz zdjęcie, a my znajdziemy jego dominujące kolory i podamy ich kody HEX.</div>
+            </div>
+            <button id="pal-pick-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; margin-top: 8px;">Wybierz zdjęcie</button>
           </div>
         </div>
 
@@ -68,7 +88,7 @@
 
       const $ = id => container.querySelector("#" + id);
       const fileInput = $("pal-file");
-      const dropZone = $("pal-drop-zone");
+      const pickBtn = $("pal-pick-btn");
       const setupCard = $("pal-setup-card");
       const resultCard = $("pal-result-card");
       const previewImg = $("pal-preview");
@@ -85,6 +105,12 @@
         return (yiq >= 128) ? '#000000' : '#ffffff';
       }
 
+      function colorDistance(c1, c2) {
+        const r1 = parseInt(c1.slice(1, 3), 16), g1 = parseInt(c1.slice(3, 5), 16), b1 = parseInt(c1.slice(5, 7), 16);
+        const r2 = parseInt(c2.slice(1, 3), 16), g2 = parseInt(c2.slice(3, 5), 16), b2 = parseInt(c2.slice(5, 7), 16);
+        return Math.sqrt(Math.pow(r2 - r1, 2) + Math.pow(g2 - g1, 2) + Math.pow(b2 - b1, 2));
+      }
+
       async function extractColors(file) {
         if (!file || !file.type.startsWith('image/')) return showToast("Wybierz prawidłowy plik graficzny.");
 
@@ -96,12 +122,12 @@
           const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
           
           const canvas = document.createElement('canvas');
-          canvas.width = 64;
-          canvas.height = 64;
+          canvas.width = 100;
+          canvas.height = 100;
           const ctx = canvas.getContext('2d', { willReadFrequently: true });
           
-          ctx.drawImage(bitmap, 0, 0, 64, 64);
-          const imgData = ctx.getImageData(0, 0, 64, 64).data;
+          ctx.drawImage(bitmap, 0, 0, 100, 100);
+          const imgData = ctx.getImageData(0, 0, 100, 100).data;
           
           const colorCounts = {};
           
@@ -113,9 +139,9 @@
             
             if (a < 128) continue;
             
-            const qr = Math.round(r / 24) * 24;
-            const qg = Math.round(g / 24) * 24;
-            const qb = Math.round(b / 24) * 24;
+            const qr = Math.round(r / 16) * 16;
+            const qg = Math.round(g / 16) * 16;
+            const qb = Math.round(b / 16) * 16;
             
             const hex = "#" + 
               Math.min(255, qr).toString(16).padStart(2, '0') + 
@@ -125,16 +151,33 @@
             colorCounts[hex] = (colorCounts[hex] || 0) + 1;
           }
 
-          const sortedColors = Object.keys(colorCounts)
-            .sort((a, b) => colorCounts[b] - colorCounts[a])
-            .slice(0, 6);
+          const sortedColors = Object.keys(colorCounts).sort((a, b) => colorCounts[b] - colorCounts[a]);
+          
+          const finalColors = [];
+          const MIN_DISTANCE = 40;
+
+          for (const color of sortedColors) {
+            if (finalColors.length >= 6) break;
+            
+            let isDistinct = true;
+            for (const selected of finalColors) {
+              if (colorDistance(color, selected) < MIN_DISTANCE) {
+                isDistinct = false;
+                break;
+              }
+            }
+            
+            if (isDistinct) {
+              finalColors.push(color);
+            }
+          }
 
           swatchesContainer.innerHTML = "";
           
-          if (sortedColors.length === 0) {
-            swatchesContainer.innerHTML = '<div style="grid-column: span 3; text-align: center; color: var(--muted);">Nie udało się wyodrębnić kolorów.</div>';
+          if (finalColors.length === 0) {
+            swatchesContainer.innerHTML = '<div style="grid-column: span 3; text-align: center; color: var(--muted); padding: 20px;">Nie udało się wyodrębnić kolorów.</div>';
           } else {
-            sortedColors.forEach((hex, index) => {
+            finalColors.forEach((hex) => {
               const textColor = getContrastColor(hex);
               const swatch = document.createElement("div");
               swatch.className = "pal-swatch";
@@ -163,7 +206,7 @@
         }
       }
 
-      dropZone.addEventListener("click", () => fileInput.click(), { signal });
+      pickBtn.addEventListener("click", () => fileInput.click(), { signal });
       
       fileInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
