@@ -51,10 +51,13 @@
           }
           .inv-item-remove:active { background: rgba(239, 68, 68, 0.1); }
           
+          /* POPRAWIONY LAYOUT POZYCJI (4 KOLUMNY ZAMIAST 5) */
           .inv-item-grid {
-            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 8px;
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1.5fr 1fr; 
+            gap: 12px;
           }
-          .inv-item-grid .full { grid-column: span 5; }
+          .inv-item-grid .full { grid-column: span 4; }
           
           .inv-add-btn {
             width: 100%; padding: 12px; background: transparent; border: 1px dashed var(--line);
@@ -193,23 +196,23 @@
             </div>
             <div class="inv-item-grid">
               <div class="full">
-                <label class="inv-label">Nazwa towaru / usługi</label>
+                <label class="inv-label" style="margin-top:0;">Nazwa towaru / usługi</label>
                 <input type="text" class="inv-input item-name" data-idx="${i}" value="${item.name}" placeholder="np. Projekt graficzny">
               </div>
               <div>
-                <label class="inv-label">Ilość</label>
+                <label class="inv-label" style="margin-top:0;">Ilość</label>
                 <input type="number" step="0.01" min="0" class="inv-input item-qty" data-idx="${i}" value="${item.qty}">
               </div>
               <div>
-                <label class="inv-label">J.m.</label>
+                <label class="inv-label" style="margin-top:0;">J.m.</label>
                 <input type="text" class="inv-input item-unit" data-idx="${i}" value="${item.unit}" placeholder="szt.">
               </div>
               <div>
-                <label class="inv-label">Cena netto</label>
+                <label class="inv-label" style="margin-top:0;">Cena netto</label>
                 <input type="number" step="0.01" min="0" class="inv-input item-price" data-idx="${i}" value="${item.price}">
               </div>
               <div>
-                <label class="inv-label">VAT %</label>
+                <label class="inv-label" style="margin-top:0;">VAT %</label>
                 <input type="number" step="1" min="0" max="100" class="inv-input item-vat" data-idx="${i}" value="${item.vat}">
               </div>
             </div>
@@ -419,18 +422,21 @@
 
         y += 35;
 
+        // --- POPRAWIONE WSPÓŁRZĘDNE KOLUMN (DUŻO MIEJSCA) ---
+        const xLp = M;           // 100
+        const xName = M + 50;    // 150
+        const xQty = 540;        // Prawy
+        const xUnit = 570;       // Lewy
+        const xPrice = 740;      // Prawy
+        const xVat = 830;        // Prawy
+        const xNet = 940;        // Prawy
+        const xGross = 1140;     // Prawy (W - M)
+
         ctx.font = "bold 16px sans-serif";
         ctx.textAlign = "left";
-        ctx.fillText("Lp.", M, y);
-        ctx.fillText("Nazwa towaru / usługi", M + 50, y);
+        ctx.fillText("Lp.", xLp, y);
+        ctx.fillText("Nazwa towaru / usługi", xName, y);
         
-        const xQty = 650;
-        const xUnit = 710;
-        const xPrice = 820;
-        const xVat = 920;
-        const xNet = 1040;
-        const xGross = 1140;
-
         ctx.textAlign = "right";
         ctx.fillText("Ilość", xQty, y);
         
@@ -458,8 +464,8 @@
           const gross = net + vat;
 
           ctx.textAlign = "left";
-          ctx.fillText(String(idx + 1), M, y);
-          ctx.fillText(item.name.substring(0, 40) || "-", M + 50, y);
+          ctx.fillText(String(idx + 1), xLp, y);
+          ctx.fillText(item.name.substring(0, 38) || "-", xName, y);
 
           ctx.textAlign = "right";
           ctx.fillText(String(item.qty), xQty, y);
@@ -503,8 +509,8 @@
         ctx.fillText("Stawka", M, summaryY);
         ctx.textAlign = "right";
         ctx.fillText("Netto", M + 150, summaryY);
-        ctx.fillText("Kwota VAT", M + 270, summaryY);
-        ctx.fillText("Brutto", M + 390, summaryY);
+        ctx.fillText("Kwota VAT", M + 280, summaryY);
+        ctx.fillText("Brutto", M + 410, summaryY);
 
         summaryY += 20;
         
@@ -513,28 +519,28 @@
           ctx.fillText(`${rate}%`, M, summaryY);
           ctx.textAlign = "right";
           ctx.fillText(formatMoneyPlain(vals.net), M + 150, summaryY);
-          ctx.fillText(formatMoneyPlain(vals.vat), M + 270, summaryY);
-          ctx.fillText(formatMoneyPlain(vals.net + vals.vat), M + 390, summaryY);
+          ctx.fillText(formatMoneyPlain(vals.vat), M + 280, summaryY);
+          ctx.fillText(formatMoneyPlain(vals.net + vals.vat), M + 410, summaryY);
           summaryY += 20;
         }
 
         let totalY = y;
         ctx.font = "18px sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText("Razem netto:", xVat, totalY);
+        ctx.fillText("Razem netto:", xNet, totalY); 
         ctx.font = "bold 18px sans-serif";
         ctx.fillText(formatMoneyPlain(totalNet) + " zł", xGross, totalY);
 
         totalY += 30;
         ctx.font = "18px sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText("Kwota VAT:", xVat, totalY);
+        ctx.fillText("Kwota VAT:", xNet, totalY);
         ctx.fillText(formatMoneyPlain(totalVat) + " zł", xGross, totalY);
 
         totalY += 30;
         ctx.font = "bold 20px sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText("RAZEM BRUTTO:", xVat, totalY);
+        ctx.fillText("RAZEM BRUTTO:", xNet, totalY);
         ctx.fillText(formatMoneyPlain(totalGross) + " zł", xGross, totalY);
 
         y = Math.max(summaryY, totalY) + 30;
