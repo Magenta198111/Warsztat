@@ -81,11 +81,18 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .drawer-header { padding: 24px 20px; padding-top: calc(24px + var(--safe-top)); border-bottom: 1px solid var(--line); }
 .drawer-title { font-size: 18px; font-weight: 700; margin: 0; }
 .drawer-menu { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
-.drawer-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 6px; color: var(--ink); font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+.drawer-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 6px; color: var(--ink); font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s; position: relative; }
 .drawer-item:active { background: var(--surface-hover); }
 .drawer-item.active { background: var(--surface-hover); color: var(--accent); }
 .drawer-item svg { width: 20px; height: 20px; color: var(--muted); stroke-width: 1.5; transition: color 0.2s; }
 .drawer-item.active svg { color: var(--accent); }
+
+.badge-dot {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+  display: none;
+}
+.badge-dot.show { display: block; }
 
 .container { max-width: 600px; margin: 0 auto; padding: 20px; padding-bottom: calc(100px + var(--safe-bottom)); padding-left: max(20px, var(--safe-left)); padding-right: max(20px, var(--safe-right)); }
 .list { display: flex; flex-direction: column; gap: 12px; }
@@ -113,6 +120,27 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .list.grid-view .tile-heart:active { transform: scale(0.8); }
 .tile-heart.active { color: var(--accent); fill: var(--accent); }
 
+.search-container {
+  position: sticky; top: calc(54px + var(--safe-top)); z-index: 90;
+  background: var(--bg); padding: 12px 20px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 8px;
+}
+.search-icon { color: var(--muted); width: 20px; height: 20px; flex-shrink: 0; }
+.search-input {
+  flex: 1; background: transparent; border: none; color: var(--ink);
+  font-size: 16px; outline: none; padding: 4px 0;
+}
+.search-input::placeholder { color: var(--muted); }
+.search-clear { background: transparent; border: none; color: var(--muted); cursor: pointer; display: none; padding: 4px; }
+.search-clear.show { display: flex; }
+
+.changelog-item { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.changelog-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.changelog-ver { font-size: 18px; font-weight: 700; color: var(--accent); }
+.changelog-date { font-size: 12px; color: var(--muted); font-family: monospace; }
+.changelog-list { margin: 0; padding-left: 16px; color: var(--ink); font-size: 14px; line-height: 1.6; }
+.changelog-list li { margin-bottom: 4px; }
+
 body.font-small .tile-title { font-size: 13px; }
 body.font-small .tile-desc { font-size: 11px; }
 body.font-small .settings-label { font-size: 13px; }
@@ -126,7 +154,6 @@ body.font-large .settings-desc { font-size: 14px; }
 body.font-large .n-btn { font-size: 16px; }
 
 body.hide-desc .tile-desc { display: none; }
-
 body.no-anim * { transition: none !important; animation: none !important; }
 
 body.scope-home-icons .tile-icon svg { stroke: var(--accent); }
@@ -150,14 +177,13 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
 
 #view-module { display: none; }
 #view-module.active { display: block; animation: moduleIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
-@keyframes moduleIn { 
-  from { opacity: 0; transform: translateY(12px); } 
-  to { opacity: 1; transform: translateY(0); } 
-}
+@keyframes moduleIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 #view-settings { display: none; }
 #view-settings.active { display: block; }
 #view-backup { display: none; }
 #view-backup.active { display: block; }
+#view-changelog { display: none; }
+#view-changelog.active { display: block; }
 #view-home.hidden { display: none; }
 #fab-add.hidden { display: none; }
 
@@ -255,6 +281,37 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
 .update-toast span { flex: 1; font-size: 14px; color: var(--ink); }
 .update-toast button { background: var(--accent); color: var(--accent-ink); border: none; padding: 6px 12px; border-radius: 4px; font-weight: 600; cursor: pointer; }
 .update-toast button.close-btn { background: transparent; color: var(--muted); padding: 6px; }
+
+#pin-lock-overlay {
+  position: fixed; inset: 0; z-index: 99999; background: var(--bg);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  padding: 20px;
+}
+#pin-lock-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.pin-header { text-align: center; margin-bottom: 30px; }
+.pin-icon { width: 48px; height: 48px; color: var(--accent); margin-bottom: 16px; }
+.pin-title { font-size: 22px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+.pin-hint-text { font-size: 14px; color: var(--muted); font-style: italic; margin-bottom: 20px; }
+
+.pin-dots { display: flex; gap: 16px; margin-bottom: 40px; }
+.pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--muted); transition: background 0.2s, border-color 0.2s; }
+.pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+
+.pin-error { color: var(--danger); font-size: 14px; margin-bottom: 20px; min-height: 20px; font-weight: 500; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+.shake { animation: shake 0.3s ease-in-out; }
+
+.pin-numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 300px; }
+.pin-btn { 
+  aspect-ratio: 1; border-radius: 50%; background: var(--surface); border: 1px solid var(--line);
+  color: var(--ink); font-size: 24px; font-weight: 500; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.1s; outline: none;
+}
+.pin-btn:active { background: var(--surface-hover); }
+.pin-btn.empty { background: transparent; border: none; pointer-events: none; }
+.pin-btn.backspace { background: transparent; border: none; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -274,12 +331,15 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       <span>Ustawienia</span>
     </div>
-    
+    <div class="drawer-item" id="drawer-changelog" onclick="Hub.openChangelog()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path><path d="M2 12h20"></path></svg>
+      <span>Co nowego</span>
+      <div id="changelog-badge" class="badge-dot"></div>
+    </div>
     <div class="drawer-item" id="drawer-backup" onclick="Hub.openBackup()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
       <span>Kopia zapasowa</span>
     </div>
-
     <div class="drawer-item" onclick="Hub.refreshApp()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
       <span>Odśwież aplikację</span>
@@ -302,8 +362,20 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
   <h1 class="topbar-title" id="app-title">Workspace</h1>
 </div>
 
+<div id="search-area" class="search-container hidden">
+  <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+  <input type="text" id="search-input" class="search-input" placeholder="Szukaj modułów..." autocomplete="off" spellcheck="false">
+  <button id="search-clear" class="search-clear">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+  </button>
+</div>
+
 <main class="container" id="view-home"><div class="list" id="modules-grid"></div></main>
 <main class="container" id="view-module"></main>
+
+<main class="container" id="view-changelog">
+  <div id="changelog-content"></div>
+</main>
 
 <main class="container" id="view-backup">
   <div class="settings-block">
@@ -421,6 +493,31 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
         <span class="switch-slider"></span>
       </label>
     </div>
+
+    <div class="settings-row" style="border-top: 1px solid var(--line); flex-direction: row; justify-content: space-between; align-items: center;">
+      <div><div class="settings-label">Blokada dostępu PIN</div><div class="settings-desc">Zabezpiecz aplikację kodem 4-cyfrowym</div></div>
+      <label class="switch"><input type="checkbox" id="opt-pin-toggle"><span class="switch-slider"></span></label>
+    </div>
+
+    <div id="pin-settings-extra" class="hidden">
+      <div class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
+        <div><div class="settings-label">Zmień kod PIN</div></div>
+        <button class="n-btn" id="btn-change-pin" style="padding: 8px 16px; font-size: 13px;">Zmień</button>
+      </div>
+
+      <div class="settings-row" style="border-top: 1px solid var(--line);">
+        <div><div class="settings-label">Czas bezczynności do blokady</div><div class="settings-desc">Po jakim czasie aplikacja ma się zablokować</div></div>
+        <div id="opt-pin-timeout-trigger" class="n-btn" style="width: 100%; justify-content: space-between; padding: 10px 16px; margin-top: 8px;">
+          <span id="opt-pin-timeout-text">Natychmiast po wyjściu</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+      </div>
+
+      <div class="settings-row" style="border-top: 1px solid var(--line);">
+        <div><div class="settings-label">Podpowiedź do kodu</div><div class="settings-desc">Opcjonalny tekst wyświetlany na ekranie blokady</div></div>
+        <input type="text" id="input-pin-hint" class="n-input" placeholder="Np. Rok urodzenia..." maxlength="30" style="margin-top: 8px;">
+      </div>
+    </div>
   </div>
 
   <div class="settings-block">
@@ -454,6 +551,34 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
       <button class="n-btn" id="cp-cancel">Anuluj</button>
       <button class="n-btn" id="cp-apply" style="border-color:var(--accent); color:var(--accent);">Zastosuj</button>
     </div>
+  </div>
+</div>
+
+<div id="pin-lock-overlay">
+  <div class="pin-header">
+    <svg class="pin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+    <div class="pin-title" id="pin-title">Wpisz kod PIN</div>
+    <div class="pin-hint-text" id="pin-hint"></div>
+  </div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+  <div class="pin-numpad">
+    <button class="pin-btn" onclick="Hub.pinInput('1')">1</button>
+    <button class="pin-btn" onclick="Hub.pinInput('2')">2</button>
+    <button class="pin-btn" onclick="Hub.pinInput('3')">3</button>
+    <button class="pin-btn" onclick="Hub.pinInput('4')">4</button>
+    <button class="pin-btn" onclick="Hub.pinInput('5')">5</button>
+    <button class="pin-btn" onclick="Hub.pinInput('6')">6</button>
+    <button class="pin-btn" onclick="Hub.pinInput('7')">7</button>
+    <button class="pin-btn" onclick="Hub.pinInput('8')">8</button>
+    <button class="pin-btn" onclick="Hub.pinInput('9')">9</button>
+    <button class="pin-btn empty"></button>
+    <button class="pin-btn" onclick="Hub.pinInput('0')">0</button>
+    <button class="pin-btn backspace" onclick="Hub.pinDelete()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+    </button>
   </div>
 </div>
 
@@ -497,6 +622,14 @@ window.Hub = {
   modules: new Map(),
   activeModule: null,
   activeAbort: null,
+  searchQuery: "",
+  lastActivity: Date.now(),
+  idleInterval: null,
+  pin: { enabled: false, hash: null, hint: "", timeout: 0, enteredPin: "" },
+  pinSetupMode: false,
+  pinSetupStep: 0,
+  pinSetupFirst: "",
+  
   settings: { 
     accent: '#818cf8', menuStyle: 'bottom', gridView: false, haptics: true, 
     noAccent: false, scopeHome: false, scopeDrawer: false, scopeBtns: false,
@@ -545,6 +678,19 @@ window.Hub = {
   register: function(mod) {
     Hub.modules.set(mod.id, mod);
     Hub.renderGrid();
+  },
+
+  removeDiacritics: function(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/Ł/g, "L").toLowerCase();
+  },
+
+  updateSearchVisibility: function() {
+    const searchArea = document.getElementById("search-area");
+    if (document.getElementById("view-home").classList.contains("hidden")) {
+      searchArea.classList.add("hidden");
+      return;
+    }
+    searchArea.classList.remove("hidden");
   },
 
   getMenuStyle: function() { return Promise.resolve(Hub.settings.menuStyle); },
@@ -795,13 +941,25 @@ window.Hub = {
       "generator-hasel": `<svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`
     };
     
-    const sortedModules = Array.from(Hub.modules.values()).sort((a, b) => {
+    const query = Hub.removeDiacritics(Hub.searchQuery);
+    
+    const sortedModules = Array.from(Hub.modules.values()).filter(mod => {
+      if (!query) return true;
+      const title = Hub.removeDiacritics(mod.title);
+      const desc = Hub.removeDiacritics(mod.desc || "");
+      return title.includes(query) || desc.includes(query);
+    }).sort((a, b) => {
       const aFav = Hub.settings.favorites.includes(a.id);
       const bFav = Hub.settings.favorites.includes(b.id);
       if (aFav && !bFav) return -1;
       if (!aFav && bFav) return 1;
       return a.title.localeCompare(b.title, 'pl', { sensitivity: 'base' });
     });
+
+    if (sortedModules.length === 0) {
+      grid.innerHTML = '<div class="empty-state">Nie znaleziono modułów pasujących do wyszukiwania.</div>';
+      return;
+    }
 
     sortedModules.forEach(mod => {
       const icon = iconMap[mod.id] || `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
@@ -849,11 +1007,13 @@ window.Hub = {
     document.getElementById("view-module").classList.remove("active");
     document.getElementById("view-settings").classList.remove("active");
     document.getElementById("view-backup").classList.remove("active");
+    document.getElementById("view-changelog").classList.remove("active");
     document.getElementById("view-home").classList.remove("hidden");
     document.getElementById("app-title").textContent = "Workspace";
     document.getElementById("fab-add").classList.remove("hidden");
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     document.getElementById('drawer-home').classList.add('active');
+    Hub.updateSearchVisibility();
     if (push) { if (location.hash !== '' && location.hash !== '#') history.pushState(null, "", "./"); }
     else { history.replaceState(null, "", "./"); }
   },
@@ -866,6 +1026,7 @@ window.Hub = {
     document.getElementById("view-home").classList.add("hidden");
     document.getElementById("view-settings").classList.remove("active");
     document.getElementById("view-backup").classList.remove("active");
+    document.getElementById("view-changelog").classList.remove("active");
     document.getElementById("view-module").classList.add("active");
     document.getElementById("app-title").textContent = mod.title.toUpperCase();
     document.getElementById("fab-add").classList.add("hidden");
@@ -874,6 +1035,7 @@ window.Hub = {
     if (push && location.hash !== `#${id}`) history.pushState(null, "", `#${id}`);
     mod.mount(document.getElementById("view-module"), Hub.activeAbort.signal);
     document.getElementById('app-scroll').scrollTo(0, 0);
+    Hub.updateSearchVisibility();
     
     setTimeout(() => {
       document.getElementById("view-module").querySelectorAll('textarea').forEach(el => {
@@ -890,12 +1052,82 @@ window.Hub = {
     document.getElementById("view-home").classList.add("hidden");
     document.getElementById("view-module").classList.remove("active");
     document.getElementById("view-settings").classList.remove("active");
+    document.getElementById("view-changelog").classList.remove("active");
     document.getElementById("view-backup").classList.add("active");
     document.getElementById("app-title").textContent = "KOPIA ZAPASOWA";
     document.getElementById("fab-add").classList.add("hidden");
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     document.getElementById('drawer-backup').classList.add('active');
+    Hub.updateSearchVisibility();
     if (push && location.hash !== '#backup') history.pushState(null, "", `#backup`);
+  },
+
+  openChangelog: async function(push = true) {
+    Hub.cleanup();
+    document.getElementById("drawer").classList.remove("open");
+    document.getElementById("drawer-overlay").classList.remove("open");
+    document.getElementById("view-home").classList.add("hidden");
+    document.getElementById("view-module").classList.remove("active");
+    document.getElementById("view-settings").classList.remove("active");
+    document.getElementById("view-backup").classList.remove("active");
+    document.getElementById("view-changelog").classList.add("active");
+    document.getElementById("app-title").textContent = "CO NOWEGO";
+    document.getElementById("fab-add").classList.add("hidden");
+    document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('drawer-changelog').classList.add('active');
+    Hub.updateSearchVisibility();
+    if (push && location.hash !== '#changelog') history.pushState(null, "", `#changelog`);
+
+    const contentDiv = document.getElementById('changelog-content');
+    contentDiv.innerHTML = '<div class="empty-state">Wczytywanie...</div>';
+
+    try {
+      const res = await fetch('./changelog.json?t=' + Date.now());
+      const data = await res.json();
+      
+      if (data.length === 0) {
+        contentDiv.innerHTML = '<div class="empty-state">Brak informacji o aktualizacjach.</div>';
+        return;
+      }
+
+      let html = "";
+      data.forEach(item => {
+        html += `
+          <div class="changelog-item">
+            <div class="changelog-header">
+              <div class="changelog-ver">Wersja ${item.version}</div>
+              <div class="changelog-date">${item.date}</div>
+            </div>
+            <ul class="changelog-list">
+              ${item.changes.map(c => `<li>${c}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      });
+      contentDiv.innerHTML = html;
+
+      if (data.length > 0) {
+        await Hub.db.set("last_read_changelog", data[0].version);
+        document.getElementById('changelog-badge').classList.remove('show');
+      }
+
+    } catch (e) {
+      contentDiv.innerHTML = '<div class="empty-state">Błąd wczytywania historii zmian.</div>';
+    }
+  },
+
+  checkChangelog: async function() {
+    try {
+      const res = await fetch('./changelog.json?t=' + Date.now());
+      const data = await res.json();
+      if (data.length > 0) {
+        const latestVer = data[0].version;
+        const lastRead = await Hub.db.get("last_read_changelog", "0");
+        if (latestVer !== lastRead) {
+          document.getElementById('changelog-badge').classList.add('show');
+        }
+      }
+    } catch(e) {}
   },
 
   openSettings: async function(push = true) {
@@ -905,11 +1137,13 @@ window.Hub = {
     document.getElementById("view-home").classList.add("hidden");
     document.getElementById("view-module").classList.remove("active");
     document.getElementById("view-backup").classList.remove("active");
+    document.getElementById("view-changelog").classList.remove("active");
     document.getElementById("view-settings").classList.add("active");
     document.getElementById("app-title").textContent = "USTAWIENIA";
     document.getElementById("fab-add").classList.add("hidden");
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     document.getElementById('drawer-settings').classList.add('active');
+    Hub.updateSearchVisibility();
     if (push && location.hash !== '#settings') history.pushState(null, "", `#settings`);
 
     const b1 = document.getElementById("opt-bottom"), b2 = document.getElementById("opt-dropdown");
@@ -1015,11 +1249,7 @@ window.Hub = {
     chkDrawer.checked = Hub.settings.scopeDrawer;
     chkBtns.checked = Hub.settings.scopeBtns;
 
-    chkMaster.onchange = (e) => {
-      Hub.haptic('medium');
-      Hub.settings.noAccent = !e.target.checked;
-      Hub.applyScope();
-    };
+    chkMaster.onchange = (e) => { Hub.haptic('medium'); Hub.settings.noAccent = !e.target.checked; Hub.applyScope(); };
     chkHome.onchange = (e) => { Hub.haptic('light'); Hub.settings.scopeHome = e.target.checked; Hub.applyScope(); };
     chkDrawer.onchange = (e) => { Hub.haptic('light'); Hub.settings.scopeDrawer = e.target.checked; Hub.applyScope(); };
     chkBtns.onchange = (e) => { Hub.haptic('light'); Hub.settings.scopeBtns = e.target.checked; Hub.applyScope(); };
@@ -1030,6 +1260,66 @@ window.Hub = {
       Hub.settings.haptics = e.target.checked;
       Hub.db.set("haptics", e.target.checked);
       if (e.target.checked) Hub.haptic('medium');
+    };
+
+    const pinToggle = document.getElementById('opt-pin-toggle');
+    const pinSettingsExtra = document.getElementById('pin-settings-extra');
+    const pinTimeoutTrigger = document.getElementById('opt-pin-timeout-trigger');
+    const pinTimeoutText = document.getElementById('opt-pin-timeout-text');
+    const inputPinHint = document.getElementById('input-pin-hint');
+
+    pinToggle.checked = Hub.pin.enabled;
+    pinSettingsExtra.classList.toggle('hidden', !Hub.pin.enabled);
+    inputPinHint.value = Hub.pin.hint || "";
+    
+    const timeoutNames = { 0: "Natychmiast po wyjściu", 60: "Po 1 minucie", 300: "Po 5 minutach", 600: "Po 10 minutach" };
+    pinTimeoutText.textContent = timeoutNames[Hub.pin.timeout] || "Natychmiast po wyjściu";
+
+    pinToggle.onchange = async (e) => {
+      Hub.haptic('medium');
+      if (e.target.checked) {
+        const success = await Hub.showPinSetup();
+        if (!success) {
+          e.target.checked = false;
+          Hub.pin.enabled = false;
+        }
+      } else {
+        Hub.pin.enabled = false;
+        Hub.pin.hash = null;
+        Hub.pin.hint = "";
+        Hub.pin.timeout = 0;
+        Hub.db.set("pin_enabled", false);
+        Hub.db.set("pin_hash", null);
+        Hub.db.set("pin_hint", "");
+        Hub.db.set("pin_timeout", 0);
+        pinSettingsExtra.classList.add('hidden');
+        showToast("Blokada PIN wyłączona.");
+      }
+    };
+
+    pinTimeoutTrigger.onclick = async () => {
+      const opts = [
+        { id: 0, label: "Natychmiast po wyjściu" },
+        { id: 60, label: "Po 1 minucie bezczynności" },
+        { id: 300, label: "Po 5 minutach bezczynności" },
+        { id: 600, label: "Po 10 minutach bezczynności" }
+      ];
+      const choice = await Hub.showSelect({ title: "Czas blokady", options: opts, current: Hub.pin.timeout, anchor: pinTimeoutTrigger });
+      if (choice !== null) {
+        Hub.pin.timeout = Number(choice);
+        pinTimeoutText.textContent = timeoutNames[Hub.pin.timeout];
+        Hub.db.set("pin_timeout", Hub.pin.timeout);
+      }
+    };
+
+    inputPinHint.oninput = (e) => {
+      Hub.pin.hint = e.target.value;
+      Hub.db.set("pin_hint", Hub.pin.hint);
+    };
+
+    document.getElementById('btn-change-pin').onclick = async () => {
+      Hub.haptic('medium');
+      await Hub.showPinSetup();
     };
 
     document.getElementById('btn-reset-settings').onclick = async () => {
@@ -1045,6 +1335,157 @@ window.Hub = {
         };
       }
     };
+  },
+
+  showPinSetup: function() {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById("pin-lock-overlay");
+      const title = document.getElementById("pin-title");
+      const hintEl = document.getElementById("pin-hint");
+      const dots = document.querySelectorAll(".pin-dot");
+      const errorEl = document.getElementById("pin-error");
+      
+      Hub.pinSetupMode = true;
+      Hub.pinSetupStep = 0;
+      Hub.pinSetupFirst = "";
+      Hub.pin.enteredPin = "";
+      
+      title.textContent = "Ustaw nowy kod PIN";
+      hintEl.textContent = "";
+      errorEl.textContent = "";
+      dots.forEach(d => d.classList.remove("filled"));
+      overlay.classList.add("show");
+
+      const originalResolve = resolve;
+
+      Hub.finishPinSetup = async () => {
+        Hub.pinSetupMode = false;
+        overlay.classList.remove("show");
+        
+        const newHash = await Hub.hashPin(Hub.pinSetupFirst);
+        Hub.pin.enabled = true;
+        Hub.pin.hash = newHash;
+        await Hub.db.set("pin_enabled", true);
+        await Hub.db.set("pin_hash", newHash);
+        
+        document.getElementById("pin-settings-extra").classList.remove("hidden");
+        showToast("Blokada PIN włączona.");
+        originalResolve(true);
+      };
+
+      Hub.cancelPinSetup = () => {
+        Hub.pinSetupMode = false;
+        overlay.classList.remove("show");
+        originalResolve(false);
+      };
+    });
+  },
+
+  hashPin: async function(pin) {
+    const msgBuffer = new TextEncoder().encode(pin);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  },
+
+  lockApp: function() {
+    if (!Hub.pin.enabled || document.getElementById("pin-lock-overlay").classList.contains("show")) return;
+    if (document.getElementById("pin-setup-mode").classList.contains("show")) return;
+    
+    Hub.haptic('medium');
+    const overlay = document.getElementById("pin-lock-overlay");
+    const title = document.getElementById("pin-title");
+    const hintEl = document.getElementById("pin-hint");
+    const dots = document.querySelectorAll(".pin-dot");
+    const errorEl = document.getElementById("pin-error");
+    
+    Hub.pinSetupMode = false;
+    Hub.pin.enteredPin = "";
+    
+    title.textContent = "Wpisz kod PIN";
+    hintEl.textContent = Hub.pin.hint || "";
+    errorEl.textContent = "";
+    dots.forEach(d => d.classList.remove("filled"));
+    
+    overlay.classList.add("show");
+  },
+
+  unlockApp: function() {
+    const overlay = document.getElementById("pin-lock-overlay");
+    overlay.classList.remove("show");
+    Hub.pin.enteredPin = "";
+    Hub.lastActivity = Date.now();
+    Hub.haptic('success');
+  },
+
+  pinInput: function(num) {
+    if (Hub.pin.enteredPin.length >= 4) return;
+    Hub.haptic('light');
+    Hub.pin.enteredPin += num;
+    Hub.updatePinDots();
+    
+    if (Hub.pin.enteredPin.length === 4) {
+      setTimeout(() => Hub.processPin(), 150);
+    }
+  },
+
+  pinDelete: function() {
+    Hub.haptic('light');
+    Hub.pin.enteredPin = Hub.pin.enteredPin.slice(0, -1);
+    Hub.updatePinDots();
+    document.getElementById("pin-error").textContent = "";
+  },
+
+  updatePinDots: function() {
+    const dots = document.querySelectorAll(".pin-dot");
+    dots.forEach((d, i) => {
+      if (i < Hub.pin.enteredPin.length) d.classList.add("filled");
+      else d.classList.remove("filled");
+    });
+  },
+
+  processPin: async function() {
+    const pin = Hub.pin.enteredPin;
+    const errorEl = document.getElementById("pin-error");
+    const dotsContainer = document.getElementById("pin-dots");
+    const title = document.getElementById("pin-title");
+    
+    if (Hub.pinSetupMode) {
+      if (Hub.pinSetupStep === 0) {
+        Hub.pinSetupFirst = pin;
+        Hub.pinSetupStep = 1;
+        Hub.pin.enteredPin = "";
+        Hub.updatePinDots();
+        title.textContent = "Powtórz kod PIN";
+        errorEl.textContent = "";
+      } else {
+        if (pin === Hub.pinSetupFirst) {
+          Hub.finishPinSetup();
+        } else {
+          Hub.haptic('error');
+          errorEl.textContent = "Kody nie są identyczne. Spróbuj ponownie.";
+          dotsContainer.classList.add("shake");
+          setTimeout(() => dotsContainer.classList.remove("shake"), 300);
+          Hub.pin.enteredPin = "";
+          Hub.pinSetupStep = 0;
+          Hub.pinSetupFirst = "";
+          title.textContent = "Ustaw nowy kod PIN";
+          Hub.updatePinDots();
+        }
+      }
+    } else {
+      const hash = await Hub.hashPin(pin);
+      if (hash === Hub.pin.hash) {
+        Hub.unlockApp();
+      } else {
+        Hub.haptic('error');
+        errorEl.textContent = "Nieprawidłowy kod PIN.";
+        dotsContainer.classList.add("shake");
+        setTimeout(() => dotsContainer.classList.remove("shake"), 300);
+        Hub.pin.enteredPin = "";
+        Hub.updatePinDots();
+      }
+    }
   },
 
   showSupport: function() {
@@ -1224,7 +1665,7 @@ window.Hub = {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const [accent, menuStyle, gridView, haptics, scopeData, autoExpand, autoExpandLines, fontSize, hideDesc, noAnim, favorites] = await Promise.all([
+  const [accent, menuStyle, gridView, haptics, scopeData, autoExpand, autoExpandLines, fontSize, hideDesc, noAnim, favorites, pinEnabled, pinHash, pinHint, pinTimeout] = await Promise.all([
     Hub.db.get("accent_color", "#818cf8"),
     Hub.db.get("menu_style", "bottom"),
     Hub.db.get("grid_view", false),
@@ -1235,7 +1676,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     Hub.db.get("font_size", "medium"),
     Hub.db.get("hide_desc", false),
     Hub.db.get("no_anim", false),
-    Hub.db.get("favorites", [])
+    Hub.db.get("favorites", []),
+    Hub.db.get("pin_enabled", false),
+    Hub.db.get("pin_hash", null),
+    Hub.db.get("pin_hint", ""),
+    Hub.db.get("pin_timeout", 0)
   ]);
 
   Hub.settings.accent = accent; 
@@ -1256,6 +1701,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   Hub.settings.noAnim = noAnim;
   Hub.settings.favorites = favorites;
 
+  Hub.pin.enabled = pinEnabled;
+  Hub.pin.hash = pinHash;
+  Hub.pin.hint = pinHint;
+  Hub.pin.timeout = Number(pinTimeout);
+
   Hub.applyAccent(accent); 
   Hub.applyGridView(gridView); 
   Hub.applyScope();
@@ -1273,8 +1723,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     const isModule = document.getElementById("view-module").classList.contains("active");
     const isSettings = document.getElementById("view-settings").classList.contains("active");
     const isBackup = document.getElementById("view-backup").classList.contains("active");
-    if (isModule || isSettings || isBackup) Hub.showHome(false);
+    const isChangelog = document.getElementById("view-changelog").classList.contains("active");
+    if (isModule || isSettings || isBackup || isChangelog) Hub.showHome(false);
   };
+
+  const searchInput = document.getElementById("search-input");
+  const searchClear = document.getElementById("search-clear");
+  
+  searchInput.addEventListener("input", (e) => {
+    Hub.searchQuery = e.target.value;
+    searchClear.classList.toggle("show", Hub.searchQuery.length > 0);
+    document.getElementById("fab-add").classList.toggle("hidden", Hub.searchQuery.length > 0);
+    Hub.renderGrid();
+  });
+
+  searchClear.addEventListener("click", () => {
+    searchInput.value = "";
+    Hub.searchQuery = "";
+    searchClear.classList.remove("show");
+    document.getElementById("fab-add").classList.remove("hidden");
+    Hub.renderGrid();
+    searchInput.focus();
+  });
 
   document.getElementById('btn-export-data').addEventListener('click', async () => {
     Hub.haptic('medium');
@@ -1361,11 +1831,54 @@ document.addEventListener("DOMContentLoaded", async () => {
     }));
     return Promise.all(promises);
   }).then(() => {
+    Hub.checkChangelog();
     const initHash = location.hash.replace(/^#/, "");
     if (initHash === "settings") Hub.openSettings(false);
     else if (initHash === "backup") Hub.openBackup(false);
+    else if (initHash === "changelog") Hub.openChangelog(false);
     else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
   }).catch(e => { document.getElementById('modules-grid').innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd modules.json</div>'; });
+
+  if (Hub.pin.enabled && Hub.pin.hash) {
+    Hub.lockApp();
+  }
+
+  const resetActivity = Hub.throttle(() => {
+    Hub.lastActivity = Date.now();
+  }, 1000);
+
+  ['touchstart', 'mousemove', 'keydown', 'scroll'].forEach(evt => {
+    document.addEventListener(evt, resetActivity, { passive: true });
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      Hub.lastActivity = Date.now(); 
+    } else {
+      if (Hub.pin.enabled && Hub.pin.hash) {
+        if (Hub.pin.timeout === 0) {
+          Hub.lockApp();
+        } else {
+          const timePassed = Date.now() - Hub.lastActivity;
+          if (timePassed > Hub.pin.timeout * 1000) {
+            Hub.lockApp();
+          }
+        }
+      }
+      Hub.lastActivity = Date.now();
+    }
+  });
+
+  Hub.idleInterval = setInterval(() => {
+    if (Hub.pin.enabled && Hub.pin.hash && Hub.pin.timeout > 0) {
+      if (document.visibilityState === 'visible') {
+        const timePassed = Date.now() - Hub.lastActivity;
+        if (timePassed > Hub.pin.timeout * 1000) {
+          Hub.lockApp();
+        }
+      }
+    }
+  }, 1000);
 });
 
 let deferredPrompt;
