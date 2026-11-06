@@ -95,7 +95,7 @@
             <div class="pdf-warning">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               <div>
-                <strong>Uwaga:</strong> Przy dużej liczbie zdjęć (powyżej 30) przetwarzanie może potrwać kilka sekund. Aplikacja została zoptymalizowana pod kątem dużych plików, ale przy ponad 100 zdjęciach operacja może zająć kilkanaście sekund – w tym czasie nie zamykaj aplikacji.
+                <strong>Uwaga:</strong> Przy dużej liczbie zdjęć (powyżej 30) przetwarzanie może potrwać kilka sekund. Aplikacja jest zoptymalizowana, ale przy ponad 100 zdjęciach operacja może zająć kilkanaście sekund – w tym czasie nie zamykaj aplikacji. Uszkodzone pliki zostaną automatycznie pominięte.
               </div>
             </div>
 
@@ -260,6 +260,31 @@
         fileInput.value = "";
       };
 
+      // NOWA FUNKCJA: Odporne dekodowanie zdjęcia z fallbackiem
+      async function decodeImage(file) {
+        // Próba 1: Nowoczesna metoda
+        try {
+          return await createImageBitmap(file, { imageOrientation: 'from-image' });
+        } catch (e) {
+          console.warn("createImageBitmap zawiodło, próbuję Image element:", e.message);
+        }
+        
+        // Próba 2: Klasyczna metoda (bardziej odporna)
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(img);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Nie można odczytać: " + file.name));
+          };
+          img.src = url;
+        });
+      }
+
       async function createPDF() {
         if (isGenerating || selectedFiles.length === 0) return;
         isGenerating = true;
@@ -274,13 +299,77 @@
         await new Promise(r => setTimeout(r, 200));
 
         try {
-          // Nowa metoda: Budujemy PDF binarnie w locie, bez trzymania wszystkich zdjęć w pamięci
+          const maxDim = 2000;
+          const totalFiles = selectedFiles.length;
+          const jpegPages = [];
+          const skipped = [];
+
+          // FAZA 1: Dekodowanie i kompresja każdego zdjęcia (z odpornością na błędy)
+          for (let i = 0; i < totalFiles; i++) {
+            const item = selectedFiles[i];
+            const percent = Math.round(((i) / totalFiles) * 50);
+            progressFill.style.width = percent + "%";
+            progressText.textContent = `Przetwarzanie zdjęcia ${i + 1}/${totalFiles} (${percent}%)...`;
+            
+            try {
+              const img = await decodeImage(item.file);
+              
+              let w = img.width;
+              let h = img.height;
+              
+              if (w > maxDim || h > maxDim) {
+                if (w > h) {
+                  h = Math.round((maxDim / w) * h);
+                  w = maxDim;
+                } else {
+                  w = Math.round((maxDim / h) * w);
+                  h = maxDim;
+                }
+              }
+
+              const canvas = document.createElement('canvas');
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(0, 0, w, h);
+              ctx.drawImage(img, 0, 0, w, h);
+
+              const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+              if (!blob) throw new Error("Nie udało się zapisać JPEG");
+              
+              const arrayBuffer = await blob.arrayBuffer();
+              jpegPages.push({ data: new Uint8Array(arrayBuffer), w, h });
+
+              // Zwolnienie pamięci
+              if (img.close) img.close();
+              canvas.width = 0;
+              canvas.height = 0;
+              
+            } catch (err) {
+              console.warn(`Pominięto zdjęcie ${i + 1} (${item.name}): ${err.message}`);
+              skipped.push({ index: i + 1, name: item.name });
+            }
+            
+            // Ważne: dłuższa przerwa dla telefonu, żeby zwolnił pamięć dekodera
+            await new Promise(r => setTimeout(r, 30));
+          }
+
+          if (jpegPages.length === 0) {
+            throw new Error("Nie udało się odczytać żadnego zdjęcia. Wszystkie pliki są uszkodzone lub w nieobsługiwanym formacie.");
+          }
+
+          // FAZA 2: Budowanie PDF z przetworzonych stron
+          progressText.textContent = "Budowanie struktury PDF (50%)...";
+          progressFill.style.width = "50%";
+          await new Promise(r => setTimeout(r, 100));
+
           let pdfChunks = [];
           let currentOffset = 0;
           let offsets = [];
           let objectId = 1;
-          const maxDim = 2000;
-          const totalFiles = selectedFiles.length;
+          const pageCount = jpegPages.length;
 
           function appendString(str) {
             const bytes = new TextEncoder().encode(str);
@@ -309,71 +398,31 @@
 
           appendString("%PDF-1.4\n");
           
-          // Obiekt 1: Katalog
           addObject(`<< /Type /Catalog /Pages 2 0 R >>`);
           
-          // Obiekt 2: Lista stron (Kids) - wiemy ile ich będzie
           let kidsArray = [];
-          for (let i = 0; i < totalFiles; i++) {
+          for (let i = 0; i < pageCount; i++) {
             kidsArray.push(`${3 + i * 3} 0 R`);
           }
-          addObject(`<< /Type /Pages /Kids [${kidsArray.join(' ')}] /Count ${totalFiles} >>`);
+          addObject(`<< /Type /Pages /Kids [${kidsArray.join(' ')}] /Count ${pageCount} >>`);
 
-          for (let i = 0; i < totalFiles; i++) {
-            const item = selectedFiles[i];
-            const percent = Math.round(((i) / totalFiles) * 100);
-            progressFill.style.width = percent + "%";
-            progressText.textContent = `Przetwarzanie i budowanie (${percent}%)...`;
+          for (let i = 0; i < pageCount; i++) {
+            const page = jpegPages[i];
             
-            await new Promise(r => setTimeout(r, 10));
-
-            const bitmap = await createImageBitmap(item.file, { imageOrientation: 'from-image' });
-            
-            let w = bitmap.width;
-            let h = bitmap.height;
-            
-            if (w > maxDim || h > maxDim) {
-              if (w > h) {
-                h = Math.round((maxDim / w) * h);
-                w = maxDim;
-              } else {
-                w = Math.round((maxDim / h) * w);
-                h = maxDim;
-              }
-            }
-
-            const canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, w, h);
-            ctx.drawImage(bitmap, 0, 0, w, h);
-
-            // KLUCZOWA ZMIANA: Używamy Blob i ArrayBuffer (binarnie) zamiast ogromnych stringów Hex/Base64
-            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
-            const arrayBuffer = await blob.arrayBuffer();
-            const uint8Array = new Uint8Array(arrayBuffer);
-
-            // Obiekt strony (Page)
             offsets.push(currentOffset);
-            appendString(`${objectId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${w} ${h}] /Contents ${objectId + 1} 0 R /Resources << /XObject << /Im1 ${objectId + 2} 0 R >> >> >>\nendobj\n`);
+            appendString(`${objectId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${page.w} ${page.h}] /Contents ${objectId + 1} 0 R /Resources << /XObject << /Im1 ${objectId + 2} 0 R >> >> >>\nendobj\n`);
             objectId++;
 
-            // Strumień zawartości (gdzie narysować obraz)
-            const contentStream = `q\n${w} 0 0 ${h} 0 0 cm\n/Im1 Do\nQ\n`;
+            const contentStream = `q\n${page.w} 0 0 ${page.h} 0 0 cm\n/Im1 Do\nQ\n`;
             addStreamObject('', new TextEncoder().encode(contentStream));
             
-            // Strumień obrazu (surowe dane JPEG)
-            addStreamObject(`/Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`, uint8Array);
+            addStreamObject(`/Type /XObject /Subtype /Image /Width ${page.w} /Height ${page.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`, page.data);
 
-            // Zwalniamy pamięć
-            if (bitmap.close) bitmap.close();
-            canvas.width = 0;
-            canvas.height = 0;
+            const pct = 50 + Math.round(((i + 1) / pageCount) * 45);
+            progressFill.style.width = pct + "%";
+            progressText.textContent = `Zapisywanie stron (${pct}%)...`;
             
-            await new Promise(r => setTimeout(r, 0)); 
+            if (i % 20 === 0) await new Promise(r => setTimeout(r, 10));
           }
 
           progressText.textContent = "Finalizowanie (95%)...";
@@ -395,16 +444,22 @@
           const finalBlob = new Blob(pdfChunks, { type: 'application/pdf' });
           Hub.download(finalBlob, `dokument_${new Date().toISOString().slice(0,10)}.pdf`);
           
+          if (skipped.length > 0) {
+            showToast(`PDF gotowy! Pominięto ${skipped.length} uszkodzonych zdjęć.`);
+          } else {
+            showToast(`PDF gotowy z ${pageCount} stronami!`);
+          }
+          
           setTimeout(() => {
             progressWrapper.style.display = "none";
             generateBtn.disabled = false;
             generateBtn.textContent = "Generuj wielostronicowy PDF";
             isGenerating = false;
-          }, 1000);
+          }, 1500);
 
         } catch (err) {
           console.error(err);
-          showToast("Błąd: " + err.message); // Pokazujemy dokładny błąd
+          showToast("Błąd: " + err.message);
           progressWrapper.style.display = "none";
           generateBtn.disabled = false;
           generateBtn.textContent = "Generuj wielostronicowy PDF";
