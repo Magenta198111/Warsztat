@@ -120,7 +120,6 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .list.grid-view .tile-heart:active { transform: scale(0.8); }
 .tile-heart.active { color: var(--accent); fill: var(--accent); }
 
-/* NOWY STYL WYSZUKIWARKI - ZINTEGROWANY Z KAFELKAMI */
 .search-container {
   position: sticky; 
   top: calc(48px + var(--safe-top)); 
@@ -425,7 +424,7 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
 </div>
 
 <main class="container" id="view-home">
-  <div id="search-area" class="search-container hidden">
+  <div id="search-area" class="search-container">
     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
     <input type="text" id="search-input" class="search-input" placeholder="Szukaj modułów..." autocomplete="off" spellcheck="false">
     <button id="search-clear" class="search-clear">
@@ -755,9 +754,9 @@ window.Hub = {
     const searchArea = document.getElementById("search-area");
     if (document.getElementById("view-home").classList.contains("hidden")) {
       searchArea.classList.add("hidden");
-      return;
+    } else {
+      searchArea.classList.remove("hidden");
     }
-    searchArea.classList.remove("hidden");
   },
 
   getMenuStyle: function() { return Promise.resolve(Hub.settings.menuStyle); },
@@ -1923,6 +1922,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     else if (initHash === "backup") Hub.openBackup(false);
     else if (initHash === "changelog") Hub.openChangelog(false);
     else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
+    else Hub.updateSearchVisibility(); // <-- DODANA LINIJKA
   }).catch(e => { document.getElementById('modules-grid').innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd modules.json</div>'; });
 
   if (Hub.pin.enabled && Hub.pin.hash) {
