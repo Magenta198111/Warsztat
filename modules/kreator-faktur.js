@@ -13,8 +13,6 @@
       
       let items = [{ name: "Usługa programistyczna", qty: 1, price: 100, vat: 23 }];
       let isGenerating = false;
-      let lastGeneratedBlob = null;
-      let lastGeneratedFilename = "";
 
       container.innerHTML = `
         <style>
@@ -166,6 +164,8 @@
 
           <button id="generate-btn" class="n-btn n-btn-outline inv-generate-btn">Podgląd faktury</button>
         </div>
+        
+        <canvas id="invoice-canvas" style="display:none;"></canvas>
       `;
 
       const $ = id => container.querySelector("#" + id);
@@ -251,26 +251,6 @@
       renderItems();
       calculateTotals();
 
-      const polishMap = {
-        'Ą': 0xA5, 'Ć': 0xC6, 'Ę': 0xCA, 'Ł': 0xA3, 'Ń': 0xD1, 'Ó': 0xD3, 'Ś': 0x8C, 'Ź': 0x8F, 'Ż': 0xAF,
-        'ą': 0xB9, 'ć': 0xE6, 'ę': 0xEA, 'ł': 0xB3, 'ń': 0xF1, 'ó': 0xF3, 'ś': 0x9C, 'ź': 0x9F, 'ż': 0xBF
-      };
-
-      function encodeText(text) {
-        const bytes = [];
-        for (let i = 0; i < text.length; i++) {
-          const ch = text[i];
-          if (polishMap[ch] !== undefined) {
-            bytes.push(polishMap[ch]);
-          } else {
-            const code = ch.charCodeAt(0);
-            if (code < 256) bytes.push(code);
-            else bytes.push(63);
-          }
-        }
-        return bytes;
-      }
-
       function numberToWords(num) {
         if (num === 0) return 'zero';
         const ones = ['', 'jeden', 'dwa', 'trzy', 'cztery', 'pięć', 'sześć', 'siedem', 'osiem', 'dziewięć'];
@@ -336,7 +316,266 @@
         return `${numberToWords(intPart)} ${zlotyForm} ${String(decPart).padStart(2, '0')}/100 ${groszForm}`;
       }
 
-      async function previewPDF() {
+      function formatDate(d) {
+        if (!d) return '-';
+        const parts = d.split('-');
+        if (parts.length === 3) return `${parts[2]}.${parts[1]}.${parts[0]}`;
+        return d;
+      }
+
+      function formatMoneyPlain(n) {
+        return n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      }
+
+      // ===== RYSOWANIE NA CANVAS =====
+      function renderInvoiceToCanvas(seller, buyer, invNum, invDate, dueDate, payMethod, totalNet, totalVat, totalGross) {
+        const canvas = $("invoice-canvas");
+        const ctx = canvas.getContext("2d");
+        const W = 1240, H = 1754, M = 100; // A4 w proporcjach ~150 DPI
+        canvas.width = W;
+        canvas.height = H;
+
+        // Tło
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, W, H);
+
+        // Kolory i style
+        ctx.fillStyle = "#000000";
+        let y = M + 40;
+
+        // Nagłówek
+        ctx.font = "bold 44px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("FAKTURA VAT", M, y);
+        
+        ctx.font = "20px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(`nr ${invNum}`, W - M, y);
+        
+        y += 35;
+        ctx.font = "16px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText(`Data wystawienia: ${formatDate(invDate)}`, M, y);
+        
+        ctx.textAlign = "right";
+        ctx.fillText(`Termin płatności: ${formatDate(dueDate)}`, W - M, y);
+        
+        y += 25;
+        ctx.textAlign = "left";
+        ctx.fillText(`Metoda płatności: ${payMethod}`, M, y);
+        
+        y += 20;
+        ctx.beginPath();
+        ctx.moveTo(M, y);
+        ctx.lineTo(W - M, y);
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        y += 40;
+
+        // Sprzedawca / Nabywca
+        const colL = M;
+        const colR = M + (W - 2*M) / 2 + 20;
+
+        ctx.font = "bold 20px sans-serif";
+        ctx.fillText("SPRZEDAWCA", colL, y);
+        ctx.fillText("NABYWCA", colR, y);
+
+        y += 30;
+        ctx.font = "22px sans-serif";
+        ctx.fillText(seller.name || "-", colL, y);
+        ctx.fillText(buyer.name || "-", colR, y);
+
+        y += 25;
+        ctx.font = "18px sans-serif";
+        if (seller.nip) ctx.fillText(`NIP: ${seller.nip}`, colL, y);
+        if (buyer.nip) ctx.fillText(`NIP: ${buyer.nip}`, colR, y);
+        
+        y += 25;
+        ctx.fillText((seller.address || "-").substring(0, 35), colL, y);
+        ctx.fillText((buyer.address || "-").substring(0, 35), colR, y);
+
+        y += 40;
+        ctx.beginPath();
+        ctx.moveTo(M, y);
+        ctx.lineTo(W - M, y);
+        ctx.stroke();
+
+        y += 30;
+
+        // Tabela Nagłówek
+        ctx.font = "bold 16px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("Lp.", M, y);
+        ctx.fillText("Nazwa towaru / usługi", M + 60, y);
+        
+        ctx.textAlign = "right";
+        ctx.fillText("Ilość", M + 750, y);
+        ctx.fillText("Cena netto", M + 880, y);
+        ctx.fillText("VAT", M + 980, y);
+        ctx.fillText("Netto", M + 1080, y);
+        ctx.fillText("Brutto", W - M, y);
+
+        y += 15;
+        ctx.beginPath();
+        ctx.moveTo(M, y);
+        ctx.lineTo(W - M, y);
+        ctx.stroke();
+
+        y += 30;
+
+        // Tabela Wiersze
+        ctx.font = "18px sans-serif";
+        items.forEach((item, idx) => {
+          const net = item.qty * item.price;
+          const vat = net * item.vat / 100;
+          const gross = net + vat;
+
+          ctx.textAlign = "left";
+          ctx.fillText(String(idx + 1), M, y);
+          ctx.fillText(item.name.substring(0, 45) || "-", M + 60, y);
+
+          ctx.textAlign = "right";
+          ctx.fillText(String(item.qty), M + 750, y);
+          ctx.fillText(formatMoneyPlain(item.price), M + 880, y);
+          ctx.fillText(`${item.vat}%`, M + 980, y);
+          ctx.fillText(formatMoneyPlain(net), M + 1080, y);
+          ctx.fillText(formatMoneyPlain(gross), W - M, y);
+
+          y += 30;
+        });
+
+        y += 10;
+        ctx.beginPath();
+        ctx.moveTo(M, y);
+        ctx.lineTo(W - M, y);
+        ctx.stroke();
+
+        y += 30;
+
+        // Sumy
+        ctx.font = "18px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText("Razem netto:", M + 950, y);
+        ctx.font = "bold 18px sans-serif";
+        ctx.fillText(formatMoneyPlain(totalNet) + " zł", W - M, y);
+
+        y += 25;
+        ctx.font = "18px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText("Kwota VAT:", M + 950, y);
+        ctx.fillText(formatMoneyPlain(totalVat) + " zł", W - M, y);
+
+        y += 25;
+        ctx.font = "bold 20px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText("RAZEM BRUTTO:", M + 950, y);
+        ctx.fillText(formatMoneyPlain(totalGross) + " zł", W - M, y);
+
+        y += 40;
+        ctx.beginPath();
+        ctx.moveTo(M, y);
+        ctx.lineTo(W - M, y);
+        ctx.stroke();
+
+        y += 30;
+
+        // Słownie
+        ctx.textAlign = "left";
+        ctx.font = "bold 16px sans-serif";
+        ctx.fillText("Kwota słownie:", M, y);
+        
+        y += 25;
+        ctx.font = "18px sans-serif";
+        const words = amountInWords(totalGross);
+        // Ręczne łamanie linii dla canvasu
+        const wordsLines = [];
+        let currentLine = "";
+        const maxLineWidth = W - 2 * M;
+        const wordsSplit = words.split(' ');
+        wordsSplit.forEach(word => {
+          const testLine = currentLine + (currentLine ? ' ' : '') + word;
+          if (ctx.measureText(testLine).width > maxLineWidth && currentLine) {
+            wordsLines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        });
+        if (currentLine) wordsLines.push(currentLine);
+        
+        wordsLines.forEach(line => {
+          ctx.fillText(line, M, y);
+          y += 25;
+        });
+
+        // Stopka
+        y = H - 80;
+        ctx.beginPath();
+        ctx.moveTo(M, y);
+        ctx.lineTo(W - M, y);
+        ctx.stroke();
+
+        y += 25;
+        ctx.font = "14px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("Dokument wygenerowany w aplikacji Workspace", M, y);
+        
+        ctx.textAlign = "right";
+        ctx.fillText("Dziękujemy za zaufanie!", W - M, y);
+
+        return canvas;
+      }
+
+      // ===== KONWERSJA CANVAS NA PDF =====
+      async function generatePDFBlob(canvas) {
+        // Konwersja na JPEG
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.85));
+        const arrayBuffer = await blob.arrayBuffer();
+        const jpegData = new Uint8Array(arrayBuffer);
+        
+        const W = canvas.width, H = canvas.height;
+
+        const pdfChunks = [];
+        let currentOffset = 0;
+        let offsets = [];
+        let objectId = 1;
+
+        function pushBytes(bytes) { pdfChunks.push(bytes); currentOffset += bytes.length; }
+        function pushStr(str) { const b = new Uint8Array(str.length); for(let i=0;i<str.length;i++) b[i]=str.charCodeAt(i); pushBytes(b); }
+        function addObject(content) { offsets.push(currentOffset); pushStr(`${objectId} 0 obj\n${content}\nendobj\n`); objectId++; }
+        function addStream(dict, stream) {
+          offsets.push(currentOffset);
+          pushStr(`${objectId} 0 obj\n<< ${dict} /Length ${stream.length} >>\nstream\n`);
+          pushBytes(stream);
+          pushStr(`\nendstream\nendobj\n`);
+          objectId++;
+        }
+
+        pushStr("%PDF-1.4\n");
+        
+        addObject(`<< /Type /Catalog /Pages 2 0 R >>`);
+        addObject(`<< /Type /Pages /Kids [3 0 R] /Count 1 >>`);
+        addObject(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Contents 4 0 R /Resources << /XObject << /Im1 5 0 R >> >> >>`);
+        
+        const contentStream = `q\n${W} 0 0 ${H} 0 0 cm\n/Im1 Do\nQ\n`;
+        addStream('', new TextEncoder().encode(contentStream));
+
+        addStream(`/Type /XObject /Subtype /Image /Width ${W} /Height ${H} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`, jpegData);
+
+        const startXref = currentOffset;
+        let xref = `xref\n0 ${objectId}\n0000000000 65535 f \n`;
+        offsets.forEach(off => { xref += `${off.toString().padStart(10, '0')} 00000 n \n`; });
+
+        const trailer = `trailer\n<< /Size ${objectId} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF`;
+        pushStr(xref + trailer);
+
+        return new Blob(pdfChunks, { type: 'application/pdf' });
+      }
+
+      // ===== AKCJA PO KLIKNIĘCIU =====
+      async function previewInvoice() {
         if (isGenerating) return;
         isGenerating = true;
         
@@ -345,7 +584,6 @@
         btn.textContent = "Generowanie podglądu...";
         Hub.haptic('medium');
 
-        // Zapisujemy dane sprzedawcy
         const sellerData = {
           name: $("seller-name").value,
           nip: $("seller-nip").value,
@@ -373,233 +611,54 @@
         });
         const totalGross = totalNet + totalVat;
 
-        // === BUDOWA PDF ===
-        const pdfChunks = [];
-        let currentOffset = 0;
-        let offsets = [];
-        let objectId = 1;
+        try {
+          // 1. Rysujemy fakturę na Canvas
+          const canvas = renderInvoiceToCanvas(sellerData, buyerData, invoiceNum, invDate, dueDate, payMethod, totalNet, totalVat, totalGross);
+          
+          // 2. Generujemy PDF w tle
+          const pdfBlob = await generatePDFBlob(canvas);
+          const filename = `faktura_${invoiceNum.replace(/[^a-z0-9]/gi, '_')}.pdf`;
 
-        function pushBytes(bytes) {
-          pdfChunks.push(bytes);
-          currentOffset += bytes.length;
-        }
+          // 3. Tworzymy obrazek z canvasu dla podglądu (JPEG)
+          const previewUrl = canvas.toDataURL("image/jpeg", 0.85);
 
-        function pushStr(str) {
-          const bytes = new Uint8Array(str.length);
-          for (let i = 0; i < str.length; i++) bytes[i] = str.charCodeAt(i);
-          pushBytes(bytes);
-        }
-
-        const contentBytes = [];
-        function pushContentBytes(bytes) { for (let b of bytes) contentBytes.push(b); }
-        function pushContentStr(str) { for (let i = 0; i < str.length; i++) contentBytes.push(str.charCodeAt(i)); }
-
-        function addText(x, y, text, font = 'F1', size = 10) {
-          pushContentStr(`BT /${font} ${size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (`);
-          const encoded = encodeText(text);
-          for (let b of encoded) {
-            if (b === 40 || b === 41 || b === 92) pushContentBytes([92]);
-            pushContentBytes([b]);
-          }
-          pushContentStr(`) Tj ET\n`);
-        }
-
-        function addTextRight(xRight, y, text, font = 'F1', size = 10) {
-          const estWidth = text.length * size * 0.55;
-          addText(xRight - estWidth, y, text, font, size);
-        }
-
-        function addLine(x1, y1, x2, y2) {
-          pushContentStr(`${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S\n`);
-        }
-
-        // --- LAYOUT A4: 595 x 842 ---
-        const W = 595, H = 842, M = 40;
-        let y = H - 60;
-
-        addText(M, y, 'FAKTURA VAT', 'F2', 22);
-        addTextRight(W - M, y, `nr ${invoiceNum}`, 'F1', 12);
-        y -= 20;
-        addText(M, y, `Data wystawienia: ${formatDate(invDate)}`, 'F1', 9);
-        addTextRight(W - M, y, `Termin płatności: ${formatDate(dueDate)}`, 'F1', 9);
-        y -= 15;
-        addText(M, y, `Metoda płatności: ${payMethod}`, 'F1', 9);
-        y -= 10;
-        addLine(M, y, W - M, y);
-        y -= 25;
-
-        const colW = (W - 2 * M) / 2 - 10;
-        const colL = M;
-        const colR = M + colW + 20;
-
-        addText(colL, y, 'SPRZEDAWCA', 'F2', 10);
-        addText(colR, y, 'NABYWCA', 'F2', 10);
-        y -= 15;
-        addText(colL, y, sellerData.name || '-', 'F1', 10);
-        addText(colR, y, buyerData.name || '-', 'F1', 10);
-        y -= 14;
-        if (sellerData.nip) addText(colL, y, `NIP: ${sellerData.nip}`, 'F1', 9);
-        if (buyerData.nip) addText(colR, y, `NIP: ${buyerData.nip}`, 'F1', 9);
-        y -= 14;
-        addText(colL, y, (sellerData.address || '-').substring(0, 35), 'F1', 9);
-        addText(colR, y, (buyerData.address || '-').substring(0, 35), 'F1', 9);
-        y -= 25;
-        addLine(M, y, W - M, y);
-        y -= 20;
-
-        addText(M, y, 'Lp.', 'F2', 8);
-        addText(M + 25, y, 'Nazwa towaru / usługi', 'F2', 8);
-        addTextRight(M + 330, y, 'Ilość', 'F2', 8);
-        addTextRight(M + 390, y, 'Cena netto', 'F2', 8);
-        addTextRight(M + 440, y, 'VAT', 'F2', 8);
-        addTextRight(M + 490, y, 'Netto', 'F2', 8);
-        addTextRight(W - M, y, 'Brutto', 'F2', 8);
-        y -= 8;
-        addLine(M, y, W - M, y);
-        y -= 15;
-
-        items.forEach((item, idx) => {
-          if (y < 200) return;
-          const net = item.qty * item.price;
-          const vat = net * item.vat / 100;
-          const gross = net + vat;
-          addText(M, y, String(idx + 1), 'F1', 9);
-          addText(M + 25, y, item.name.substring(0, 45) || '-', 'F1', 9);
-          addTextRight(M + 330, y, `${item.qty}`, 'F1', 9);
-          addTextRight(M + 390, y, `${item.price.toFixed(2)}`, 'F1', 9);
-          addTextRight(M + 440, y, `${item.vat}%`, 'F1', 9);
-          addTextRight(M + 490, y, formatMoneyPlain(net), 'F1', 9);
-          addTextRight(W - M, y, formatMoneyPlain(gross), 'F1', 9);
-          y -= 15;
-        });
-
-        y -= 5;
-        addLine(M, y, W - M, y);
-        y -= 18;
-        addTextRight(W - M - 150, y, 'Razem netto:', 'F1', 10);
-        addTextRight(W - M, y, formatMoneyPlain(totalNet) + ' zł', 'F2', 10);
-        y -= 15;
-        addTextRight(W - M - 150, y, 'Kwota VAT:', 'F1', 10);
-        addTextRight(W - M, y, formatMoneyPlain(totalVat) + ' zł', 'F1', 10);
-        y -= 15;
-        addTextRight(W - M - 150, y, 'RAZEM BRUTTO:', 'F2', 11);
-        addTextRight(W - M, y, formatMoneyPlain(totalGross) + ' zł', 'F2', 11);
-        y -= 30;
-        addLine(M, y, W - M, y);
-        y -= 20;
-
-        addText(M, y, 'Kwota słownie:', 'F2', 9);
-        y -= 14;
-        const words = amountInWords(totalGross);
-        const wordsLines = words.match(/.{1,80}(\s|$)/g) || [words];
-        wordsLines.forEach(line => {
-          addText(M, y, line.trim(), 'F1', 9);
-          y -= 12;
-        });
-
-        y = 80;
-        addLine(M, y, W - M, y);
-        y -= 15;
-        addText(M, y, 'Dokument wygenerowany w aplikacji Workspace', 'F1', 8);
-        addTextRight(W - M, y, 'Dziękujemy za zaufanie!', 'F1', 8);
-
-        const contentStream = new Uint8Array(contentBytes);
-        
-        pushStr("%PDF-1.4\n");
-
-        offsets.push(currentOffset);
-        pushStr(`${objectId} 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`);
-        objectId++;
-
-        offsets.push(currentOffset);
-        pushStr(`${objectId} 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n`);
-        objectId++;
-
-        offsets.push(currentOffset);
-        pushStr(`${objectId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>\nendobj\n`);
-        objectId++;
-
-        offsets.push(currentOffset);
-        pushStr(`${objectId} 0 obj\n<< /Length ${contentStream.length} >>\nstream\n`);
-        pushBytes(contentStream);
-        pushStr(`\nendstream\nendobj\n`);
-        objectId++;
-
-        const diffStr = '[140 /Sacute 143 /Zacute 156 /sacute 159 /zacute 163 /Lslash 165 /Aogonek 175 /Zdotaccent 179 /lslash 185 /aogonek 191 /zdotaccent 198 /Cacute 202 /Eogonek 209 /Nacute 230 /cacute 234 /eogonek 241 /nacute]';
-        
-        offsets.push(currentOffset);
-        pushStr(`${objectId} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding << /Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences ${diffStr} >> >>\nendobj\n`);
-        objectId++;
-
-        offsets.push(currentOffset);
-        pushStr(`${objectId} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding << /Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences ${diffStr} >> >>\nendobj\n`);
-        objectId++;
-
-        const startXref = currentOffset;
-        let xref = `xref\n0 ${objectId}\n0000000000 65535 f \n`;
-        offsets.forEach(off => {
-          xref += `${off.toString().padStart(10, '0')} 00000 n \n`;
-        });
-        const trailer = `trailer\n<< /Size ${objectId} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF`;
-        pushStr(xref + trailer);
-
-        const finalBlob = new Blob(pdfChunks, { type: 'application/pdf' });
-        lastGeneratedBlob = finalBlob;
-        lastGeneratedFilename = `faktura_${invoiceNum.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-        
-        const url = URL.createObjectURL(finalBlob);
-        
-        const modalContent = `
-          <div style="width: 100%; height: 80vh; max-height: 700px; display: flex; flex-direction: column; gap: 12px;">
-            <div style="flex: 1; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--line);">
-              <iframe src="${url}" style="width: 100%; height: 100%; border: none;"></iframe>
+          // 4. Pokazujemy modal z podglądem
+          const modalContent = `
+            <div style="width: 100%; height: 80vh; max-height: 700px; display: flex; flex-direction: column; gap: 12px;">
+              <div style="flex: 1; background: #fff; border-radius: 8px; overflow-y: auto; border: 1px solid var(--line);">
+                <img src="${previewUrl}" style="width: 100%; height: auto; display: block;">
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button id="modal-cancel-btn" class="n-btn" style="flex: 1;">Anuluj</button>
+                <button id="modal-download-btn" class="n-btn n-btn-outline" style="flex: 2;">Pobierz PDF</button>
+              </div>
             </div>
-            <div style="font-size: 11px; color: var(--muted); text-align: center; line-height: 1.4;">
-              Jeśli podgląd się nie wyświetla (np. w Chrome na Androidzie), po prostu kliknij "Pobierz PDF".
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <button id="modal-cancel-btn" class="n-btn" style="flex: 1;">Anuluj</button>
-              <button id="modal-download-btn" class="n-btn n-btn-outline" style="flex: 2;">Pobierz PDF</button>
-            </div>
-          </div>
-        `;
-        
-        const modal = Hub.showModal({ content: modalContent });
-        
-        const originalClose = modal.close;
-        modal.close = () => {
-          URL.revokeObjectURL(url);
-          originalClose();
-        };
-        
-        modal.element.querySelector('#modal-cancel-btn').onclick = () => {
-          Hub.haptic('light');
-          modal.close();
-        };
-        
-        modal.element.querySelector('#modal-download-btn').onclick = () => {
-          Hub.haptic('success');
-          Hub.download(lastGeneratedBlob, lastGeneratedFilename);
-          modal.close();
-        };
-        
-        btn.disabled = false;
-        btn.textContent = "Podgląd faktury";
-        isGenerating = false;
+          `;
+
+          const modal = Hub.showModal({ content: modalContent });
+
+          modal.element.querySelector('#modal-cancel-btn').onclick = () => {
+            Hub.haptic('light');
+            modal.close();
+          };
+
+          modal.element.querySelector('#modal-download-btn').onclick = () => {
+            Hub.haptic('success');
+            Hub.download(pdfBlob, filename);
+            modal.close();
+          };
+
+        } catch (err) {
+          console.error(err);
+          showToast("Błąd podczas generowania: " + err.message);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Podgląd faktury";
+          isGenerating = false;
+        }
       }
 
-      function formatDate(d) {
-        if (!d) return '-';
-        const parts = d.split('-');
-        if (parts.length === 3) return `${parts[2]}.${parts[1]}.${parts[0]}`;
-        return d;
-      }
-
-      function formatMoneyPlain(n) {
-        return n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-      }
-
-      $("generate-btn").onclick = previewPDF;
+      $("generate-btn").onclick = previewInvoice;
     },
 
     unmount() {}
