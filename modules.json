@@ -28,5 +28,8 @@
   },
   {
     "file": "./modules/konwerter-rzymski.js"
+  },
+  {
+    "file": "./modules/obrazy-do-pdf.js"
   }
 ]
