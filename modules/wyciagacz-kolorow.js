@@ -5,26 +5,24 @@
     desc: "Wyodrębnij dominujące kolory ze zdjęcia",
 
     async mount(container, signal) {
+      let targetColorCount = 6;
+      let sensitivity = 40;
+      let currentImgUrl = null;
+
       container.innerHTML = `
         <style>
-          .pal-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 12px; }
+          .pal-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .pal-flat-section { margin-bottom: 24px; }
           
           .pal-intro-box {
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            padding: 32px 20px;
-            text-align: center;
-            margin-top: 16px;
-            margin-bottom: 24px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 12px; padding: 24px 20px; text-align: center;
+            margin-top: 16px; margin-bottom: 24px;
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
           }
 
           .pal-icon-wrapper {
-            width: 72px; height: 72px; border-radius: 50%;
+            width: 64px; height: 64px; border-radius: 50%;
             background: var(--bg); border: 1px solid var(--line);
             display: flex; align-items: center; justify-content: center;
             color: var(--accent);
@@ -32,13 +30,13 @@
 
           .pal-preview-img {
             width: 100%; border-radius: 8px; border: 1px solid var(--line);
-            display: block; object-fit: contain; max-height: 300px; background: var(--surface);
+            display: block; object-fit: contain; max-height: 250px; background: var(--surface);
             margin-bottom: 24px;
           }
 
           .pal-grid { 
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; 
-            margin-bottom: 32px;
+            margin-bottom: 16px;
           }
           
           .pal-swatch {
@@ -53,9 +51,32 @@
             font-family: monospace; font-size: 14px; font-weight: 700;
             text-shadow: 0 1px 2px rgba(0,0,0,0.2); pointer-events: none;
           }
+
+          .pal-warning-text {
+            text-align: center; font-size: 12px; color: #fbbf24;
+            margin-bottom: 24px; min-height: 16px; line-height: 1.4;
+          }
           
           .pal-action-row { display: flex; gap: 12px; margin-bottom: 24px; }
           .pal-btn { flex: 1; padding: 14px; font-size: 15px; }
+
+          .pal-slider-wrapper {
+            display: flex; align-items: center; height: 40px;
+            touch-action: none; cursor: pointer; margin-bottom: 8px;
+          }
+          .pal-slider-value { font-family: monospace; font-size: 16px; font-weight: 600; color: var(--accent); min-width: 40px; text-align: right; margin-left: 16px; }
+          
+          .pal-range-track {
+            position: relative; width: 100%; height: 6px; border-radius: 3px; flex: 1;
+            background: linear-gradient(to right, var(--accent) var(--percent, 0%), var(--line) var(--percent, 0%));
+          }
+          
+          .pal-range-thumb {
+            position: absolute; top: 50%; transform: translate(-50%, -50%);
+            width: 24px; height: 24px; border-radius: 50%; background: var(--accent);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4); pointer-events: none;
+            transition: transform 0.1s;
+          }
         </style>
 
         ${Hub.backButtonHtml}
@@ -69,9 +90,30 @@
             </div>
             <div>
               <div style="font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 8px;">Wyciągnij paletę barw</div>
-              <div style="font-size: 14px; color: var(--muted); line-height: 1.5;">Wybierz zdjęcie, a my znajdziemy jego dominujące kolory i podamy ich kody HEX.</div>
+              <div style="font-size: 14px; color: var(--muted); line-height: 1.5;">Wybierz zdjęcie, a my znajdziemy jego dominujące kolory.</div>
             </div>
             <button id="pal-pick-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; margin-top: 8px;">Wybierz zdjęcie</button>
+          </div>
+
+          <div class="pal-flat-section">
+            <label class="pal-label">Liczba kolorów</label>
+            <div class="pal-slider-wrapper">
+              <div id="pal-count-track" class="pal-range-track">
+                <div id="pal-count-thumb" class="pal-range-thumb"></div>
+              </div>
+              <div id="pal-count-val" class="pal-slider-value">6</div>
+            </div>
+          </div>
+
+          <div class="pal-flat-section">
+            <label class="pal-label">Czułość grupowania</label>
+            <div class="pal-slider-wrapper">
+              <div id="pal-sens-track" class="pal-range-track">
+                <div id="pal-sens-thumb" class="pal-range-thumb"></div>
+              </div>
+              <div id="pal-sens-val" class="pal-slider-value">40</div>
+            </div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: -4px;">Im wyższa, tym bardziej odrzucane są podobne kolory.</div>
           </div>
         </div>
 
@@ -79,6 +121,7 @@
           <label class="pal-label">Dominujące kolory (kliknij, aby skopiować)</label>
           <img id="pal-preview" class="pal-preview-img">
           <div id="pal-swatches" class="pal-grid"></div>
+          <div id="pal-warning" class="pal-warning-text"></div>
           
           <div class="pal-action-row">
             <button id="pal-btn-reset" class="n-btn pal-btn">Wybierz inne zdjęcie</button>
@@ -93,9 +136,61 @@
       const resultCard = $("pal-result-card");
       const previewImg = $("pal-preview");
       const swatchesContainer = $("pal-swatches");
+      const warningText = $("pal-warning");
       const btnReset = $("pal-btn-reset");
 
-      let currentImgUrl = null;
+      const countTrack = $("pal-count-track");
+      const countThumb = $("pal-count-thumb");
+      const countVal = $("pal-count-val");
+
+      const sensTrack = $("pal-sens-track");
+      const sensThumb = $("pal-sens-thumb");
+      const sensVal = $("pal-sens-val");
+
+      function updateSliderUI(track, thumb, valEl, value, min, max) {
+        const percent = ((value - min) / (max - min)) * 100;
+        thumb.style.left = percent + "%";
+        track.style.setProperty('--percent', `${percent}%`);
+        valEl.textContent = value;
+      }
+
+      function setupSlider(wrapper, track, thumb, valEl, min, max, getVal, setVal) {
+        let currentValue = getVal();
+        updateSliderUI(track, thumb, valEl, currentValue, min, max);
+
+        wrapper.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
+          wrapper.setPointerCapture(e.pointerId);
+          updateFromX(e.clientX);
+        });
+
+        wrapper.addEventListener("pointermove", (e) => {
+          if (wrapper.hasPointerCapture(e.pointerId)) {
+            updateFromX(e.clientX);
+          }
+        });
+
+        wrapper.addEventListener("pointerup", (e) => {
+          wrapper.releasePointerCapture(e.pointerId);
+        });
+
+        function updateFromX(clientX) {
+          const rect = track.getBoundingClientRect();
+          let x = clientX - rect.left;
+          x = Math.max(0, Math.min(x, rect.width));
+          const percent = x / rect.width;
+          let newValue = Math.round(min + percent * (max - min));
+          
+          if (newValue !== currentValue) {
+            currentValue = newValue;
+            updateSliderUI(track, thumb, valEl, currentValue, min, max);
+            setVal(currentValue);
+          }
+        }
+      }
+
+      setupSlider(countTrack.parentElement, countTrack, countThumb, countVal, 3, 12, () => targetColorCount, (v) => { targetColorCount = v; });
+      setupSlider(sensTrack.parentElement, sensTrack, sensThumb, sensVal, 1, 100, () => sensitivity, (v) => { sensitivity = v; });
 
       function getContrastColor(hex) {
         const r = parseInt(hex.slice(1, 3), 16);
@@ -122,12 +217,12 @@
           const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
           
           const canvas = document.createElement('canvas');
-          canvas.width = 100;
-          canvas.height = 100;
+          canvas.width = 128;
+          canvas.height = 128;
           const ctx = canvas.getContext('2d', { willReadFrequently: true });
           
-          ctx.drawImage(bitmap, 0, 0, 100, 100);
-          const imgData = ctx.getImageData(0, 0, 100, 100).data;
+          ctx.drawImage(bitmap, 0, 0, 128, 128);
+          const imgData = ctx.getImageData(0, 0, 128, 128).data;
           
           const colorCounts = {};
           
@@ -154,14 +249,14 @@
           const sortedColors = Object.keys(colorCounts).sort((a, b) => colorCounts[b] - colorCounts[a]);
           
           const finalColors = [];
-          const MIN_DISTANCE = 40;
+          let skippedCount = 0;
 
           for (const color of sortedColors) {
-            if (finalColors.length >= 6) break;
+            if (finalColors.length >= targetColorCount) break;
             
             let isDistinct = true;
             for (const selected of finalColors) {
-              if (colorDistance(color, selected) < MIN_DISTANCE) {
+              if (colorDistance(color, selected) < sensitivity) {
                 isDistinct = false;
                 break;
               }
@@ -169,13 +264,18 @@
             
             if (isDistinct) {
               finalColors.push(color);
+            } else {
+              skippedCount++;
             }
           }
 
           swatchesContainer.innerHTML = "";
+          warningText.textContent = "";
           
           if (finalColors.length === 0) {
-            swatchesContainer.innerHTML = '<div style="grid-column: span 3; text-align: center; color: var(--muted); padding: 20px;">Nie udało się wyodrębnić kolorów.</div>';
+            swatchesContainer.innerHTML = '<div style="grid-column: span 3; text-align: center; color: var(--muted); padding: 20px;">Brak kolorów do wyświetlenia.</div>';
+            warningText.textContent = "Odrzucono wszystkie kolory jako zbyt podobne. Zmniejsz czułość.";
+            warningText.style.color = "var(--danger)";
           } else {
             finalColors.forEach((hex) => {
               const textColor = getContrastColor(hex);
@@ -195,6 +295,14 @@
               
               swatchesContainer.appendChild(swatch);
             });
+
+            if (finalColors.length < targetColorCount) {
+              warningText.textContent = `Znaleziono ${finalColors.length} unikalnych kolorów. Pominięto ${skippedCount} zbyt podobnych.`;
+              warningText.style.color = "#fbbf24";
+            } else {
+              warningText.textContent = `Znaleziono ${finalColors.length} dominujących kolorów.`;
+              warningText.style.color = "var(--muted)";
+            }
           }
 
           setupCard.classList.add("hidden");
