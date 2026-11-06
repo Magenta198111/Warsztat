@@ -121,8 +121,8 @@
           <div class="rom-key" data-val="L">L</div>
           <div class="rom-key" data-val="C">C</div>
           <div class="rom-key" data-val="D">D</div>
-          <div class="rom-key" data-val="M">M</div>
           <div class="rom-key clear" data-action="clear">CLR</div>
+          <div class="rom-key" data-val="M">M</div>
           <div class="rom-key del" data-action="del">DEL</div>
         </div>
 
