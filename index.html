@@ -285,33 +285,87 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
 #pin-lock-overlay {
   position: fixed; inset: 0; z-index: 99999; background: var(--bg);
   display: none; flex-direction: column; align-items: center; justify-content: center;
-  padding: 20px;
+  padding: 24px;
 }
 #pin-lock-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-.pin-header { text-align: center; margin-bottom: 30px; }
-.pin-icon { width: 48px; height: 48px; color: var(--accent); margin-bottom: 16px; }
-.pin-title { font-size: 22px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
-.pin-hint-text { font-size: 14px; color: var(--muted); font-style: italic; margin-bottom: 20px; }
+.pin-header { text-align: center; margin-bottom: 32px; }
+.pin-icon { width: 40px; height: 40px; color: var(--accent); margin-bottom: 16px; opacity: 0.9; }
+.pin-title { font-size: 20px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+.pin-hint-text { font-size: 14px; color: var(--muted); font-style: italic; min-height: 20px; }
 
 .pin-dots { display: flex; gap: 16px; margin-bottom: 40px; }
-.pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--muted); transition: background 0.2s, border-color 0.2s; }
-.pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+.pin-dot { 
+  width: 14px; height: 14px; border-radius: 50%; 
+  background: var(--line); 
+  transition: background 0.15s, transform 0.15s; 
+}
+.pin-dot.filled { 
+  background: var(--accent); 
+  transform: scale(1.2); 
+}
 
-.pin-error { color: var(--danger); font-size: 14px; margin-bottom: 20px; min-height: 20px; font-weight: 500; }
+.pin-error { color: var(--danger); font-size: 14px; margin-bottom: 20px; min-height: 20px; font-weight: 500; text-align: center; }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
 .shake { animation: shake 0.3s ease-in-out; }
 
-.pin-numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 300px; }
-.pin-btn { 
-  aspect-ratio: 1; border-radius: 50%; background: var(--surface); border: 1px solid var(--line);
-  color: var(--ink); font-size: 24px; font-weight: 500; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: background 0.1s; outline: none;
+.pin-numpad { 
+  display: grid; 
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 12px; 
+  width: 100%; 
+  max-width: 300px; 
 }
-.pin-btn:active { background: var(--surface-hover); }
-.pin-btn.empty { background: transparent; border: none; pointer-events: none; }
-.pin-btn.backspace { background: transparent; border: none; color: var(--muted); }
+.pin-btn { 
+  height: 64px; 
+  border-radius: 12px; 
+  background: var(--surface); 
+  border: 1px solid var(--line);
+  color: var(--ink); 
+  font-size: 24px; 
+  font-weight: 500; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  cursor: pointer; 
+  transition: background 0.1s, transform 0.1s; 
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  font-family: inherit;
+}
+.pin-btn:active { 
+  background: var(--surface-hover); 
+  transform: scale(0.95);
+}
+.pin-btn.empty { 
+  background: transparent; 
+  border: none; 
+  pointer-events: none; 
+}
+.pin-btn.backspace { 
+  background: transparent; 
+  border: none; 
+  color: var(--muted); 
+}
+.pin-btn.backspace:active { 
+  background: var(--surface); 
+  color: var(--ink);
+}
+.pin-cancel {
+  margin-top: 24px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 500;
+  padding: 12px 24px;
+  cursor: pointer;
+  outline: none;
+  display: none;
+}
+.pin-cancel:active { opacity: 0.7; }
 </style>
 </head>
 <body>
@@ -580,6 +634,7 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
     </button>
   </div>
+  <button id="pin-cancel-btn" class="pin-cancel" onclick="Hub.cancelPinFlow()">Anuluj</button>
 </div>
 
 <div id="toast-container"></div>
@@ -626,9 +681,11 @@ window.Hub = {
   lastActivity: Date.now(),
   idleInterval: null,
   pin: { enabled: false, hash: null, hint: "", timeout: 0, enteredPin: "" },
-  pinSetupMode: false,
+  pinMode: 'unlock',
   pinSetupStep: 0,
   pinSetupFirst: "",
+  pinFlowResolve: null,
+  pinIsFirstTime: false,
   
   settings: { 
     accent: '#818cf8', menuStyle: 'bottom', gridView: false, haptics: true, 
@@ -1130,6 +1187,175 @@ window.Hub = {
     } catch(e) {}
   },
 
+  lockApp: function() {
+    if (!Hub.pin.enabled || !Hub.pin.hash) return;
+    const overlay = document.getElementById("pin-lock-overlay");
+    if (overlay.classList.contains("show")) return;
+    
+    Hub.pinMode = 'unlock';
+    Hub.pin.enteredPin = "";
+    Hub.pinSetupStep = 0;
+    Hub.pinSetupFirst = "";
+    
+    document.getElementById("pin-title").textContent = "Wpisz kod PIN";
+    document.getElementById("pin-hint").textContent = Hub.pin.hint || "";
+    document.getElementById("pin-error").textContent = "";
+    document.getElementById("pin-cancel-btn").style.display = "none";
+    Hub.updatePinDots();
+    overlay.classList.add("show");
+    Hub.haptic('medium');
+  },
+
+  startPinFlow: function(skipVerify = false) {
+    return new Promise((resolve) => {
+      Hub.pinFlowResolve = resolve;
+      Hub.pin.enteredPin = "";
+      
+      if (skipVerify) {
+        Hub.pinMode = 'setup';
+        Hub.pinSetupStep = 0;
+        Hub.pinSetupFirst = "";
+        document.getElementById("pin-title").textContent = "Ustaw nowy kod PIN";
+      } else {
+        Hub.pinMode = 'verify';
+        document.getElementById("pin-title").textContent = "Wpisz obecny kod PIN";
+      }
+      
+      document.getElementById("pin-hint").textContent = Hub.pinMode === 'verify' ? (Hub.pin.hint || "") : "";
+      document.getElementById("pin-error").textContent = "";
+      document.getElementById("pin-cancel-btn").style.display = "block";
+      Hub.updatePinDots();
+      document.getElementById("pin-lock-overlay").classList.add("show");
+    });
+  },
+
+  finishPinSetup: async function() {
+    const newHash = await Hub.hashPin(Hub.pinSetupFirst);
+    Hub.pin.enabled = true;
+    Hub.pin.hash = newHash;
+    await Hub.db.set("pin_enabled", true);
+    await Hub.db.set("pin_hash", newHash);
+    
+    document.getElementById("pin-lock-overlay").classList.remove("show");
+    document.getElementById("pin-settings-extra").classList.remove("hidden");
+    document.getElementById("pin-cancel-btn").style.display = "none";
+    
+    if (Hub.pinFlowResolve) {
+      Hub.pinFlowResolve(true);
+      Hub.pinFlowResolve = null;
+    }
+    
+    showToast("Kod PIN zaktualizowany.");
+    Hub.haptic('success');
+    Hub.pinMode = 'unlock';
+  },
+
+  cancelPinFlow: function() {
+    document.getElementById("pin-lock-overlay").classList.remove("show");
+    document.getElementById("pin-cancel-btn").style.display = "none";
+    Hub.pin.enteredPin = "";
+    
+    if (Hub.pinFlowResolve) {
+      Hub.pinFlowResolve(false);
+      Hub.pinFlowResolve = null;
+    }
+    
+    Hub.pinMode = 'unlock';
+  },
+
+  hashPin: async function(pin) {
+    const msgBuffer = new TextEncoder().encode(pin);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  },
+
+  unlockApp: function() {
+    document.getElementById("pin-lock-overlay").classList.remove("show");
+    Hub.pin.enteredPin = "";
+    Hub.lastActivity = Date.now();
+    Hub.haptic('success');
+  },
+
+  pinInput: function(num) {
+    if (Hub.pin.enteredPin.length >= 4) return;
+    Hub.haptic('light');
+    Hub.pin.enteredPin += num;
+    Hub.updatePinDots();
+    
+    if (Hub.pin.enteredPin.length === 4) {
+      setTimeout(() => Hub.processPin(), 150);
+    }
+  },
+
+  pinDelete: function() {
+    Hub.haptic('light');
+    Hub.pin.enteredPin = Hub.pin.enteredPin.slice(0, -1);
+    Hub.updatePinDots();
+    document.getElementById("pin-error").textContent = "";
+  },
+
+  updatePinDots: function() {
+    const dots = document.querySelectorAll(".pin-dot");
+    dots.forEach((d, i) => {
+      if (i < Hub.pin.enteredPin.length) d.classList.add("filled");
+      else d.classList.remove("filled");
+    });
+  },
+
+  pinError: function(msg) {
+    Hub.haptic('error');
+    document.getElementById("pin-error").textContent = msg;
+    const dotsContainer = document.getElementById("pin-dots");
+    dotsContainer.classList.add("shake");
+    setTimeout(() => dotsContainer.classList.remove("shake"), 300);
+    Hub.pin.enteredPin = "";
+    Hub.updatePinDots();
+  },
+
+  processPin: async function() {
+    const pin = Hub.pin.enteredPin;
+    const hash = await Hub.hashPin(pin);
+    
+    if (Hub.pinMode === 'unlock') {
+      if (hash === Hub.pin.hash) {
+        Hub.unlockApp();
+      } else {
+        Hub.pinError("Nieprawidłowy kod PIN.");
+      }
+    } else if (Hub.pinMode === 'verify') {
+      if (hash === Hub.pin.hash) {
+        Hub.pin.enteredPin = "";
+        Hub.updatePinDots();
+        Hub.pinMode = 'setup';
+        Hub.pinSetupStep = 0;
+        Hub.pinSetupFirst = "";
+        document.getElementById("pin-title").textContent = "Ustaw nowy kod PIN";
+        document.getElementById("pin-hint").textContent = "";
+        document.getElementById("pin-error").textContent = "";
+      } else {
+        Hub.pinError("Nieprawidłowy kod PIN.");
+      }
+    } else if (Hub.pinMode === 'setup') {
+      if (Hub.pinSetupStep === 0) {
+        Hub.pinSetupFirst = pin;
+        Hub.pinSetupStep = 1;
+        Hub.pin.enteredPin = "";
+        Hub.updatePinDots();
+        document.getElementById("pin-title").textContent = "Powtórz kod PIN";
+      } else {
+        if (pin === Hub.pinSetupFirst) {
+          Hub.finishPinSetup();
+        } else {
+          Hub.pinError("Kody nie są identyczne. Spróbuj ponownie.");
+          Hub.pinSetupStep = 0;
+          Hub.pinSetupFirst = "";
+          document.getElementById("pin-title").textContent = "Ustaw nowy kod PIN";
+        }
+      }
+    }
+  },
+
   openSettings: async function(push = true) {
     Hub.cleanup();
     document.getElementById("drawer").classList.remove("open");
@@ -1278,10 +1504,11 @@ window.Hub = {
     pinToggle.onchange = async (e) => {
       Hub.haptic('medium');
       if (e.target.checked) {
-        const success = await Hub.showPinSetup();
+        const success = await Hub.startPinFlow(true);
         if (!success) {
           e.target.checked = false;
           Hub.pin.enabled = false;
+          Hub.pin.hash = null;
         }
       } else {
         Hub.pin.enabled = false;
@@ -1292,7 +1519,7 @@ window.Hub = {
         Hub.db.set("pin_hash", null);
         Hub.db.set("pin_hint", "");
         Hub.db.set("pin_timeout", 0);
-        pinSettingsExtra.classList.add('hidden');
+        pinSettingsExtra.classList.add("hidden");
         showToast("Blokada PIN wyłączona.");
       }
     };
@@ -1319,7 +1546,7 @@ window.Hub = {
 
     document.getElementById('btn-change-pin').onclick = async () => {
       Hub.haptic('medium');
-      await Hub.showPinSetup();
+      await Hub.startPinFlow(false);
     };
 
     document.getElementById('btn-reset-settings').onclick = async () => {
@@ -1335,157 +1562,6 @@ window.Hub = {
         };
       }
     };
-  },
-
-  showPinSetup: function() {
-    return new Promise((resolve) => {
-      const overlay = document.getElementById("pin-lock-overlay");
-      const title = document.getElementById("pin-title");
-      const hintEl = document.getElementById("pin-hint");
-      const dots = document.querySelectorAll(".pin-dot");
-      const errorEl = document.getElementById("pin-error");
-      
-      Hub.pinSetupMode = true;
-      Hub.pinSetupStep = 0;
-      Hub.pinSetupFirst = "";
-      Hub.pin.enteredPin = "";
-      
-      title.textContent = "Ustaw nowy kod PIN";
-      hintEl.textContent = "";
-      errorEl.textContent = "";
-      dots.forEach(d => d.classList.remove("filled"));
-      overlay.classList.add("show");
-
-      const originalResolve = resolve;
-
-      Hub.finishPinSetup = async () => {
-        Hub.pinSetupMode = false;
-        overlay.classList.remove("show");
-        
-        const newHash = await Hub.hashPin(Hub.pinSetupFirst);
-        Hub.pin.enabled = true;
-        Hub.pin.hash = newHash;
-        await Hub.db.set("pin_enabled", true);
-        await Hub.db.set("pin_hash", newHash);
-        
-        document.getElementById("pin-settings-extra").classList.remove("hidden");
-        showToast("Blokada PIN włączona.");
-        originalResolve(true);
-      };
-
-      Hub.cancelPinSetup = () => {
-        Hub.pinSetupMode = false;
-        overlay.classList.remove("show");
-        originalResolve(false);
-      };
-    });
-  },
-
-  hashPin: async function(pin) {
-    const msgBuffer = new TextEncoder().encode(pin);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  },
-
-  lockApp: function() {
-    if (!Hub.pin.enabled || document.getElementById("pin-lock-overlay").classList.contains("show")) return;
-    if (document.getElementById("pin-setup-mode").classList.contains("show")) return;
-    
-    Hub.haptic('medium');
-    const overlay = document.getElementById("pin-lock-overlay");
-    const title = document.getElementById("pin-title");
-    const hintEl = document.getElementById("pin-hint");
-    const dots = document.querySelectorAll(".pin-dot");
-    const errorEl = document.getElementById("pin-error");
-    
-    Hub.pinSetupMode = false;
-    Hub.pin.enteredPin = "";
-    
-    title.textContent = "Wpisz kod PIN";
-    hintEl.textContent = Hub.pin.hint || "";
-    errorEl.textContent = "";
-    dots.forEach(d => d.classList.remove("filled"));
-    
-    overlay.classList.add("show");
-  },
-
-  unlockApp: function() {
-    const overlay = document.getElementById("pin-lock-overlay");
-    overlay.classList.remove("show");
-    Hub.pin.enteredPin = "";
-    Hub.lastActivity = Date.now();
-    Hub.haptic('success');
-  },
-
-  pinInput: function(num) {
-    if (Hub.pin.enteredPin.length >= 4) return;
-    Hub.haptic('light');
-    Hub.pin.enteredPin += num;
-    Hub.updatePinDots();
-    
-    if (Hub.pin.enteredPin.length === 4) {
-      setTimeout(() => Hub.processPin(), 150);
-    }
-  },
-
-  pinDelete: function() {
-    Hub.haptic('light');
-    Hub.pin.enteredPin = Hub.pin.enteredPin.slice(0, -1);
-    Hub.updatePinDots();
-    document.getElementById("pin-error").textContent = "";
-  },
-
-  updatePinDots: function() {
-    const dots = document.querySelectorAll(".pin-dot");
-    dots.forEach((d, i) => {
-      if (i < Hub.pin.enteredPin.length) d.classList.add("filled");
-      else d.classList.remove("filled");
-    });
-  },
-
-  processPin: async function() {
-    const pin = Hub.pin.enteredPin;
-    const errorEl = document.getElementById("pin-error");
-    const dotsContainer = document.getElementById("pin-dots");
-    const title = document.getElementById("pin-title");
-    
-    if (Hub.pinSetupMode) {
-      if (Hub.pinSetupStep === 0) {
-        Hub.pinSetupFirst = pin;
-        Hub.pinSetupStep = 1;
-        Hub.pin.enteredPin = "";
-        Hub.updatePinDots();
-        title.textContent = "Powtórz kod PIN";
-        errorEl.textContent = "";
-      } else {
-        if (pin === Hub.pinSetupFirst) {
-          Hub.finishPinSetup();
-        } else {
-          Hub.haptic('error');
-          errorEl.textContent = "Kody nie są identyczne. Spróbuj ponownie.";
-          dotsContainer.classList.add("shake");
-          setTimeout(() => dotsContainer.classList.remove("shake"), 300);
-          Hub.pin.enteredPin = "";
-          Hub.pinSetupStep = 0;
-          Hub.pinSetupFirst = "";
-          title.textContent = "Ustaw nowy kod PIN";
-          Hub.updatePinDots();
-        }
-      }
-    } else {
-      const hash = await Hub.hashPin(pin);
-      if (hash === Hub.pin.hash) {
-        Hub.unlockApp();
-      } else {
-        Hub.haptic('error');
-        errorEl.textContent = "Nieprawidłowy kod PIN.";
-        dotsContainer.classList.add("shake");
-        setTimeout(() => dotsContainer.classList.remove("shake"), 300);
-        Hub.pin.enteredPin = "";
-        Hub.updatePinDots();
-      }
-    }
   },
 
   showSupport: function() {
