@@ -79,26 +79,46 @@
             cursor: zoom-in; transition: opacity 0.2s; 
           }
           .c-preview-img:active { opacity: 0.8; }
-          
-          .c-drop-zone { 
-            border: 1px dashed var(--line); border-radius: 8px; padding: 30px 20px; 
-            text-align: center; color: var(--muted); cursor: pointer; 
-            transition: border-color 0.2s; margin-bottom: 16px; 
+
+          .c-intro-box {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 32px 20px;
+            text-align: center;
+            margin-top: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
           }
-          .c-drop-zone:active { border-color: var(--accent); }
+
+          .c-icon-wrapper {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: var(--bg); border: 1px solid var(--line);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent);
+          }
         </style>
 
         ${Hub.backButtonHtml}
 
         <div class="c-flat-section" style="margin-top: 16px;">
-          <label class="c-label">Plik źródłowy</label>
           <input type="file" id="c-file" accept="image/*" style="display:none;">
           
-          <div id="c-drop-zone" class="c-drop-zone">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px; opacity:0.5;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-            <div style="font-size: 14px; font-weight: 500;">Kliknij, aby wybrać zdjęcie</div>
-            <div style="font-size: 12px; margin-top: 4px; opacity: 0.7;">lub wklej ze schowka (Ctrl+V)</div>
+          <div class="c-intro-box">
+            <div class="c-icon-wrapper">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </div>
+            <div>
+              <div style="font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 8px;">Konwersja zdjęć</div>
+              <div style="font-size: 14px; color: var(--muted); line-height: 1.5;">Wybierz zdjęcie, aby zmienić jego format, rozmiar lub stopień kompresji.</div>
+            </div>
+            <button id="c-pick-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; margin-top: 8px;">Wybierz zdjęcie</button>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">lub wklej ze schowka (Ctrl+V)</div>
           </div>
+          
           <div id="c-file-name" class="c-file-name">Nie wybrano pliku</div>
         </div>
 
@@ -143,7 +163,7 @@
       `;
 
       const $ = id => container.querySelector("#" + id);
-      const fileInput = $("c-file"), dropZone = $("c-drop-zone"), fileName = $("c-file-name");
+      const fileInput = $("c-file"), pickBtn = $("c-pick-btn"), fileName = $("c-file-name");
       const fmtTrigger = $("c-fmt-trigger"), fmtText = $("c-fmt-text");
       const resizeTrigger = $("c-resize-trigger"), resizeText = $("c-resize-text");
       const qualWrapper = $("c-qual-wrapper"), qualInput = $("c-qual"), qualLabel = $("c-qual-label");
@@ -206,7 +226,7 @@
         }
       }
 
-      dropZone.addEventListener("click", () => fileInput.click(), { signal });
+      pickBtn.addEventListener("click", () => fileInput.click(), { signal });
       fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]), { signal });
 
       document.addEventListener('paste', (e) => {
