@@ -13,6 +13,8 @@
       
       let items = [{ name: "Usługa programistyczna", qty: 1, price: 100, vat: 23 }];
       let isGenerating = false;
+      let lastGeneratedBlob = null;
+      let lastGeneratedFilename = "";
 
       container.innerHTML = `
         <style>
@@ -162,7 +164,7 @@
             <div class="inv-total-row grand"><span>Razem brutto</span><span id="total-gross">0,00 zł</span></div>
           </div>
 
-          <button id="generate-btn" class="n-btn n-btn-outline inv-generate-btn">Pobierz fakturę (PDF)</button>
+          <button id="generate-btn" class="n-btn n-btn-outline inv-generate-btn">Podgląd faktury</button>
         </div>
       `;
 
@@ -249,7 +251,6 @@
       renderItems();
       calculateTotals();
 
-      // === POPRAWIONE POLSKIE ZNAKI (CP1250) ===
       const polishMap = {
         'Ą': 0xA5, 'Ć': 0xC6, 'Ę': 0xCA, 'Ł': 0xA3, 'Ń': 0xD1, 'Ó': 0xD3, 'Ś': 0x8C, 'Ź': 0x8F, 'Ż': 0xAF,
         'ą': 0xB9, 'ć': 0xE6, 'ę': 0xEA, 'ł': 0xB3, 'ń': 0xF1, 'ó': 0xF3, 'ś': 0x9C, 'ź': 0x9F, 'ż': 0xBF
@@ -264,7 +265,7 @@
           } else {
             const code = ch.charCodeAt(0);
             if (code < 256) bytes.push(code);
-            else bytes.push(63); // '?' dla nieznanych
+            else bytes.push(63);
           }
         }
         return bytes;
@@ -335,15 +336,16 @@
         return `${numberToWords(intPart)} ${zlotyForm} ${String(decPart).padStart(2, '0')}/100 ${groszForm}`;
       }
 
-      async function generatePDF() {
+      async function previewPDF() {
         if (isGenerating) return;
         isGenerating = true;
         
         const btn = $("generate-btn");
         btn.disabled = true;
-        btn.textContent = "Generowanie...";
+        btn.textContent = "Generowanie podglądu...";
         Hub.haptic('medium');
 
+        // Zapisujemy dane sprzedawcy
         const sellerData = {
           name: $("seller-name").value,
           nip: $("seller-nip").value,
@@ -371,7 +373,7 @@
         });
         const totalGross = totalNet + totalVat;
 
-        // === BUDOWA PDF (BINARNIE) ===
+        // === BUDOWA PDF ===
         const pdfChunks = [];
         let currentOffset = 0;
         let offsets = [];
@@ -388,29 +390,21 @@
           pushBytes(bytes);
         }
 
-        // Zbieranie zawartości strony jako tablica bajtów
         const contentBytes = [];
-
-        function pushContentBytes(bytes) {
-          for (let b of bytes) contentBytes.push(b);
-        }
-
-        function pushContentStr(str) {
-          for (let i = 0; i < str.length; i++) contentBytes.push(str.charCodeAt(i));
-        }
+        function pushContentBytes(bytes) { for (let b of bytes) contentBytes.push(b); }
+        function pushContentStr(str) { for (let i = 0; i < str.length; i++) contentBytes.push(str.charCodeAt(i)); }
 
         function addText(x, y, text, font = 'F1', size = 10) {
           pushContentStr(`BT /${font} ${size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (`);
           const encoded = encodeText(text);
           for (let b of encoded) {
-            if (b === 40 || b === 41 || b === 92) pushContentBytes([92]); // ( ) \
+            if (b === 40 || b === 41 || b === 92) pushContentBytes([92]);
             pushContentBytes([b]);
           }
           pushContentStr(`) Tj ET\n`);
         }
 
         function addTextRight(xRight, y, text, font = 'F1', size = 10) {
-          // Helvetica srednia szerokosc znaku to ok 0.55 * rozmiar
           const estWidth = text.length * size * 0.55;
           addText(xRight - estWidth, y, text, font, size);
         }
@@ -423,21 +417,17 @@
         const W = 595, H = 842, M = 40;
         let y = H - 60;
 
-        // Nagłówek
         addText(M, y, 'FAKTURA VAT', 'F2', 22);
         addTextRight(W - M, y, `nr ${invoiceNum}`, 'F1', 12);
         y -= 20;
-        
         addText(M, y, `Data wystawienia: ${formatDate(invDate)}`, 'F1', 9);
         addTextRight(W - M, y, `Termin płatności: ${formatDate(dueDate)}`, 'F1', 9);
         y -= 15;
         addText(M, y, `Metoda płatności: ${payMethod}`, 'F1', 9);
-        
         y -= 10;
         addLine(M, y, W - M, y);
         y -= 25;
 
-        // Sprzedawca i Nabywca
         const colW = (W - 2 * M) / 2 - 10;
         const colL = M;
         const colR = M + colW + 20;
@@ -445,25 +435,18 @@
         addText(colL, y, 'SPRZEDAWCA', 'F2', 10);
         addText(colR, y, 'NABYWCA', 'F2', 10);
         y -= 15;
-        
         addText(colL, y, sellerData.name || '-', 'F1', 10);
         addText(colR, y, buyerData.name || '-', 'F1', 10);
         y -= 14;
-        
         if (sellerData.nip) addText(colL, y, `NIP: ${sellerData.nip}`, 'F1', 9);
         if (buyerData.nip) addText(colR, y, `NIP: ${buyerData.nip}`, 'F1', 9);
         y -= 14;
-        
-        const sellerAddr = sellerData.address || '-';
-        const buyerAddr = buyerData.address || '-';
-        addText(colL, y, sellerAddr.substring(0, 35), 'F1', 9);
-        addText(colR, y, buyerAddr.substring(0, 35), 'F1', 9);
-        
+        addText(colL, y, (sellerData.address || '-').substring(0, 35), 'F1', 9);
+        addText(colR, y, (buyerData.address || '-').substring(0, 35), 'F1', 9);
         y -= 25;
         addLine(M, y, W - M, y);
         y -= 20;
 
-        // Nagłówek tabeli (rozsunięte kolumny)
         addText(M, y, 'Lp.', 'F2', 8);
         addText(M + 25, y, 'Nazwa towaru / usługi', 'F2', 8);
         addTextRight(M + 330, y, 'Ilość', 'F2', 8);
@@ -471,18 +454,15 @@
         addTextRight(M + 440, y, 'VAT', 'F2', 8);
         addTextRight(M + 490, y, 'Netto', 'F2', 8);
         addTextRight(W - M, y, 'Brutto', 'F2', 8);
-        
         y -= 8;
         addLine(M, y, W - M, y);
         y -= 15;
 
-        // Wiersze tabeli
         items.forEach((item, idx) => {
           if (y < 200) return;
           const net = item.qty * item.price;
           const vat = net * item.vat / 100;
           const gross = net + vat;
-          
           addText(M, y, String(idx + 1), 'F1', 9);
           addText(M + 25, y, item.name.substring(0, 45) || '-', 'F1', 9);
           addTextRight(M + 330, y, `${item.qty}`, 'F1', 9);
@@ -490,15 +470,12 @@
           addTextRight(M + 440, y, `${item.vat}%`, 'F1', 9);
           addTextRight(M + 490, y, formatMoneyPlain(net), 'F1', 9);
           addTextRight(W - M, y, formatMoneyPlain(gross), 'F1', 9);
-          
           y -= 15;
         });
 
-        // Suma
         y -= 5;
         addLine(M, y, W - M, y);
         y -= 18;
-        
         addTextRight(W - M - 150, y, 'Razem netto:', 'F1', 10);
         addTextRight(W - M, y, formatMoneyPlain(totalNet) + ' zł', 'F2', 10);
         y -= 15;
@@ -507,12 +484,10 @@
         y -= 15;
         addTextRight(W - M - 150, y, 'RAZEM BRUTTO:', 'F2', 11);
         addTextRight(W - M, y, formatMoneyPlain(totalGross) + ' zł', 'F2', 11);
-        
         y -= 30;
         addLine(M, y, W - M, y);
         y -= 20;
 
-        // Kwota słownie
         addText(M, y, 'Kwota słownie:', 'F2', 9);
         y -= 14;
         const words = amountInWords(totalGross);
@@ -522,7 +497,6 @@
           y -= 12;
         });
 
-        // Stopka
         y = 80;
         addLine(M, y, W - M, y);
         y -= 15;
@@ -531,32 +505,26 @@
 
         const contentStream = new Uint8Array(contentBytes);
         
-        // === BUDOWA STRUKTURY PDF ===
         pushStr("%PDF-1.4\n");
 
-        // 1: Catalog
         offsets.push(currentOffset);
         pushStr(`${objectId} 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`);
         objectId++;
 
-        // 2: Pages
         offsets.push(currentOffset);
         pushStr(`${objectId} 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n`);
         objectId++;
 
-        // 3: Page
         offsets.push(currentOffset);
         pushStr(`${objectId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>\nendobj\n`);
         objectId++;
 
-        // 4: Contents
         offsets.push(currentOffset);
         pushStr(`${objectId} 0 obj\n<< /Length ${contentStream.length} >>\nstream\n`);
         pushBytes(contentStream);
         pushStr(`\nendstream\nendobj\n`);
         objectId++;
 
-        // 5 i 6: Helvetica z polskim encoding
         const diffStr = '[140 /Sacute 143 /Zacute 156 /sacute 159 /zacute 163 /Lslash 165 /Aogonek 175 /Zdotaccent 179 /lslash 185 /aogonek 191 /zdotaccent 198 /Cacute 202 /Eogonek 209 /Nacute 230 /cacute 234 /eogonek 241 /nacute]';
         
         offsets.push(currentOffset);
@@ -567,7 +535,6 @@
         pushStr(`${objectId} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding << /Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences ${diffStr} >> >>\nendobj\n`);
         objectId++;
 
-        // Xref i trailer
         const startXref = currentOffset;
         let xref = `xref\n0 ${objectId}\n0000000000 65535 f \n`;
         offsets.forEach(off => {
@@ -576,16 +543,49 @@
         const trailer = `trailer\n<< /Size ${objectId} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF`;
         pushStr(xref + trailer);
 
-        // Pobieranie
         const finalBlob = new Blob(pdfChunks, { type: 'application/pdf' });
-        Hub.download(finalBlob, `faktura_${invoiceNum.replace(/[^a-z0-9]/gi, '_')}.pdf`);
+        lastGeneratedBlob = finalBlob;
+        lastGeneratedFilename = `faktura_${invoiceNum.replace(/[^a-z0-9]/gi, '_')}.pdf`;
         
-        setTimeout(() => {
-          btn.disabled = false;
-          btn.textContent = "Pobierz fakturę (PDF)";
-          isGenerating = false;
-          showToast("Faktura wygenerowana!");
-        }, 1000);
+        const url = URL.createObjectURL(finalBlob);
+        
+        const modalContent = `
+          <div style="width: 100%; height: 80vh; max-height: 700px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="flex: 1; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--line);">
+              <iframe src="${url}" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+            <div style="font-size: 11px; color: var(--muted); text-align: center; line-height: 1.4;">
+              Jeśli podgląd się nie wyświetla (np. w Chrome na Androidzie), po prostu kliknij "Pobierz PDF".
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button id="modal-cancel-btn" class="n-btn" style="flex: 1;">Anuluj</button>
+              <button id="modal-download-btn" class="n-btn n-btn-outline" style="flex: 2;">Pobierz PDF</button>
+            </div>
+          </div>
+        `;
+        
+        const modal = Hub.showModal({ content: modalContent });
+        
+        const originalClose = modal.close;
+        modal.close = () => {
+          URL.revokeObjectURL(url);
+          originalClose();
+        };
+        
+        modal.element.querySelector('#modal-cancel-btn').onclick = () => {
+          Hub.haptic('light');
+          modal.close();
+        };
+        
+        modal.element.querySelector('#modal-download-btn').onclick = () => {
+          Hub.haptic('success');
+          Hub.download(lastGeneratedBlob, lastGeneratedFilename);
+          modal.close();
+        };
+        
+        btn.disabled = false;
+        btn.textContent = "Podgląd faktury";
+        isGenerating = false;
       }
 
       function formatDate(d) {
@@ -599,7 +599,7 @@
         return n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
       }
 
-      $("generate-btn").onclick = generatePDF;
+      $("generate-btn").onclick = previewPDF;
     },
 
     unmount() {}
