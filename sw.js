@@ -4,7 +4,7 @@ self.addEventListener("install", event => {
   self.skipWaiting();
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    const coreAssets = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
+    const coreAssets = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './changelog.json'];
     await cache.addAll(coreAssets);
 
     try {
@@ -42,7 +42,7 @@ self.addEventListener("fetch", event => {
 
   const url = new URL(event.request.url);
   
-  if (url.pathname.endsWith('modules.json')) {
+  if (url.pathname.endsWith('modules.json') || url.pathname.endsWith('changelog.json')) {
     event.respondWith(
       fetch(event.request, { cache: "no-store" })
         .then(networkResponse => {
