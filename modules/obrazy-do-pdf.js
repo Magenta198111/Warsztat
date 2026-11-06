@@ -5,7 +5,8 @@
     desc: "Połącz wiele zdjęć w jeden wielostronicowy plik PDF",
 
     async mount(container, signal) {
-      const MAX_FILES = 1000; // <-- USTAWIONY LIMIT 1000
+      const MAX_FILES = 1000;
+      const BROWSER_PICK_LIMIT = 100;
       let selectedFiles = [];
       let isGenerating = false;
 
@@ -35,6 +36,16 @@
           }
           .pdf-warning svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
           .pdf-warning strong { color: #fcd34d; }
+          .pdf-warning.info { background: rgba(129, 140, 248, 0.08); border-color: rgba(129, 140, 248, 0.3); color: #a5b4fc; }
+          .pdf-warning.info strong { color: #c7d2fe; }
+
+          .pdf-tip {
+            font-size: 12px; color: var(--muted); text-align: left; line-height: 1.5;
+            display: flex; align-items: flex-start; gap: 8px;
+            background: var(--bg); border: 1px solid var(--line);
+            border-radius: 6px; padding: 10px 12px; margin-top: 8px;
+          }
+          .pdf-tip svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; color: var(--accent); }
 
           .pdf-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
           
@@ -92,10 +103,17 @@
               <div style="font-size: 14px; color: var(--muted); line-height: 1.5;">Wybierz wiele zdjęć, ułóż je w odpowiedniej kolejności i scal w jeden dokument. Maksymalnie ${MAX_FILES} zdjęć.</div>
             </div>
             
+            <div class="pdf-warning info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <div>
+                <strong>Wskazówka:</strong> Przeglądarka pozwala zazwyczaj wybrać do <strong>${BROWSER_PICK_LIMIT} zdjęć jednocześnie</strong>. Aby dodać więcej, po wybraniu pierwszych zdjęć kliknij przycisk <strong>"Dodaj kolejne zdjęcia"</strong>.
+              </div>
+            </div>
+
             <div class="pdf-warning">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               <div>
-                <strong>Uwaga:</strong> Przy dużej liczbie zdjęć (powyżej 30) przetwarzanie może potrwać kilka sekund. Aplikacja jest zoptymalizowana, ale przy ponad 100 zdjęciach operacja może zająć kilkanaście sekund – w tym czasie nie zamykaj aplikacji. Uszkodzone pliki zostaną automatycznie pominięte.
+                Przy dużej liczbie zdjęć (powyżej 30) przetwarzanie może potrwać kilka sekund. Przy ponad 100 zdjęciach operacja może zająć kilkanaście sekund – nie zamykaj aplikacji. Uszkodzone pliki zostaną automatycznie pominięte.
               </div>
             </div>
 
@@ -118,7 +136,13 @@
 
             <div class="pdf-actions">
               <button id="pdf-add-more" class="n-btn" style="width: 100%; padding: 14px;">Dodaj kolejne zdjęcia</button>
-              <button id="pdf-generate-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px;">Generuj wielostronicowy PDF</button>
+              
+              <div class="pdf-tip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path></svg>
+                <div>Przeglądarka pozwala wybrać do <strong>${BROWSER_PICK_LIMIT} zdjęć na raz</strong>. Jeśli potrzebujesz więcej, kliknij "Dodaj kolejne zdjęcia" ponownie.</div>
+              </div>
+
+              <button id="pdf-generate-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; margin-top: 8px;">Generuj wielostronicowy PDF</button>
             </div>
 
             <div id="pdf-progress" class="pdf-progress-wrapper">
@@ -224,6 +248,11 @@
         const newFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
         if (newFiles.length === 0) return;
 
+        // Ostrzeżenie, gdy użytkownik wybiera bardzo dużo plików naraz
+        if (newFiles.length >= 90) {
+          showToast(`Wybrano ${newFiles.length} zdjęć. Aby dodać jeszcze więcej, kliknij "Dodaj kolejne zdjęcia" po zakończeniu.`);
+        }
+
         const availableSlots = MAX_FILES - selectedFiles.length;
         if (availableSlots <= 0) {
           showToast(`Osiągnięto limit ${MAX_FILES} zdjęć.`);
@@ -282,7 +311,6 @@
         });
       }
 
-      // NOWA FUNKCJA: Ekran podsumowania z błędami
       function showSummaryScreen(successCount, skippedList, totalFiles) {
         let html = `
           <div style="width: 100%; max-width: 450px; display: flex; flex-direction: column;">
@@ -351,7 +379,6 @@
           const jpegPages = [];
           const skipped = [];
 
-          // FAZA 1: Dekodowanie i kompresja (z odpornością na błędy)
           for (let i = 0; i < totalFiles; i++) {
             const item = selectedFiles[i];
             const percent = Math.round(((i) / totalFiles) * 50);
@@ -410,7 +437,6 @@
             throw new Error("Nie udało się odczytać żadnego zdjęcia. Wszystkie pliki są uszkodzone lub w nieobsługiwanym formacie.");
           }
 
-          // FAZA 2: Budowanie PDF
           progressText.textContent = "Budowanie struktury PDF (50%)...";
           progressFill.style.width = "50%";
           await new Promise(r => setTimeout(r, 100));
@@ -494,14 +520,13 @@
           const finalBlob = new Blob(pdfChunks, { type: 'application/pdf' });
           Hub.download(finalBlob, `dokument_${new Date().toISOString().slice(0,10)}.pdf`);
           
-          // POKAZUJEMY EKRAN PODSUMOWANIA
           setTimeout(() => {
             showSummaryScreen(pageCount, skipped, totalFiles);
             progressWrapper.style.display = "none";
             generateBtn.disabled = false;
             generateBtn.textContent = "Generuj wielostronicowy PDF";
             isGenerating = false;
-          }, 800); // Krótkie opóźnienie, aby pobieranie wystartowało
+          }, 800);
 
         } catch (err) {
           console.error(err);
