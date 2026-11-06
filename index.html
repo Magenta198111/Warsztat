@@ -120,10 +120,18 @@ input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-se
 .list.grid-view .tile-heart:active { transform: scale(0.8); }
 .tile-heart.active { color: var(--accent); fill: var(--accent); }
 
+/* NOWY STYL WYSZUKIWARKI - ZINTEGROWANY Z KAFELKAMI */
 .search-container {
-  position: sticky; top: calc(54px + var(--safe-top)); z-index: 90;
-  background: var(--bg); padding: 12px 20px; border-bottom: 1px solid var(--line);
-  display: flex; align-items: center; gap: 8px;
+  position: sticky; 
+  top: calc(48px + var(--safe-top)); 
+  z-index: 90;
+  background: var(--bg); 
+  padding: 12px 0; 
+  border-bottom: 1px solid var(--line);
+  display: flex; 
+  align-items: center; 
+  gap: 8px;
+  margin-bottom: 16px;
 }
 .search-icon { color: var(--muted); width: 20px; height: 20px; flex-shrink: 0; }
 .search-input {
@@ -416,15 +424,17 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
   <h1 class="topbar-title" id="app-title">Workspace</h1>
 </div>
 
-<div id="search-area" class="search-container hidden">
-  <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-  <input type="text" id="search-input" class="search-input" placeholder="Szukaj modułów..." autocomplete="off" spellcheck="false">
-  <button id="search-clear" class="search-clear">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-  </button>
-</div>
+<main class="container" id="view-home">
+  <div id="search-area" class="search-container hidden">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    <input type="text" id="search-input" class="search-input" placeholder="Szukaj modułów..." autocomplete="off" spellcheck="false">
+    <button id="search-clear" class="search-clear">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+  </div>
+  <div class="list" id="modules-grid"></div>
+</main>
 
-<main class="container" id="view-home"><div class="list" id="modules-grid"></div></main>
 <main class="container" id="view-module"></main>
 
 <main class="container" id="view-changelog">
