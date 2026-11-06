@@ -82,151 +82,209 @@
       const categories = {
         "math": "Stylowe (Matematyczne)",
         "deco": "Ozdobne (Kształty)",
-        "effects": "Efekty (Przekreślenia, itp.)",
-        "other": "Inne alfabety",
-        "zalgo": "Zalgo (Zniekształcone)"
+        "effects": "Efekty (Linie, kropki)",
+        "frames": "Ramki i Ozdobniki",
+        "scripts": "Inne alfabety",
+        "zalgo": "Zalgo (Zniekształcone)",
+        "weird": "Dziwne i Kreatywne"
       };
 
-      const mathStyles = {
+      // Bazy dla znaków matematycznych [Wielkie, Małe, Cyfry]
+      const mathBases = {
         "Pogrubienie": [0x1D400, 0x1D41A, 0x1D7CE],
         "Kursywa": [0x1D434, 0x1D44E, 0],
         "Pogrubiona kursywa": [0x1D468, 0x1D482, 0],
+        "Pismo odręczne": [0x1D49C, 0x1D4B6, 0],
+        "Pogrubione odręczne": [0x1D4D0, 0x1D4EA, 0],
+        "Gotyckie": [0x1D504, 0x1D51E, 0],
+        "Pogrubione gotyckie": [0x1D56C, 0x1D586, 0],
+        "Podwójna linia": [0x1D538, 0x1D552, 0x1D7D8],
         "Bezszeryfowe": [0x1D5A0, 0x1D5BA, 0x1D7E2],
         "Bezszeryfowe pogrubione": [0x1D5D4, 0x1D5EE, 0x1D7EC],
         "Bezszeryfowe kursywa": [0x1D608, 0x1D622, 0],
-        "Pismo odręczne": [0x1D49C, 0x1D4B6, 0],
-        "Gotyckie": [0x1D504, 0x1D51E, 0],
-        "Gotyckie pogrubione": [0x1D56C, 0x1D586, 0],
-        "Podwójna linia": [0x1D538, 0x1D552, 0x1D7D8],
+        "Bezszeryfowe pogrubione kursywa": [0x1D63C, 0x1D656, 0],
         "Monospace": [0x1D670, 0x1D68A, 0x1D7F6]
       };
 
-      const decoStyles = {
+      // Wyjątki, gdzie Unicode ma "dziury" i użycza znaków z innych bloków
+      const mathExceptions = {
+        0x1D455: 0x210E,
+        0x1D49D: 0x212C, 0x1D4A0: 0x2130, 0x1D4A1: 0x2131, 0x1D4A3: 0x210B, 0x1D4A4: 0x2110, 0x1D4A7: 0x2112, 0x1D4A8: 0x2133, 0x1D4AD: 0x211B, 0x1D4BA: 0x212F, 0x1D4BC: 0x210A, 0x1D4C4: 0x2134,
+        0x1D506: 0x212D, 0x1D50B: 0x210C, 0x1D50C: 0x2111, 0x1D515: 0x211C, 0x1D51D: 0x2128,
+        0x1D53A: 0x2102, 0x1D53F: 0x210D, 0x1D545: 0x2115, 0x1D547: 0x2119, 0x1D548: 0x211A, 0x1D549: 0x211D, 0x1D551: 0x2124
+      };
+
+      const decoBases = {
         "Kółeczka": [0x24B6, 0x24D0, 0],
         "Kółeczka ciemne": [0x1F150, 0, 0],
         "Kwadraty": [0x1F130, 0, 0],
         "Kwadraty ciemne": [0x1F170, 0, 0],
         "Pełna szerokość": [0xFF21, 0xFF41, 0xFF10],
-        "Małe kapitaliki": ["ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘqʀꜱᴛᴜᴠᴡxʏᴢ", "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘqʀꜱᴛᴜᴠᴡxʏᴢ", ""],
-        "Odwrócony": ["ɐqɔpǝɟƃɥıɾʞlɯuodbɹsʇnʌʍxʎz", "ɐqɔpǝɟƃɥıɾʞlɯuodbɹsʇnʌʍxʎz", ""]
+        "Małe kapitaliki": ["ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘqʀꜱᴛᴜᴠᴡxʏᴢ", "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘqʀꜱᴛᴜᴠᴡxʏᴢ", ""]
       };
 
-      const effectStyles = {
-        "Przekreślenie": "strike",
-        "Podkreślenie": "underline",
-        "Podwójne podkreślenie": "double_underline",
-        "Ukośnik": "slash",
-        "Kropka nad": "dot_above",
-        "Fala": "tilde"
+      const effects = {
+        "Przekreślenie": '\u0336',
+        "Podkreślenie": '\u0332',
+        "Podwójne podkreślenie": '\u0333',
+        "Ukośnik": '\u0338',
+        "Fala": '\u0334',
+        "Kropka nad": '\u0307',
+        "Kropka pod": '\u0323',
+        "Kreska nad": '\u0304',
+        "Ptaszek nad": '\u030C',
+        "Ogonek": '\u0328',
+        "Cedilla": '\u0327',
+        "Umlaut": '\u0308',
+        "Akcent ostry": '\u0301',
+        "Akcent ciężki": '\u0300',
+        "Daszek": '\u0302'
       };
 
-      const otherStyles = {
+      const frames = {
+        "Nawiasy ostrokątne": ["《", "》"],
+        "Nawiasy klamrowe": ["【", "】"],
+        "Podwójne klamry": ["『", "』"],
+        "Gwiazdki": ["★", "★"],
+        "Puste gwiazdki": ["☆", "☆"],
+        "Kwiatki": ["✿", "✿"],
+        "Iskierki": ["✧", "✧"],
+        "Błyskawice": ["⚡", "⚡"],
+        "Kotwice": ["⚓", "⚓"],
+        "Koniczyny": ["♣", "♣"],
+        "Piki": ["♠", "♠"],
+        "Kier": ["♥", "♥"],
+        "Karo": ["♦", "♦"],
+        "Słońca": ["☀", "☀"],
+        "Księżyce": ["☾", "☽"],
+        "Chmurki": ["☁", "☁"],
+        "Serduszka": ["❤", "❤"],
+        "Pioruny": ["ϟ", "ϟ"],
+        "Falbanki": ["༺", "༻"],
+        "Ozdobne kropki": ["•", "•"],
+        "Klamry": ["⦑", "⦒"],
+        "Strzałki": ["»", "«"],
+        "Kreski": ["⫷", "⫸"],
+        "Kratki": ["░", "░"],
+        "Pełne kratki": ["█", "█"],
+        "Szachownica": ["▒", "▒"]
+      };
+
+      const otherScripts = {
         "Greckie": ["ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ", "αβγδεζηθικλμνξοπρστυφχψω", ""],
         "Cyrylica": ["АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", "абвгдежзийклмнопрстуфхцчшщъыьэюя", ""],
-        "Symbole": ["♔♕♖♗♘♙♚♛♜♝♞♟", "♔♕♖♗♘♙♚♛♜♝♞♟", "⓪①②③④⑤⑥⑦⑧⑨"],
-        "Runy": ["ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ", "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ", ""]
+        "Runy": ["ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ", "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ", ""],
+        "Gruzińskie": ["აბგდევზთიკლმნოპჟრსტუფქღყშჩცძწჭხჯჰ", "აბგდევზთიკლმნოპჟრსტუფქღყშჩცძწჭხჯჰ", ""],
+        "Symbole": ["♔♕♖♗♘♙♚♛♜♝♞♟", "♔♕♖♗♘♙♚♛♜♝♞♟", "⓪①②③④⑤⑥⑦⑧⑨"]
       };
 
-      const zalgoStyles = {
+      const zalgoLevels = {
         "Lekki (Góra)": { up: 1, down: 0, mid: 0 },
         "Lekki (Dół)": { up: 0, down: 1, mid: 0 },
-        "Średni": { up: 1, down: 1, mid: 0 },
+        "Lekki (Środek)": { up: 0, down: 0, mid: 1 },
+        "Średni (Góra)": { up: 2, down: 0, mid: 0 },
+        "Średni (Dół)": { up: 0, down: 2, mid: 0 },
         "Średni (Mieszany)": { up: 1, down: 1, mid: 1 },
-        "Mocny": { up: 3, down: 3, mid: 0 },
+        "Mocny (Góra)": { up: 3, down: 0, mid: 0 },
+        "Mocny (Dół)": { up: 0, down: 3, mid: 0 },
+        "Mocny (Mieszany)": { up: 2, down: 2, mid: 1 },
         "Bardzo mocny": { up: 5, down: 5, mid: 0 },
-        "Ekstremalny": { up: 8, down: 8, mid: 2 }
+        "Ekstremalny": { up: 8, down: 8, mid: 2 },
+        "Chaos": { up: 10, down: 10, mid: 5 },
+        "Glitch": { up: 2, down: 2, mid: 8 }
       };
 
       const zalgoUp = ['\u030d', '\u030e', '\u0304', '\u0305', '\u033f', '\u0311', '\u0306', '\u0310', '\u0352', '\u0357', '\u0351', '\u0307', '\u0308', '\u030a', '\u0342', '\u0343', '\u0344', '\u034a', '\u034b', '\u034c', '\u0350', '\u0353', '\u0354', '\u0355', '\u0356', '\u0357', '\u0358', '\u0359'];
       const zalgoDown = ['\u0316', '\u0317', '\u0318', '\u0319', '\u031c', '\u031d', '\u031e', '\u031f', '\u0320', '\u0324', '\u0325', '\u0326', '\u0329', '\u032a', '\u032b', '\u032c', '\u032d', '\u032e', '\u032f', '\u0330', '\u0331', '\u0332', '\u0333', '\u0339', '\u033a', '\u033b', '\u033c', '\u0345', '\u0347', '\u0348', '\u0349', '\u034d', '\u034e'];
       const zalgoMid = ['\u0315', '\u031b', '\u0340', '\u0341', '\u0358', '\u0321', '\u0322', '\u0327', '\u0328', '\u0334', '\u0335', '\u0336', '\u034f', '\u035c', '\u035d', '\u035e', '\u035f', '\u0360', '\u0362', '\u0338', '\u0337', '\u0361', '\u0489'];
 
-      const mathExceptions = {
-        0x1D455: 0x210E,
-        0x1D49D: 0x212C, 0x1D4A0: 0x2130, 0x1D4A1: 0x2131, 0x1D4A3: 0x210B, 0x1D4A4: 0x2110,
-        0x1D4A7: 0x2112, 0x1D4A8: 0x2133, 0x1D4AD: 0x211B, 0x1D4BA: 0x212F, 0x1D4BC: 0x210A,
-        0x1D4C4: 0x2134,
-        0x1D506: 0x212D, 0x1D50B: 0x210C, 0x1D50C: 0x2111, 0x1D515: 0x211C, 0x1D51D: 0x2128,
-        0x1D53A: 0x2102, 0x1D53F: 0x210D, 0x1D545: 0x2115, 0x1D547: 0x2119, 0x1D548: 0x211A,
-        0x1D549: 0x211D, 0x1D551: 0x2124
-      };
-
-      function mapMathStyle(char, baseUpper, baseLower, baseDigit) {
-        const code = char.charCodeAt(0);
-        if (char === ' ') return ' ';
-        
-        let targetCode = 0;
-        if (code >= 65 && code <= 90) {
-          targetCode = baseUpper + (code - 65);
-        } else if (code >= 97 && code <= 122 && baseLower > 0) {
-          targetCode = baseLower + (code - 97);
-        } else if (code >= 48 && code <= 57 && baseDigit > 0) {
-          targetCode = baseDigit + (code - 48);
-        } else {
-          return char;
-        }
-
-        if (mathExceptions[targetCode]) {
-          targetCode = mathExceptions[targetCode];
-        }
-
-        try {
-          return String.fromCodePoint(targetCode);
-        } catch (e) {
-          return char;
-        }
-      }
-
-      function transformText(text, styleName, styleData, category) {
+      function transformText(text, type, data) {
         if (!text) return "";
 
-        if (category === "effects") {
-          const map = {
-            "strike": '\u0336', "underline": '\u0332', "double_underline": '\u0333',
-            "slash": '\u0338', "dot_above": '\u0307', "tilde": '\u0334'
-          };
-          const char = map[styleData];
-          return text.split('').map(c => c === ' ' ? c : c + char).join('');
+        if (type === "math") {
+          let result = "";
+          for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const code = char.charCodeAt(0);
+            if (char === ' ') { result += ' '; continue; }
+            
+            let target = 0;
+            if (code >= 65 && code <= 90) target = data[0] + (code - 65);
+            else if (code >= 97 && code <= 122 && data[1] > 0) target = data[1] + (code - 97);
+            else if (code >= 48 && code <= 57 && data[2] > 0) target = data[2] + (code - 48);
+            else { result += char; continue; }
+
+            if (mathExceptions[target]) target = mathExceptions[target];
+            try { result += String.fromCodePoint(target); } catch { result += char; }
+          }
+          return result;
         }
 
-        if (category === "zalgo") {
+        if (type === "deco") {
+          let result = "";
+          for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const code = char.charCodeAt(0);
+            if (char === ' ') { result += ' '; continue; }
+            
+            if (typeof data[0] === 'number') {
+              let target = 0;
+              if (code >= 65 && code <= 90) target = data[0] + (code - 65);
+              else if (code >= 97 && code <= 122 && data[1] > 0) target = data[1] + (code - 97);
+              else if (code >= 48 && code <= 57 && data[2] > 0) target = data[2] + (code - 48);
+              else { result += char; continue; }
+              try { result += String.fromCodePoint(target); } catch { result += char; }
+            } else {
+              if (code >= 65 && code <= 90) result += data[0][code - 65] || char;
+              else if (code >= 97 && code <= 122) result += data[1][code - 97] || char;
+              else result += char;
+            }
+          }
+          return result;
+        }
+
+        if (type === "effect") {
+          return text.split('').map(c => c === ' ' ? c : c + data).join('');
+        }
+
+        if (type === "frame") {
+          return data[0] + " " + text + " " + data[1];
+        }
+
+        if (type === "script") {
+          let result = "";
+          for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const code = char.charCodeAt(0);
+            if (code >= 65 && code <= 90) result += data[0][code - 65] || char;
+            else if (code >= 97 && code <= 122) result += data[1][code - 97] || char;
+            else if (code >= 48 && code <= 57 && data[2]) result += data[2][code - 48] || char;
+            else result += char;
+          }
+          return result;
+        }
+
+        if (type === "zalgo") {
           return text.split('').map(c => {
             if (c === ' ') return c;
             let res = c;
-            for (let i=0; i<styleData.up; i++) res += zalgoUp[Math.floor(Math.random() * zalgoUp.length)];
-            for (let i=0; i<styleData.down; i++) res += zalgoDown[Math.floor(Math.random() * zalgoDown.length)];
-            for (let i=0; i<styleData.mid; i++) res += zalgoMid[Math.floor(Math.random() * zalgoMid.length)];
+            for (let i=0; i<data.up; i++) res += zalgoUp[Math.floor(Math.random() * zalgoUp.length)];
+            for (let i=0; i<data.down; i++) res += zalgoDown[Math.floor(Math.random() * zalgoDown.length)];
+            for (let i=0; i<data.mid; i++) res += zalgoMid[Math.floor(Math.random() * zalgoMid.length)];
             return res;
           }).join('');
         }
 
-        let result = "";
-        for (let i = 0; i < text.length; i++) {
-          const char = text[i];
-          if (char === ' ') { result += ' '; continue; }
-
-          if (category === "math") {
-            result += mapMathStyle(char, styleData[0], styleData[1], styleData[2]);
-          } 
-          else if (category === "deco" || category === "other") {
-            const code = char.charCodeAt(0);
-            if (code >= 65 && code <= 90 && typeof styleData[0] === 'number') {
-              try { result += String.fromCodePoint(styleData[0] + (code - 65)); } catch { result += char; }
-            } else if (code >= 97 && code <= 122 && typeof styleData[1] === 'number' && styleData[1] > 0) {
-              try { result += String.fromCodePoint(styleData[1] + (code - 97)); } catch { result += char; }
-            } else if (code >= 48 && code <= 57 && typeof styleData[2] === 'number' && styleData[2] > 0) {
-              try { result += String.fromCodePoint(styleData[2] + (code - 48)); } catch { result += char; }
-            } else if (typeof styleData[0] === 'string') {
-               if (code >= 65 && code <= 90) result += styleData[0][code - 65] || char;
-               else if (code >= 97 && code <= 122) result += styleData[1][code - 97] || char;
-               else if (code >= 48 && code <= 57 && styleData[2]) result += styleData[2][code - 48] || char;
-               else result += char;
-            } else {
-              result += char;
-            }
+        if (type === "weird") {
+          if (data === "spaced") return text.split('').join(' ');
+          if (data === "reverse") return text.split('').reverse().join('');
+          if (data === "upside_down") {
+            const map = {"a":"ɐ","b":"q","c":"ɔ","d":"p","e":"ǝ","f":"ɟ","g":"ƃ","h":"ɥ","i":"ᴉ","j":"ɾ","k":"ʞ","l":"l","m":"ɯ","n":"u","o":"o","p":"d","q":"b","r":"ɹ","s":"s","t":"ʇ","u":"n","v":"ʌ","w":"ʍ","x":"x","y":"ʎ","z":"z","A":"∀","B":"𐐒","C":"Ɔ","D":"◖","E":"Ǝ","F":"Ⅎ","G":"פ","H":"H","I":"I","J":"ſ","K":"K","L":"˥","M":"W","N":"N","O":"O","P":"Ԁ","Q":"Q","R":"ᴚ","S":"S","T":"⊥","U":"∩","V":"Λ","W":"M","X":"X","Y":"⅄","Z":"Z","0":"0","1":"Ɩ","2":"ᄅ","3":"Ɛ","4":"ㄣ","5":"ϛ","6":"9","7":"ㄥ","8":"8","9":"6",",":"'",".":"˙","?":"¿","!":"¡","'":",","\"":"„","(":")",")":"(","[":"]","]":"[","{":"}","}":"{","<":">",">":"<","&":"⅋","_":"‾"};
+            return text.split('').reverse().map(c => map[c] || c).join('');
           }
+          return text;
         }
-        return result;
+        return text;
       }
 
       function renderResults() {
@@ -238,15 +296,34 @@
           return;
         }
 
-        let stylesToRender = {};
-        if (currentCategory === "math") stylesToRender = mathStyles;
-        else if (currentCategory === "deco") stylesToRender = decoStyles;
-        else if (currentCategory === "effects") stylesToRender = effectStyles;
-        else if (currentCategory === "other") stylesToRender = otherStyles;
-        else if (currentCategory === "zalgo") stylesToRender = zalgoStyles;
+        let stylesToRender = [];
 
-        for (let [name, data] of Object.entries(stylesToRender)) {
-          const transformed = transformText(text, name, data, currentCategory);
+        if (currentCategory === "math") {
+          for (let [name, data] of Object.entries(mathBases)) stylesToRender.push({ name, type: "math", data });
+        } else if (currentCategory === "deco") {
+          for (let [name, data] of Object.entries(decoBases)) stylesToRender.push({ name, type: "deco", data });
+        } else if (currentCategory === "effects") {
+          for (let [name, data] of Object.entries(effects)) stylesToRender.push({ name, type: "effect", data });
+        } else if (currentCategory === "frames") {
+          for (let [name, data] of Object.entries(frames)) stylesToRender.push({ name, type: "frame", data });
+        } else if (currentCategory === "scripts") {
+          for (let [name, data] of Object.entries(otherScripts)) stylesToRender.push({ name, type: "script", data });
+        } else if (currentCategory === "zalgo") {
+          for (let [name, data] of Object.entries(zalgoLevels)) stylesToRender.push({ name, type: "zalgo", data });
+        } else if (currentCategory === "weird") {
+          stylesToRender.push({ name: "Spacje", type: "weird", data: "spaced" });
+          stylesToRender.push({ name: "Odwrócony", type: "weird", data: "reverse" });
+          stylesToRender.push({ name: "Do góry nogami", type: "weird", data: "upside_down" });
+        }
+
+        // Specjalne łączenia (np. przekreślenie + podkreślenie)
+        if (currentCategory === "effects") {
+          stylesToRender.push({ name: "Przekreślenie + Podkreślenie", type: "effect", data: '\u0336\u0332' });
+          stylesToRender.push({ name: "Podkreślenie + Kropka", type: "effect", data: '\u0332\u0307' });
+        }
+
+        stylesToRender.forEach(style => {
+          const transformed = transformText(text, style.type, style.data);
           
           const row = document.createElement("div");
           row.className = "font-row";
@@ -261,7 +338,7 @@
           btn.onclick = () => Hub.copy(transformed, btn);
           
           resultsContainer.appendChild(row);
-        }
+        });
       }
 
       inputEl.addEventListener("input", renderResults, { signal });
