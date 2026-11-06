@@ -5,13 +5,13 @@
     desc: "Twórz profesjonalne faktury PDF z polskimi znakami",
 
     async mount(container, signal) {
-      let savedSeller = await Hub.db.get("invoice_seller", { name: "", nip: "", address: "" });
+      let savedSeller = await Hub.db.get("invoice_seller", { name: "", nip: "", address: "", bank: "" });
       
       const today = new Date();
       const todayStr = today.toISOString().slice(0, 10);
       const paymentDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       
-      let items = [{ name: "Usługa programistyczna", qty: 1, price: 100, vat: 23 }];
+      let items = [{ name: "Usługa programistyczna", qty: 1, unit: "szt.", price: 100, vat: 23 }];
       let isGenerating = false;
 
       container.innerHTML = `
@@ -52,9 +52,9 @@
           .inv-item-remove:active { background: rgba(239, 68, 68, 0.1); }
           
           .inv-item-grid {
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 8px;
           }
-          .inv-item-grid .full { grid-column: span 3; }
+          .inv-item-grid .full { grid-column: span 5; }
           
           .inv-add-btn {
             width: 100%; padding: 12px; background: transparent; border: 1px dashed var(--line);
@@ -97,7 +97,7 @@
         <div style="margin-top: 16px;">
           <div class="inv-warning">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-            <div>Faktura ma pełne wsparcie polskich znaków. Dane sprzedawcy zapisują się automatycznie, więc przy kolejnej fakturze nie musisz ich wpisywać ponownie.</div>
+            <div>Dane sprzedawcy zapisują się automatycznie. Wpisz pełny adres z kodem pocztowym i miejscowością.</div>
           </div>
 
           <div class="inv-section">
@@ -110,10 +110,12 @@
                 <input type="text" id="seller-nip" class="inv-input" placeholder="np. 1234567890" value="${savedSeller.nip || ''}">
               </div>
               <div>
-                <label class="inv-label">Adres</label>
+                <label class="inv-label">Adres (ulica, kod, miasto)</label>
                 <input type="text" id="seller-address" class="inv-input" placeholder="ul. Przykładowa 1, 00-000 Miasto" value="${savedSeller.address || ''}">
               </div>
             </div>
+            <label class="inv-label">Numer konta bankowego</label>
+            <input type="text" id="seller-bank" class="inv-input" placeholder="np. 12 1234 5678 9012 3456 7890 1234" value="${savedSeller.bank || ''}">
           </div>
 
           <div class="inv-section">
@@ -126,7 +128,7 @@
                 <input type="text" id="buyer-nip" class="inv-input" placeholder="np. 9876543210">
               </div>
               <div>
-                <label class="inv-label">Adres</label>
+                <label class="inv-label">Adres (ulica, kod, miasto)</label>
                 <input type="text" id="buyer-address" class="inv-input" placeholder="ul. Inna 2, 11-111 Miasto">
               </div>
             </div>
@@ -140,6 +142,10 @@
               <div>
                 <label class="inv-label">Data wystawienia</label>
                 <input type="date" id="invoice-date" class="inv-input" value="${todayStr}">
+              </div>
+              <div>
+                <label class="inv-label">Data sprzedaży</label>
+                <input type="date" id="sale-date" class="inv-input" value="${todayStr}">
               </div>
               <div>
                 <label class="inv-label">Termin płatności</label>
@@ -195,6 +201,10 @@
                 <input type="number" step="0.01" min="0" class="inv-input item-qty" data-idx="${i}" value="${item.qty}">
               </div>
               <div>
+                <label class="inv-label">J.m.</label>
+                <input type="text" class="inv-input item-unit" data-idx="${i}" value="${item.unit}" placeholder="szt.">
+              </div>
+              <div>
                 <label class="inv-label">Cena netto</label>
                 <input type="number" step="0.01" min="0" class="inv-input item-price" data-idx="${i}" value="${item.price}">
               </div>
@@ -212,6 +222,9 @@
         });
         container.querySelectorAll(".item-qty").forEach(el => {
           el.oninput = (e) => { items[e.target.dataset.idx].qty = parseFloat(e.target.value) || 0; calculateTotals(); };
+        });
+        container.querySelectorAll(".item-unit").forEach(el => {
+          el.oninput = (e) => { items[e.target.dataset.idx].unit = e.target.value; };
         });
         container.querySelectorAll(".item-price").forEach(el => {
           el.oninput = (e) => { items[e.target.dataset.idx].price = parseFloat(e.target.value) || 0; calculateTotals(); };
@@ -244,7 +257,7 @@
 
       $("add-item-btn").onclick = () => {
         Hub.haptic('light');
-        items.push({ name: "", qty: 1, price: 0, vat: 23 });
+        items.push({ name: "", qty: 1, unit: "szt.", price: 0, vat: 23 });
         renderItems();
       };
 
@@ -327,26 +340,22 @@
         return n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
       }
 
-      // ===== RYSOWANIE NA CANVAS =====
-      function renderInvoiceToCanvas(seller, buyer, invNum, invDate, dueDate, payMethod, totalNet, totalVat, totalGross) {
+      function renderInvoiceToCanvas(seller, buyer, invNum, invDate, saleDate, dueDate, payMethod, totalNet, totalVat, totalGross) {
         const canvas = $("invoice-canvas");
         const ctx = canvas.getContext("2d");
-        const W = 1240, H = 1754, M = 100; // A4 w proporcjach ~150 DPI
+        const W = 1240, H = 1754, M = 100;
         canvas.width = W;
         canvas.height = H;
 
-        // Tło
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, W, H);
 
-        // Kolory i style
         ctx.fillStyle = "#000000";
         let y = M + 40;
 
-        // Nagłówek
         ctx.font = "bold 44px sans-serif";
         ctx.textAlign = "left";
-        ctx.fillText("FAKTURA VAT", M, y);
+        ctx.fillText("FAKTURA", M, y);
         
         ctx.font = "20px sans-serif";
         ctx.textAlign = "right";
@@ -362,7 +371,14 @@
         
         y += 25;
         ctx.textAlign = "left";
+        ctx.fillText(`Data sprzedaży: ${formatDate(saleDate)}`, M, y);
+        
+        y += 25;
         ctx.fillText(`Metoda płatności: ${payMethod}`, M, y);
+        if (seller.bank) {
+          ctx.fillText(`Nr konta: ${seller.bank}`, M, y + 25);
+          y += 25;
+        }
         
         y += 20;
         ctx.beginPath();
@@ -374,7 +390,6 @@
 
         y += 40;
 
-        // Sprzedawca / Nabywca
         const colL = M;
         const colR = M + (W - 2*M) / 2 + 20;
 
@@ -393,8 +408,8 @@
         if (buyer.nip) ctx.fillText(`NIP: ${buyer.nip}`, colR, y);
         
         y += 25;
-        ctx.fillText((seller.address || "-").substring(0, 35), colL, y);
-        ctx.fillText((buyer.address || "-").substring(0, 35), colR, y);
+        ctx.fillText((seller.address || "-").substring(0, 40), colL, y);
+        ctx.fillText((buyer.address || "-").substring(0, 40), colR, y);
 
         y += 40;
         ctx.beginPath();
@@ -404,21 +419,25 @@
 
         y += 35;
 
-        // Tabela Nagłówek
         ctx.font = "bold 16px sans-serif";
         ctx.textAlign = "left";
         ctx.fillText("Lp.", M, y);
-        ctx.fillText("Nazwa towaru / usługi", M + 60, y);
+        ctx.fillText("Nazwa towaru / usługi", M + 50, y);
         
-        // Poprawione kolumny liczbowe
-        const xQty = 750;
-        const xPrice = 860;
-        const xVat = 960;
-        const xNet = 1060;
-        const xGross = 1140; // W - M
+        const xQty = 650;
+        const xUnit = 710;
+        const xPrice = 820;
+        const xVat = 920;
+        const xNet = 1040;
+        const xGross = 1140;
 
         ctx.textAlign = "right";
         ctx.fillText("Ilość", xQty, y);
+        
+        ctx.textAlign = "left";
+        ctx.fillText("J.m.", xUnit, y);
+        
+        ctx.textAlign = "right";
         ctx.fillText("Cena netto", xPrice, y);
         ctx.fillText("VAT", xVat, y);
         ctx.fillText("Netto", xNet, y);
@@ -432,7 +451,6 @@
 
         y += 30;
 
-        // Tabela Wiersze
         ctx.font = "18px sans-serif";
         items.forEach((item, idx) => {
           const net = item.qty * item.price;
@@ -441,10 +459,15 @@
 
           ctx.textAlign = "left";
           ctx.fillText(String(idx + 1), M, y);
-          ctx.fillText(item.name.substring(0, 45) || "-", M + 60, y);
+          ctx.fillText(item.name.substring(0, 40) || "-", M + 50, y);
 
           ctx.textAlign = "right";
           ctx.fillText(String(item.qty), xQty, y);
+          
+          ctx.textAlign = "left";
+          ctx.fillText(item.unit || "szt.", xUnit, y);
+          
+          ctx.textAlign = "right";
           ctx.fillText(formatMoneyPlain(item.price), xPrice, y);
           ctx.fillText(`${item.vat}%`, xVat, y);
           ctx.fillText(formatMoneyPlain(net), xNet, y);
@@ -459,28 +482,62 @@
         ctx.lineTo(W - M, y);
         ctx.stroke();
 
-        y += 40;
+        y += 30;
 
-        // Sumy
+        const vatSummary = {};
+        items.forEach(item => {
+          const net = item.qty * item.price;
+          const vatAmt = net * item.vat / 100;
+          if (!vatSummary[item.vat]) vatSummary[item.vat] = { net: 0, vat: 0 };
+          vatSummary[item.vat].net += net;
+          vatSummary[item.vat].vat += vatAmt;
+        });
+
+        let summaryY = y;
+        ctx.font = "bold 16px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("Podsumowanie VAT", M, summaryY);
+        summaryY += 25;
+        
+        ctx.font = "16px sans-serif";
+        ctx.fillText("Stawka", M, summaryY);
+        ctx.textAlign = "right";
+        ctx.fillText("Netto", M + 150, summaryY);
+        ctx.fillText("Kwota VAT", M + 270, summaryY);
+        ctx.fillText("Brutto", M + 390, summaryY);
+
+        summaryY += 20;
+        
+        for (const [rate, vals] of Object.entries(vatSummary)) {
+          ctx.textAlign = "left";
+          ctx.fillText(`${rate}%`, M, summaryY);
+          ctx.textAlign = "right";
+          ctx.fillText(formatMoneyPlain(vals.net), M + 150, summaryY);
+          ctx.fillText(formatMoneyPlain(vals.vat), M + 270, summaryY);
+          ctx.fillText(formatMoneyPlain(vals.net + vals.vat), M + 390, summaryY);
+          summaryY += 20;
+        }
+
+        let totalY = y;
         ctx.font = "18px sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText("Razem netto:", xVat, y); // Wyrównane do lewej względem kwot
+        ctx.fillText("Razem netto:", xVat, totalY);
         ctx.font = "bold 18px sans-serif";
-        ctx.fillText(formatMoneyPlain(totalNet) + " zł", xGross, y);
+        ctx.fillText(formatMoneyPlain(totalNet) + " zł", xGross, totalY);
 
-        y += 30;
+        totalY += 30;
         ctx.font = "18px sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText("Kwota VAT:", xVat, y);
-        ctx.fillText(formatMoneyPlain(totalVat) + " zł", xGross, y);
+        ctx.fillText("Kwota VAT:", xVat, totalY);
+        ctx.fillText(formatMoneyPlain(totalVat) + " zł", xGross, totalY);
 
-        y += 30;
+        totalY += 30;
         ctx.font = "bold 20px sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText("RAZEM BRUTTO:", xVat, y);
-        ctx.fillText(formatMoneyPlain(totalGross) + " zł", xGross, y);
+        ctx.fillText("RAZEM BRUTTO:", xVat, totalY);
+        ctx.fillText(formatMoneyPlain(totalGross) + " zł", xGross, totalY);
 
-        y += 40;
+        y = Math.max(summaryY, totalY) + 30;
         ctx.beginPath();
         ctx.moveTo(M, y);
         ctx.lineTo(W - M, y);
@@ -488,7 +545,6 @@
 
         y += 30;
 
-        // Słownie
         ctx.textAlign = "left";
         ctx.font = "bold 16px sans-serif";
         ctx.fillText("Kwota słownie:", M, y);
@@ -496,7 +552,6 @@
         y += 25;
         ctx.font = "18px sans-serif";
         const words = amountInWords(totalGross);
-        // Ręczne łamanie linii dla canvasu
         const wordsLines = [];
         let currentLine = "";
         const maxLineWidth = W - 2 * M;
@@ -517,7 +572,6 @@
           y += 25;
         });
 
-        // Stopka
         y = H - 80;
         ctx.beginPath();
         ctx.moveTo(M, y);
@@ -535,7 +589,6 @@
         return canvas;
       }
 
-      // ===== KONWERSJA CANVAS NA PDF =====
       async function generatePDFBlob(canvas) {
         const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.85));
         const arrayBuffer = await blob.arrayBuffer();
@@ -580,7 +633,6 @@
         return new Blob(pdfChunks, { type: 'application/pdf' });
       }
 
-      // ===== AKCJA PO KLIKNIĘCIU =====
       async function previewInvoice() {
         if (isGenerating) return;
         isGenerating = true;
@@ -593,7 +645,8 @@
         const sellerData = {
           name: $("seller-name").value,
           nip: $("seller-nip").value,
-          address: $("seller-address").value
+          address: $("seller-address").value,
+          bank: $("seller-bank").value
         };
         await Hub.db.set("invoice_seller", sellerData);
 
@@ -605,6 +658,7 @@
         
         const invoiceNum = $("invoice-number").value || 'F/2024/001';
         const invDate = $("invoice-date").value;
+        const saleDate = $("sale-date").value;
         const dueDate = $("invoice-due").value;
         const payMethod = $("payment-method").value;
 
@@ -618,7 +672,7 @@
         const totalGross = totalNet + totalVat;
 
         try {
-          const canvas = renderInvoiceToCanvas(sellerData, buyerData, invoiceNum, invDate, dueDate, payMethod, totalNet, totalVat, totalGross);
+          const canvas = renderInvoiceToCanvas(sellerData, buyerData, invoiceNum, invDate, saleDate, dueDate, payMethod, totalNet, totalVat, totalGross);
           const pdfBlob = await generatePDFBlob(canvas);
           const filename = `faktura_${invoiceNum.replace(/[^a-z0-9]/gi, '_')}.pdf`;
           const previewUrl = canvas.toDataURL("image/jpeg", 0.85);
