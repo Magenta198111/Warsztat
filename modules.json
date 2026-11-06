@@ -26,4 +26,7 @@
   {
     "file": "./modules/wyciagacz-kolorow.js"
   }
+{
+  "file": "./modules/konwerter-rzymski.js"
+}
 ]
