@@ -8,6 +8,14 @@
       let targetColorCount = 6;
       let currentImgUrl = null;
       let isProcessing = false;
+      let ignoreWhite = true;
+      let ignoreBlack = true;
+      let sortMode = "lightness";
+
+      const sortNames = {
+        "lightness": "Jasność (od ciemnego)",
+        "hue": "Odcień (tęcza)"
+      };
 
       container.innerHTML = `
         <style>
@@ -31,7 +39,12 @@
           .pal-preview-img {
             width: 100%; border-radius: 8px; border: 1px solid var(--line);
             display: block; object-fit: contain; max-height: 250px; background: var(--surface);
-            margin-bottom: 24px;
+            margin-bottom: 16px;
+          }
+
+          .pal-header-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px;
           }
 
           .pal-grid { 
@@ -90,6 +103,19 @@
           .pal-progress-text {
             font-size: 12px; color: var(--muted); font-family: monospace; text-align: center;
           }
+
+          .pal-trigger { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: transparent; border: none; border-bottom: 1px solid var(--line); 
+            padding: 16px 0; color: var(--ink); font-size: 16px; font-weight: 500;
+            cursor: pointer; user-select: none; transition: color 0.2s; margin-bottom: 16px;
+          }
+          .pal-trigger:active { color: var(--accent); }
+          .pal-trigger svg { color: var(--muted); }
+
+          .pal-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
+          .pal-row:last-child { border-bottom: none; }
+          .pal-row-title { font-size: 15px; color: var(--ink); font-weight: 500; }
         </style>
 
         ${Hub.backButtonHtml}
@@ -122,11 +148,34 @@
               <div id="pal-count-val" class="pal-slider-value">6</div>
             </div>
           </div>
+
+          <div class="pal-flat-section">
+            <label class="pal-label">Sortowanie palety</label>
+            <div id="pal-sort-trigger" class="pal-trigger">
+              <span id="pal-sort-text">${sortNames[sortMode]}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+
+            <label class="pal-label">Filtry</label>
+            <div class="pal-row">
+              <div class="pal-row-title">Pomijaj czystą biel</div>
+              <label class="switch"><input type="checkbox" id="pal-ignore-white" checked><span class="switch-slider"></span></label>
+            </div>
+            <div class="pal-row">
+              <div class="pal-row-title">Pomijaj czystą czerń</div>
+              <label class="switch"><input type="checkbox" id="pal-ignore-black" checked><span class="switch-slider"></span></label>
+            </div>
+          </div>
         </div>
 
         <div id="pal-result-card" class="hidden">
-          <label class="pal-label">Dominujące kolory (kliknij, aby skopiować)</label>
           <img id="pal-preview" class="pal-preview-img">
+          
+          <div class="pal-header-row">
+            <label class="pal-label" style="margin-bottom:0;">Dominujące kolory</label>
+            <button id="pal-copy-all" class="n-btn" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Kopiuj wszystkie</button>
+          </div>
+          
           <div id="pal-swatches" class="pal-grid"></div>
           <div id="pal-warning" class="pal-warning-text"></div>
           
@@ -145,6 +194,7 @@
       const swatchesContainer = $("pal-swatches");
       const warningText = $("pal-warning");
       const btnReset = $("pal-btn-reset");
+      const btnCopyAll = $("pal-copy-all");
       
       const progressWrapper = $("pal-progress");
       const progressFill = $("pal-progress-fill");
@@ -153,6 +203,12 @@
       const countTrack = $("pal-count-track");
       const countThumb = $("pal-count-thumb");
       const countVal = $("pal-count-val");
+
+      const sortTrigger = $("pal-sort-trigger");
+      const sortText = $("pal-sort-text");
+      
+      const chkIgnoreWhite = $("pal-ignore-white");
+      const chkIgnoreBlack = $("pal-ignore-black");
 
       function updateSliderUI(track, thumb, valEl, value, min, max) {
         const percent = ((value - min) / (max - min)) * 100;
@@ -198,12 +254,43 @@
 
       setupSlider(countTrack.parentElement, countTrack, countThumb, countVal, 3, 12, () => targetColorCount, (v) => { targetColorCount = v; });
 
+      sortTrigger.addEventListener("click", async () => {
+        const opts = Object.keys(sortNames).map(k => ({ id: k, label: sortNames[k] }));
+        const choice = await Hub.showSelect({ title: "Sortowanie", options: opts, current: sortMode, anchor: sortTrigger, signal });
+        if (choice) {
+          sortMode = choice;
+          sortText.textContent = sortNames[sortMode];
+        }
+      }, { signal });
+
+      chkIgnoreWhite.addEventListener("change", (e) => { ignoreWhite = e.target.checked; }, { signal });
+      chkIgnoreBlack.addEventListener("change", (e) => { ignoreBlack = e.target.checked; }, { signal });
+
       function getContrastColor(hex) {
         const r = parseInt(hex.slice(1, 3), 16);
         const g = parseInt(hex.slice(3, 5), 16);
         const b = parseInt(hex.slice(5, 7), 16);
         const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
         return (yiq >= 128) ? '#000000' : '#ffffff';
+      }
+
+      function rgbToHsl(r, g, b) {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        if (max === min) {
+          h = s = 0;
+        } else {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+          }
+          h /= 6;
+        }
+        return { h, s, l };
       }
 
       function rgbToLab(r, g, b) {
@@ -270,6 +357,17 @@
           Math.round(b).toString(16).padStart(2, '0');
       }
 
+      let currentPalette = [];
+
+      btnCopyAll.addEventListener("click", () => {
+        if (currentPalette.length === 0) return;
+        const text = currentPalette.join(", ");
+        navigator.clipboard.writeText(text).then(() => {
+          Hub.haptic('success');
+          showToast("Skopiowano całą paletę!");
+        }).catch(() => showToast("Błąd kopiowania"));
+      }, { signal });
+
       async function extractColors(file) {
         if (isProcessing) return;
         if (!file || !file.type.startsWith('image/')) return showToast("Wybierz prawidłowy plik graficzny.");
@@ -300,11 +398,19 @@
           for (let i = 0; i < imgData.length; i += 4) {
             const a = imgData[i + 3];
             if (a < 128) continue;
-            pixels.push({
-              r: imgData[i],
-              g: imgData[i + 1],
-              b: imgData[i + 2]
-            });
+            
+            const r = imgData[i];
+            const g = imgData[i + 1];
+            const b = imgData[i + 2];
+
+            if (ignoreWhite && r > 245 && g > 245 && b > 245) continue;
+            if (ignoreBlack && r < 10 && g < 10 && b < 10) continue;
+
+            pixels.push({ r, g, b });
+          }
+
+          if (pixels.length === 0) {
+             throw new Error("Wszystkie piksele zostały odfiltrowane.");
           }
 
           progressText.textContent = "Konwersja przestrzeni kolorów...";
@@ -378,12 +484,21 @@
             }
           }
 
-          finalColors.sort((a, b) => {
-            const labA = rgbToLab(a.r, a.g, a.b);
-            const labB = rgbToLab(b.r, b.g, b.b);
-            return labA.L - labB.L;
-          });
+          if (sortMode === "lightness") {
+            finalColors.sort((a, b) => {
+              const labA = rgbToLab(a.r, a.g, a.b);
+              const labB = rgbToLab(b.r, b.g, b.b);
+              return labA.L - labB.L;
+            });
+          } else {
+            finalColors.sort((a, b) => {
+              const hslA = rgbToHsl(a.r, a.g, a.b);
+              const hslB = rgbToHsl(b.r, b.g, b.b);
+              return hslA.h - hslB.h;
+            });
+          }
 
+          currentPalette = finalColors.map(c => c.hex.toUpperCase());
           swatchesContainer.innerHTML = "";
           warningText.textContent = "";
 
@@ -420,7 +535,7 @@
 
         } catch (err) {
           console.error(err);
-          showToast("Błąd podczas analizy zdjęcia.");
+          showToast(err.message === "Wszystkie piksele zostały odfiltrowane." ? "Zdjęcie składa się tylko z bieli/czerni." : "Błąd podczas analizy zdjęcia.");
         } finally {
           isProcessing = false;
           pickBtn.disabled = false;
