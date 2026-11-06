@@ -249,7 +249,7 @@
       renderItems();
       calculateTotals();
 
-      // === POLSKIE ZNAKI W PDF ===
+      // === POPRAWIONE POLSKIE ZNAKI (CP1250) ===
       const polishMap = {
         'Ą': 0xA5, 'Ć': 0xC6, 'Ę': 0xCA, 'Ł': 0xA3, 'Ń': 0xD1, 'Ó': 0xD3, 'Ś': 0x8C, 'Ź': 0x8F, 'Ż': 0xAF,
         'ą': 0xB9, 'ć': 0xE6, 'ę': 0xEA, 'ł': 0xB3, 'ń': 0xF1, 'ó': 0xF3, 'ś': 0x9C, 'ź': 0x9F, 'ż': 0xBF
@@ -264,7 +264,7 @@
           } else {
             const code = ch.charCodeAt(0);
             if (code < 256) bytes.push(code);
-            else bytes.push(63);
+            else bytes.push(63); // '?' dla nieznanych
           }
         }
         return bytes;
@@ -344,7 +344,6 @@
         btn.textContent = "Generowanie...";
         Hub.haptic('medium');
 
-        // Zapisujemy dane sprzedawcy
         const sellerData = {
           name: $("seller-name").value,
           nip: $("seller-nip").value,
@@ -363,7 +362,6 @@
         const dueDate = $("invoice-due").value;
         const payMethod = $("payment-method").value;
 
-        // Obliczenia
         let totalNet = 0, totalVat = 0;
         items.forEach(item => {
           const net = item.qty * item.price;
@@ -373,7 +371,7 @@
         });
         const totalGross = totalNet + totalVat;
 
-        // === BUDOWA PDF ===
+        // === BUDOWA PDF (BINARNIE) ===
         const pdfChunks = [];
         let currentOffset = 0;
         let offsets = [];
@@ -390,36 +388,35 @@
           pushBytes(bytes);
         }
 
-        function writeText(text) {
-          const bytes = encodeText(text);
-          for (const b of bytes) {
-            if (b === 40 || b === 41 || b === 92) pushBytes(new Uint8Array([92]));
-            pushBytes(new Uint8Array([b]));
-          }
+        // Zbieranie zawartości strony jako tablica bajtów
+        const contentBytes = [];
+
+        function pushContentBytes(bytes) {
+          for (let b of bytes) contentBytes.push(b);
         }
 
-        // Zbieranie zawartości strony
-        const content = [];
-        
+        function pushContentStr(str) {
+          for (let i = 0; i < str.length; i++) contentBytes.push(str.charCodeAt(i));
+        }
+
         function addText(x, y, text, font = 'F1', size = 10) {
-          content.push(`BT /${font} ${size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (`);
-          // Konwertujemy ręcznie - zapisujemy do osobnego bufora
-          const bytes = encodeText(text);
-          for (const b of bytes) {
-            if (b === 40 || b === 41 || b === 92) content.push('\\');
-            content.push(String.fromCharCode(b));
+          pushContentStr(`BT /${font} ${size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (`);
+          const encoded = encodeText(text);
+          for (let b of encoded) {
+            if (b === 40 || b === 41 || b === 92) pushContentBytes([92]); // ( ) \
+            pushContentBytes([b]);
           }
-          content.push(`) Tj ET\n`);
+          pushContentStr(`) Tj ET\n`);
         }
 
         function addTextRight(xRight, y, text, font = 'F1', size = 10) {
-          // Estymacja szerokości: 0.5 * fontSize * chars (dla Helvetica approx.)
-          const estWidth = text.length * size * 0.5;
+          // Helvetica srednia szerokosc znaku to ok 0.55 * rozmiar
+          const estWidth = text.length * size * 0.55;
           addText(xRight - estWidth, y, text, font, size);
         }
 
         function addLine(x1, y1, x2, y2) {
-          content.push(`${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S\n`);
+          pushContentStr(`${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S\n`);
         }
 
         // --- LAYOUT A4: 595 x 842 ---
@@ -457,7 +454,6 @@
         if (buyerData.nip) addText(colR, y, `NIP: ${buyerData.nip}`, 'F1', 9);
         y -= 14;
         
-        // Adres - może być długi, dzielimy
         const sellerAddr = sellerData.address || '-';
         const buyerAddr = buyerData.address || '-';
         addText(colL, y, sellerAddr.substring(0, 35), 'F1', 9);
@@ -467,13 +463,13 @@
         addLine(M, y, W - M, y);
         y -= 20;
 
-        // Nagłówek tabeli
+        // Nagłówek tabeli (rozsunięte kolumny)
         addText(M, y, 'Lp.', 'F2', 8);
         addText(M + 25, y, 'Nazwa towaru / usługi', 'F2', 8);
-        addText(M + 230, y, 'Ilość', 'F2', 8);
-        addTextRight(M + 320, y, 'Cena netto', 'F2', 8);
-        addTextRight(M + 380, y, 'VAT', 'F2', 8);
-        addTextRight(M + 460, y, 'Netto', 'F2', 8);
+        addTextRight(M + 330, y, 'Ilość', 'F2', 8);
+        addTextRight(M + 390, y, 'Cena netto', 'F2', 8);
+        addTextRight(M + 440, y, 'VAT', 'F2', 8);
+        addTextRight(M + 490, y, 'Netto', 'F2', 8);
         addTextRight(W - M, y, 'Brutto', 'F2', 8);
         
         y -= 8;
@@ -482,17 +478,17 @@
 
         // Wiersze tabeli
         items.forEach((item, idx) => {
-          if (y < 200) return; // zabezpieczenie
+          if (y < 200) return;
           const net = item.qty * item.price;
           const vat = net * item.vat / 100;
           const gross = net + vat;
           
           addText(M, y, String(idx + 1), 'F1', 9);
-          addText(M + 25, y, item.name.substring(0, 40) || '-', 'F1', 9);
-          addTextRight(M + 320, y, `${item.qty}`, 'F1', 9);
-          addTextRight(M + 380, y, `${item.price.toFixed(2)}`, 'F1', 9);
-          addTextRight(M + 460, y, `${item.vat}%`, 'F1', 9);
-          addTextRight(M + 500, y, formatMoneyPlain(net), 'F1', 9);
+          addText(M + 25, y, item.name.substring(0, 45) || '-', 'F1', 9);
+          addTextRight(M + 330, y, `${item.qty}`, 'F1', 9);
+          addTextRight(M + 390, y, `${item.price.toFixed(2)}`, 'F1', 9);
+          addTextRight(M + 440, y, `${item.vat}%`, 'F1', 9);
+          addTextRight(M + 490, y, formatMoneyPlain(net), 'F1', 9);
           addTextRight(W - M, y, formatMoneyPlain(gross), 'F1', 9);
           
           y -= 15;
@@ -520,7 +516,6 @@
         addText(M, y, 'Kwota słownie:', 'F2', 9);
         y -= 14;
         const words = amountInWords(totalGross);
-        // Dzielenie na linie po ~80 znaków
         const wordsLines = words.match(/.{1,80}(\s|$)/g) || [words];
         wordsLines.forEach(line => {
           addText(M, y, line.trim(), 'F1', 9);
@@ -534,8 +529,7 @@
         addText(M, y, 'Dokument wygenerowany w aplikacji Workspace', 'F1', 8);
         addTextRight(W - M, y, 'Dziękujemy za zaufanie!', 'F1', 8);
 
-        // Konwersja content na bajty
-        const contentStream = new TextEncoder().encode(content.join(''));
+        const contentStream = new Uint8Array(contentBytes);
         
         // === BUDOWA STRUKTURY PDF ===
         pushStr("%PDF-1.4\n");
@@ -562,13 +556,13 @@
         pushStr(`\nendstream\nendobj\n`);
         objectId++;
 
-        // 5: Helvetica z polskim encoding
+        // 5 i 6: Helvetica z polskim encoding
         const diffStr = '[140 /Sacute 143 /Zacute 156 /sacute 159 /zacute 163 /Lslash 165 /Aogonek 175 /Zdotaccent 179 /lslash 185 /aogonek 191 /zdotaccent 198 /Cacute 202 /Eogonek 209 /Nacute 230 /cacute 234 /eogonek 241 /nacute]';
+        
         offsets.push(currentOffset);
         pushStr(`${objectId} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding << /Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences ${diffStr} >> >>\nendobj\n`);
         objectId++;
 
-        // 6: Helvetica-Bold z polskim encoding
         offsets.push(currentOffset);
         pushStr(`${objectId} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding << /Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences ${diffStr} >> >>\nendobj\n`);
         objectId++;
