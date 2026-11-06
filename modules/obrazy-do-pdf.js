@@ -5,7 +5,7 @@
     desc: "Połącz wiele zdjęć w jeden wielostronicowy plik PDF",
 
     async mount(container, signal) {
-      const MAX_FILES = 1000;
+      const MAX_FILES = 1000; // <-- USTAWIONY LIMIT 1000
       let selectedFiles = [];
       let isGenerating = false;
 
@@ -260,16 +260,13 @@
         fileInput.value = "";
       };
 
-      // NOWA FUNKCJA: Odporne dekodowanie zdjęcia z fallbackiem
       async function decodeImage(file) {
-        // Próba 1: Nowoczesna metoda
         try {
           return await createImageBitmap(file, { imageOrientation: 'from-image' });
         } catch (e) {
           console.warn("createImageBitmap zawiodło, próbuję Image element:", e.message);
         }
         
-        // Próba 2: Klasyczna metoda (bardziej odporna)
         return new Promise((resolve, reject) => {
           const img = new Image();
           const url = URL.createObjectURL(file);
@@ -279,10 +276,60 @@
           };
           img.onerror = () => {
             URL.revokeObjectURL(url);
-            reject(new Error("Nie można odczytać: " + file.name));
+            reject(new Error("Nie można odczytać pliku graficznego. Mógł zostać uszkodzony lub ma nieobsługiwany format."));
           };
           img.src = url;
         });
+      }
+
+      // NOWA FUNKCJA: Ekran podsumowania z błędami
+      function showSummaryScreen(successCount, skippedList, totalFiles) {
+        let html = `
+          <div style="width: 100%; max-width: 450px; display: flex; flex-direction: column;">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--surface); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--accent);">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <h2 style="margin: 0 0 8px; color: var(--ink); font-size: 20px;">PDF Gotowy!</h2>
+              <p style="color: var(--muted); font-size: 14px; margin: 0;">
+                Pomyślnie przetworzono <strong>${successCount}</strong> z <strong>${totalFiles}</strong> zdjęć.
+              </p>
+            </div>
+        `;
+
+        if (skippedList.length > 0) {
+          html += `
+            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+              <div style="color: var(--danger); font-weight: 600; font-size: 13px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                Pominięto ${skippedList.length} zdjęć z powodu błędów:
+              </div>
+              <div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px;">
+          `;
+
+          skippedList.forEach((item) => {
+            html += `
+              <div style="display: flex; align-items: flex-start; gap: 10px; background: var(--surface); padding: 10px; border-radius: 6px; border: 1px solid var(--line);">
+                <img src="${item.url}" style="width: 36px; height: 36px; border-radius: 4px; object-fit: cover; border: 1px solid var(--line); flex-shrink: 0;">
+                <div style="flex: 1; min-width: 0; text-align: left;">
+                  <div style="font-size: 13px; color: var(--ink); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">#${item.index}: ${item.name}</div>
+                  <div style="font-size: 11px; color: var(--danger); margin-top: 4px; line-height: 1.3;">${item.reason}</div>
+                </div>
+              </div>
+            `;
+          });
+
+          html += `
+              </div>
+            </div>
+          `;
+        }
+
+        html += `
+            <button class="n-btn n-btn-outline" onclick="this.closest('.hub-modal-overlay').remove()" style="width: 100%; padding: 14px; flex-shrink: 0;">Zamknij podsumowanie</button>
+          </div>
+        `;
+
+        Hub.showModal({ content: html });
       }
 
       async function createPDF() {
@@ -304,7 +351,7 @@
           const jpegPages = [];
           const skipped = [];
 
-          // FAZA 1: Dekodowanie i kompresja każdego zdjęcia (z odpornością na błędy)
+          // FAZA 1: Dekodowanie i kompresja (z odpornością na błędy)
           for (let i = 0; i < totalFiles; i++) {
             const item = selectedFiles[i];
             const percent = Math.round(((i) / totalFiles) * 50);
@@ -337,22 +384,25 @@
               ctx.drawImage(img, 0, 0, w, h);
 
               const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
-              if (!blob) throw new Error("Nie udało się zapisać JPEG");
+              if (!blob) throw new Error("Błąd konwersji na format JPEG.");
               
               const arrayBuffer = await blob.arrayBuffer();
               jpegPages.push({ data: new Uint8Array(arrayBuffer), w, h });
 
-              // Zwolnienie pamięci
               if (img.close) img.close();
               canvas.width = 0;
               canvas.height = 0;
               
             } catch (err) {
               console.warn(`Pominięto zdjęcie ${i + 1} (${item.name}): ${err.message}`);
-              skipped.push({ index: i + 1, name: item.name });
+              skipped.push({ 
+                index: i + 1, 
+                name: item.name, 
+                reason: err.message,
+                url: item.url 
+              });
             }
             
-            // Ważne: dłuższa przerwa dla telefonu, żeby zwolnił pamięć dekodera
             await new Promise(r => setTimeout(r, 30));
           }
 
@@ -360,7 +410,7 @@
             throw new Error("Nie udało się odczytać żadnego zdjęcia. Wszystkie pliki są uszkodzone lub w nieobsługiwanym formacie.");
           }
 
-          // FAZA 2: Budowanie PDF z przetworzonych stron
+          // FAZA 2: Budowanie PDF
           progressText.textContent = "Budowanie struktury PDF (50%)...";
           progressFill.style.width = "50%";
           await new Promise(r => setTimeout(r, 100));
@@ -444,18 +494,14 @@
           const finalBlob = new Blob(pdfChunks, { type: 'application/pdf' });
           Hub.download(finalBlob, `dokument_${new Date().toISOString().slice(0,10)}.pdf`);
           
-          if (skipped.length > 0) {
-            showToast(`PDF gotowy! Pominięto ${skipped.length} uszkodzonych zdjęć.`);
-          } else {
-            showToast(`PDF gotowy z ${pageCount} stronami!`);
-          }
-          
+          // POKAZUJEMY EKRAN PODSUMOWANIA
           setTimeout(() => {
+            showSummaryScreen(pageCount, skipped, totalFiles);
             progressWrapper.style.display = "none";
             generateBtn.disabled = false;
             generateBtn.textContent = "Generuj wielostronicowy PDF";
             isGenerating = false;
-          }, 1500);
+          }, 800); // Krótkie opóźnienie, aby pobieranie wystartowało
 
         } catch (err) {
           console.error(err);
