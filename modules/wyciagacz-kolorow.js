@@ -422,11 +422,32 @@
           });
 
           const numClusters = targetColorCount;
+          
+          // --- ZMIENIONA SEKCJA: INICJALIZACJA K-MEANS++ ---
           let centroids = [];
+          centroids.push(labPixels[Math.floor(Math.random() * labPixels.length)]);
 
-          for (let i = 0; i < numClusters; i++) {
-            centroids.push(labPixels[Math.floor(Math.random() * labPixels.length)]);
+          for (let i = 1; i < numClusters; i++) {
+            let sumSqDist = 0;
+            const distances = labPixels.map(p => {
+              let minDist = Infinity;
+              for (const c of centroids) {
+                const d = deltaE(p, c);
+                if (d < minDist) minDist = d;
+              }
+              sumSqDist += minDist * minDist;
+              return minDist * minDist;
+            });
+
+            let r = Math.random() * sumSqDist;
+            let index = 0;
+            while (r > 0 && index < distances.length - 1) {
+              r -= distances[index];
+              index++;
+            }
+            centroids.push(labPixels[index]);
           }
+          // ------------------------------------------------
 
           const maxIterations = 15;
           for (let iter = 0; iter < maxIterations; iter++) {
