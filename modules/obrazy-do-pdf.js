@@ -5,6 +5,7 @@
     desc: "Połącz wiele zdjęć w jeden wielostronicowy plik PDF",
 
     async mount(container, signal) {
+      const MAX_FILES = 1000;
       let selectedFiles = [];
       let isGenerating = false;
 
@@ -25,6 +26,15 @@
             display: flex; align-items: center; justify-content: center;
             color: var(--accent);
           }
+
+          .pdf-warning {
+            display: flex; align-items: flex-start; gap: 10px;
+            background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;
+            font-size: 12px; color: #fbbf24; line-height: 1.5; text-align: left;
+          }
+          .pdf-warning svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+          .pdf-warning strong { color: #fcd34d; }
 
           .pdf-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
           
@@ -60,6 +70,12 @@
           .pdf-progress-bar { width: 100%; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
           .pdf-progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.2s ease; }
           .pdf-progress-text { font-size: 12px; color: var(--muted); font-family: monospace; text-align: center; }
+
+          .pdf-count-badge {
+            display: inline-block; font-size: 11px; font-weight: 600;
+            background: var(--accent); color: var(--accent-ink);
+            padding: 2px 8px; border-radius: 10px; margin-left: 8px;
+          }
         </style>
 
         ${Hub.backButtonHtml}
@@ -73,14 +89,32 @@
             </div>
             <div>
               <div style="font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 8px;">Zdjęcia do PDF</div>
-              <div style="font-size: 14px; color: var(--muted); line-height: 1.5;">Wybierz wiele zdjęć, ułóż je w odpowiedniej kolejności i scal w jeden dokument.</div>
+              <div style="font-size: 14px; color: var(--muted); line-height: 1.5;">Wybierz wiele zdjęć, ułóż je w odpowiedniej kolejności i scal w jeden dokument. Maksymalnie ${MAX_FILES} zdjęć.</div>
             </div>
+            
+            <div class="pdf-warning">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <div>
+                <strong>Uwaga:</strong> Przy dużej liczbie zdjęć (powyżej 30) przetwarzanie może potrwać kilka sekund, a aplikacja może na chwilę "przymulić". Przy ponad 100 zdjęciach operacja może zająć nawet kilkanaście sekund – w tym czasie nie zamykaj aplikacji.
+              </div>
+            </div>
+
             <button id="pdf-add-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; margin-top: 8px;">Dodaj zdjęcia</button>
           </div>
 
           <div id="pdf-workspace" class="hidden">
-            <label class="pdf-label">Kolejność stron (przeciągnij strzałkami)</label>
+            <label class="pdf-label">
+              Kolejność stron (przeciągnij strzałkami)
+              <span id="pdf-count-badge" class="pdf-count-badge">0</span>
+            </label>
             <div id="pdf-list" class="pdf-list"></div>
+
+            <div id="pdf-workspace-warning" class="pdf-warning hidden">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <div>
+                <strong>Duża liczba zdjęć!</strong> Generowanie PDF może potrwać od kilkunastu do kilkudziesięciu sekund. W tym czasie interfejs może się lekko przyciąć – to normalne. Nie zamykaj aplikacji.
+              </div>
+            </div>
 
             <div class="pdf-actions">
               <button id="pdf-add-more" class="n-btn" style="width: 100%; padding: 14px;">Dodaj kolejne zdjęcia</button>
@@ -106,6 +140,8 @@
       const progressWrapper = $("pdf-progress");
       const progressFill = $("pdf-progress-fill");
       const progressText = $("pdf-progress-text");
+      const countBadge = $("pdf-count-badge");
+      const workspaceWarning = $("pdf-workspace-warning");
 
       function formatBytes(bytes) {
         if (bytes === 0) return '0 B';
@@ -114,13 +150,28 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
       }
 
+      function updateWarningVisibility() {
+        const count = selectedFiles.length;
+        countBadge.textContent = count;
+        
+        if (count > 100) {
+          workspaceWarning.classList.remove("hidden");
+          workspaceWarning.querySelector("div").innerHTML = `<strong>UWAGA: ${count} zdjęć!</strong> Generowanie PDF może potrwać nawet kilkadziesiąt sekund. Interfejs może się w tym czasie przycinać. Nie zamykaj aplikacji.`;
+        } else if (count > 30) {
+          workspaceWarning.classList.remove("hidden");
+          workspaceWarning.querySelector("div").innerHTML = `<strong>Duża liczba zdjęć (${count}).</strong> Generowanie PDF może potrwać kilkanaście sekund. W tym czasie aplikacja może się lekko przyciąć – to normalne.`;
+        } else {
+          workspaceWarning.classList.add("hidden");
+        }
+      }
+
       function renderList() {
         listEl.innerHTML = "";
         selectedFiles.forEach((file, index) => {
           const item = document.createElement("div");
           item.className = "pdf-item";
           item.innerHTML = `
-            <img src="${file.url}" class="pdf-thumb">
+            <img src="${file.url}" class="pdf-thumb" loading="lazy">
             <div class="pdf-info">
               <div class="pdf-name">${index + 1}. ${file.name}</div>
               <div class="pdf-size">${formatBytes(file.size)}</div>
@@ -166,13 +217,28 @@
 
           listEl.appendChild(item);
         });
+        updateWarningVisibility();
       }
 
       function handleFiles(files) {
         const newFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
         if (newFiles.length === 0) return;
 
-        newFiles.forEach(file => {
+        const availableSlots = MAX_FILES - selectedFiles.length;
+        if (availableSlots <= 0) {
+          showToast(`Osiągnięto limit ${MAX_FILES} zdjęć.`);
+          return;
+        }
+
+        let filesToAdd = newFiles;
+        if (newFiles.length > availableSlots) {
+          filesToAdd = newFiles.slice(0, availableSlots);
+          showToast(`Dodano ${filesToAdd.length} zdjęć (limit ${MAX_FILES}).`);
+        } else if (newFiles.length > 30) {
+          showToast(`Dodano ${newFiles.length} zdjęć. Przetwarzanie może chwilę potrwać.`);
+        }
+
+        filesToAdd.forEach(file => {
           selectedFiles.push({
             file: file,
             name: file.name,
@@ -202,22 +268,25 @@
         generateBtn.textContent = "Przetwarzanie...";
         progressWrapper.style.display = "flex";
         progressFill.style.width = "0%";
-        progressText.textContent = "Przygotowywanie zdjęć (0%)...";
+        progressText.textContent = `Przygotowywanie ${selectedFiles.length} zdjęć (0%)...`;
         Hub.haptic('medium');
 
-        await new Promise(r => setTimeout(r, 100));
+        // Dajemy UI czas na oddech przed startem
+        await new Promise(r => setTimeout(r, 200));
 
         try {
           const pdfPages = [];
           const maxDim = 2000;
+          const totalFiles = selectedFiles.length;
 
-          for (let i = 0; i < selectedFiles.length; i++) {
+          for (let i = 0; i < totalFiles; i++) {
             const item = selectedFiles[i];
-            const percent = Math.round(((i) / selectedFiles.length) * 50);
+            const percent = Math.round(((i) / totalFiles) * 50);
             progressFill.style.width = percent + "%";
-            progressText.textContent = `Przetwarzanie zdjęcia ${i + 1} z ${selectedFiles.length} (${percent}%)...`;
+            progressText.textContent = `Przetwarzanie zdjęcia ${i + 1} z ${totalFiles} (${percent}%)...`;
             
-            await new Promise(r => setTimeout(r, 50));
+            // Oddech dla UI co każde zdjęcie
+            await new Promise(r => setTimeout(r, 10));
 
             const bitmap = await createImageBitmap(item.file, { imageOrientation: 'from-image' });
             
@@ -253,9 +322,12 @@
             hex += '>';
 
             pdfPages.push({ hex, w, h });
+
+            // Zwalniamy bitmapę (pomoc dla GC)
+            if (bitmap.close) bitmap.close();
           }
 
-          progressText.textContent = "Generowanie pliku PDF (50%)...";
+          progressText.textContent = "Budowanie struktury PDF (50%)...";
           progressFill.style.width = "50%";
           await new Promise(r => setTimeout(r, 100));
 
@@ -293,12 +365,14 @@
             const pct = 50 + Math.round(((i + 1) / pdfPages.length) * 45);
             progressFill.style.width = pct + "%";
             progressText.textContent = `Zapisywanie stron (${pct}%)...`;
-            await new Promise(r => setTimeout(r, 10));
+            
+            // Co 20 stron dajemy UI oddech (dla dużych plików)
+            if (i % 20 === 0) await new Promise(r => setTimeout(r, 10));
           }
 
           progressText.textContent = "Finalizowanie (95%)...";
           progressFill.style.width = "95%";
-          await new Promise(r => setTimeout(r, 50));
+          await new Promise(r => setTimeout(r, 100));
 
           const startXref = pdfString.length;
           let xref = `xref\n0 ${objectId}\n0000000000 65535 f \n`;
