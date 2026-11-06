@@ -90,12 +90,19 @@
             transition: transform 0.1s;
           }
 
-          .zd-drop-zone { 
-            border: 2px dashed var(--line); border-radius: 8px; padding: 30px 20px; 
-            text-align: center; color: var(--muted); cursor: pointer; 
-            transition: border-color 0.2s; margin-bottom: 16px; 
+          .zd-intro-box {
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 12px; padding: 32px 20px; text-align: center;
+            margin-top: 16px; margin-bottom: 24px;
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
           }
-          .zd-drop-zone:active { border-color: var(--accent); }
+
+          .zd-icon-wrapper {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: var(--bg); border: 1px solid var(--line);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent);
+          }
         </style>
 
         ${Hub.backButtonHtml}
@@ -133,9 +140,17 @@
           <div class="zd-divider"></div>
 
           <input type="file" id="zd-file" accept="image/*" style="display:none;">
-          <div id="zd-pick-btn" class="zd-drop-zone">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px; opacity:0.5;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-            <div style="font-size: 14px; font-weight: 500;">Kliknij, aby wybrać zdjęcie</div>
+          
+          <div class="zd-intro-box">
+            <div class="zd-icon-wrapper">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            </div>
+            <div>
+              <div style="font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 8px;">Przycinanie zdjęć</div>
+              <div style="font-size: 14px; color: var(--muted); line-height: 1.5;">Wybierz zdjęcie, aby przyciąć je do wybranego formatu i rozmiaru.</div>
+            </div>
+            <button id="zd-pick-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; margin-top: 8px;">Wybierz zdjęcie</button>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">lub wklej ze schowka (Ctrl+V)</div>
           </div>
         </div>
 
@@ -378,10 +393,8 @@
         zoomWrapper.releasePointerCapture(e.pointerId);
       }, { signal });
 
-      fileInput.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
+      async function handleFile(file) {
+        if (!file || !file.type.startsWith('image/')) return;
         try {
           const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
           const canvas = document.createElement('canvas');
@@ -407,7 +420,24 @@
         } catch (err) {
           showToast("Błąd podczas odczytu zdjęcia.");
         }
+      }
+
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) handleFile(file);
         fileInput.value = "";
+      }, { signal });
+
+      document.addEventListener('paste', (e) => {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (let index in items) {
+          const item = items[index];
+          if (item.kind === 'file' && item.type.startsWith('image/')) {
+            const blob = item.getAsFile();
+            handleFile(blob);
+            break;
+          }
+        }
       }, { signal });
 
       cropContainer.addEventListener("pointerdown", (e) => {
