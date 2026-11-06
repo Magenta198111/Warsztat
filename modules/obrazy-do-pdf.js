@@ -95,7 +95,7 @@
             <div class="pdf-warning">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               <div>
-                <strong>Uwaga:</strong> Przy dużej liczbie zdjęć (powyżej 30) przetwarzanie może potrwać kilka sekund, a aplikacja może na chwilę "przymulić". Przy ponad 100 zdjęciach operacja może zająć nawet kilkanaście sekund – w tym czasie nie zamykaj aplikacji.
+                <strong>Uwaga:</strong> Przy dużej liczbie zdjęć (powyżej 30) przetwarzanie może potrwać kilka sekund. Aplikacja została zoptymalizowana pod kątem dużych plików, ale przy ponad 100 zdjęciach operacja może zająć kilkanaście sekund – w tym czasie nie zamykaj aplikacji.
               </div>
             </div>
 
@@ -112,7 +112,7 @@
             <div id="pdf-workspace-warning" class="pdf-warning hidden">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               <div>
-                <strong>Duża liczba zdjęć!</strong> Generowanie PDF może potrwać od kilkunastu do kilkudziesięciu sekund. W tym czasie interfejs może się lekko przyciąć – to normalne. Nie zamykaj aplikacji.
+                <strong>Duża liczba zdjęć!</strong> Generowanie PDF może potrwać kilkanaście sekund. W tym czasie interfejs może się lekko przyciąć – to normalne. Nie zamykaj aplikacji.
               </div>
             </div>
 
@@ -271,21 +271,60 @@
         progressText.textContent = `Przygotowywanie ${selectedFiles.length} zdjęć (0%)...`;
         Hub.haptic('medium');
 
-        // Dajemy UI czas na oddech przed startem
         await new Promise(r => setTimeout(r, 200));
 
         try {
-          const pdfPages = [];
+          // Nowa metoda: Budujemy PDF binarnie w locie, bez trzymania wszystkich zdjęć w pamięci
+          let pdfChunks = [];
+          let currentOffset = 0;
+          let offsets = [];
+          let objectId = 1;
           const maxDim = 2000;
           const totalFiles = selectedFiles.length;
 
+          function appendString(str) {
+            const bytes = new TextEncoder().encode(str);
+            pdfChunks.push(bytes);
+            currentOffset += bytes.length;
+          }
+
+          function appendBytes(bytes) {
+            pdfChunks.push(bytes);
+            currentOffset += bytes.length;
+          }
+
+          function addObject(contentString) {
+            offsets.push(currentOffset);
+            appendString(`${objectId} 0 obj\n${contentString}\nendobj\n`);
+            objectId++;
+          }
+
+          function addStreamObject(dictString, streamBytes) {
+            offsets.push(currentOffset);
+            appendString(`${objectId} 0 obj\n<< ${dictString} /Length ${streamBytes.length} >>\nstream\n`);
+            appendBytes(streamBytes);
+            appendString(`\nendstream\nendobj\n`);
+            objectId++;
+          }
+
+          appendString("%PDF-1.4\n");
+          
+          // Obiekt 1: Katalog
+          addObject(`<< /Type /Catalog /Pages 2 0 R >>`);
+          
+          // Obiekt 2: Lista stron (Kids) - wiemy ile ich będzie
+          let kidsArray = [];
+          for (let i = 0; i < totalFiles; i++) {
+            kidsArray.push(`${3 + i * 3} 0 R`);
+          }
+          addObject(`<< /Type /Pages /Kids [${kidsArray.join(' ')}] /Count ${totalFiles} >>`);
+
           for (let i = 0; i < totalFiles; i++) {
             const item = selectedFiles[i];
-            const percent = Math.round(((i) / totalFiles) * 50);
+            const percent = Math.round(((i) / totalFiles) * 100);
             progressFill.style.width = percent + "%";
-            progressText.textContent = `Przetwarzanie zdjęcia ${i + 1} z ${totalFiles} (${percent}%)...`;
+            progressText.textContent = `Przetwarzanie i budowanie (${percent}%)...`;
             
-            // Oddech dla UI co każde zdjęcie
             await new Promise(r => setTimeout(r, 10));
 
             const bitmap = await createImageBitmap(item.file, { imageOrientation: 'from-image' });
@@ -312,82 +351,49 @@
             ctx.fillRect(0, 0, w, h);
             ctx.drawImage(bitmap, 0, 0, w, h);
 
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-            const b64 = dataUrl.split(',')[1];
-            const bin = atob(b64);
-            let hex = '';
-            for (let j = 0; j < bin.length; j++) {
-              hex += bin.charCodeAt(j).toString(16).padStart(2, '0');
-            }
-            hex += '>';
+            // KLUCZOWA ZMIANA: Używamy Blob i ArrayBuffer (binarnie) zamiast ogromnych stringów Hex/Base64
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+            const arrayBuffer = await blob.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
 
-            pdfPages.push({ hex, w, h });
-
-            // Zwalniamy bitmapę (pomoc dla GC)
-            if (bitmap.close) bitmap.close();
-          }
-
-          progressText.textContent = "Budowanie struktury PDF (50%)...";
-          progressFill.style.width = "50%";
-          await new Promise(r => setTimeout(r, 100));
-
-          let pdfString = "%PDF-1.4\n";
-          let offsets = [];
-          let objectId = 1;
-          
-          function addObject(content) {
-            offsets.push(pdfString.length);
-            pdfString += `${objectId} 0 obj\n${content}\nendobj\n`;
+            // Obiekt strony (Page)
+            offsets.push(currentOffset);
+            appendString(`${objectId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${w} ${h}] /Contents ${objectId + 1} 0 R /Resources << /XObject << /Im1 ${objectId + 2} 0 R >> >> >>\nendobj\n`);
             objectId++;
-          }
 
-          let kidsArray = [];
-          for (let i = 0; i < pdfPages.length; i++) {
-            kidsArray.push(`${3 + i * 3} 0 R`);
-          }
-
-          addObject(`<< /Type /Catalog /Pages 2 0 R >>`);
-          addObject(`<< /Type /Pages /Kids [${kidsArray.join(' ')}] /Count ${pdfPages.length} >>`);
-
-          for (let i = 0; i < pdfPages.length; i++) {
-            const page = pdfPages[i];
-            const pageId = 3 + i * 3;
-            const contentId = pageId + 1;
-            const imageId = pageId + 2;
-
-            addObject(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${page.w} ${page.h}] /Contents ${contentId} 0 R /Resources << /XObject << /Im1 ${imageId} 0 R >> >> >>`);
-
-            const contentStream = `q\n${page.w} 0 0 ${page.h} 0 0 cm\n/Im1 Do\nQ\n`;
-            addObject(`<< /Length ${contentStream.length} >>\nstream\n${contentStream}endstream`);
-
-            addObject(`<< /Type /XObject /Subtype /Image /Width ${page.w} /Height ${page.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/ASCIIHexDecode /DCTDecode] /Length ${page.hex.length} >>\nstream\n${page.hex}\nendstream`);
-
-            const pct = 50 + Math.round(((i + 1) / pdfPages.length) * 45);
-            progressFill.style.width = pct + "%";
-            progressText.textContent = `Zapisywanie stron (${pct}%)...`;
+            // Strumień zawartości (gdzie narysować obraz)
+            const contentStream = `q\n${w} 0 0 ${h} 0 0 cm\n/Im1 Do\nQ\n`;
+            addStreamObject('', new TextEncoder().encode(contentStream));
             
-            // Co 20 stron dajemy UI oddech (dla dużych plików)
-            if (i % 20 === 0) await new Promise(r => setTimeout(r, 10));
+            // Strumień obrazu (surowe dane JPEG)
+            addStreamObject(`/Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`, uint8Array);
+
+            // Zwalniamy pamięć
+            if (bitmap.close) bitmap.close();
+            canvas.width = 0;
+            canvas.height = 0;
+            
+            await new Promise(r => setTimeout(r, 0)); 
           }
 
           progressText.textContent = "Finalizowanie (95%)...";
           progressFill.style.width = "95%";
           await new Promise(r => setTimeout(r, 100));
 
-          const startXref = pdfString.length;
+          const startXref = currentOffset;
           let xref = `xref\n0 ${objectId}\n0000000000 65535 f \n`;
           offsets.forEach(off => {
             xref += `${off.toString().padStart(10, '0')} 00000 n \n`;
           });
 
           const trailer = `trailer\n<< /Size ${objectId} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF`;
-          pdfString += xref + trailer;
+          appendString(xref + trailer);
 
           progressFill.style.width = "100%";
           progressText.textContent = "Gotowe!";
           
-          const blob = new Blob([pdfString], { type: 'application/pdf' });
-          Hub.download(blob, `dokument_${new Date().toISOString().slice(0,10)}.pdf`);
+          const finalBlob = new Blob(pdfChunks, { type: 'application/pdf' });
+          Hub.download(finalBlob, `dokument_${new Date().toISOString().slice(0,10)}.pdf`);
           
           setTimeout(() => {
             progressWrapper.style.display = "none";
@@ -398,7 +404,7 @@
 
         } catch (err) {
           console.error(err);
-          showToast("Błąd podczas generowania PDF.");
+          showToast("Błąd: " + err.message); // Pokazujemy dokładny błąd
           progressWrapper.style.display = "none";
           generateBtn.disabled = false;
           generateBtn.textContent = "Generuj wielostronicowy PDF";
