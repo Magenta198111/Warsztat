@@ -369,7 +369,7 @@
         ctx.moveTo(M, y);
         ctx.lineTo(W - M, y);
         ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2;
         ctx.stroke();
 
         y += 40;
@@ -402,7 +402,7 @@
         ctx.lineTo(W - M, y);
         ctx.stroke();
 
-        y += 30;
+        y += 35;
 
         // Tabela Nagłówek
         ctx.font = "bold 16px sans-serif";
@@ -410,12 +410,19 @@
         ctx.fillText("Lp.", M, y);
         ctx.fillText("Nazwa towaru / usługi", M + 60, y);
         
+        // Poprawione kolumny liczbowe
+        const xQty = 750;
+        const xPrice = 860;
+        const xVat = 960;
+        const xNet = 1060;
+        const xGross = 1140; // W - M
+
         ctx.textAlign = "right";
-        ctx.fillText("Ilość", M + 750, y);
-        ctx.fillText("Cena netto", M + 880, y);
-        ctx.fillText("VAT", M + 980, y);
-        ctx.fillText("Netto", M + 1080, y);
-        ctx.fillText("Brutto", W - M, y);
+        ctx.fillText("Ilość", xQty, y);
+        ctx.fillText("Cena netto", xPrice, y);
+        ctx.fillText("VAT", xVat, y);
+        ctx.fillText("Netto", xNet, y);
+        ctx.fillText("Brutto", xGross, y);
 
         y += 15;
         ctx.beginPath();
@@ -437,13 +444,13 @@
           ctx.fillText(item.name.substring(0, 45) || "-", M + 60, y);
 
           ctx.textAlign = "right";
-          ctx.fillText(String(item.qty), M + 750, y);
-          ctx.fillText(formatMoneyPlain(item.price), M + 880, y);
-          ctx.fillText(`${item.vat}%`, M + 980, y);
-          ctx.fillText(formatMoneyPlain(net), M + 1080, y);
-          ctx.fillText(formatMoneyPlain(gross), W - M, y);
+          ctx.fillText(String(item.qty), xQty, y);
+          ctx.fillText(formatMoneyPlain(item.price), xPrice, y);
+          ctx.fillText(`${item.vat}%`, xVat, y);
+          ctx.fillText(formatMoneyPlain(net), xNet, y);
+          ctx.fillText(formatMoneyPlain(gross), xGross, y);
 
-          y += 30;
+          y += 35;
         });
 
         y += 10;
@@ -452,26 +459,26 @@
         ctx.lineTo(W - M, y);
         ctx.stroke();
 
-        y += 30;
+        y += 40;
 
         // Sumy
         ctx.font = "18px sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText("Razem netto:", M + 950, y);
+        ctx.fillText("Razem netto:", xVat, y); // Wyrównane do lewej względem kwot
         ctx.font = "bold 18px sans-serif";
-        ctx.fillText(formatMoneyPlain(totalNet) + " zł", W - M, y);
+        ctx.fillText(formatMoneyPlain(totalNet) + " zł", xGross, y);
 
-        y += 25;
+        y += 30;
         ctx.font = "18px sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText("Kwota VAT:", M + 950, y);
-        ctx.fillText(formatMoneyPlain(totalVat) + " zł", W - M, y);
+        ctx.fillText("Kwota VAT:", xVat, y);
+        ctx.fillText(formatMoneyPlain(totalVat) + " zł", xGross, y);
 
-        y += 25;
+        y += 30;
         ctx.font = "bold 20px sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText("RAZEM BRUTTO:", M + 950, y);
-        ctx.fillText(formatMoneyPlain(totalGross) + " zł", W - M, y);
+        ctx.fillText("RAZEM BRUTTO:", xVat, y);
+        ctx.fillText(formatMoneyPlain(totalGross) + " zł", xGross, y);
 
         y += 40;
         ctx.beginPath();
@@ -530,7 +537,6 @@
 
       // ===== KONWERSJA CANVAS NA PDF =====
       async function generatePDFBlob(canvas) {
-        // Konwersja na JPEG
         const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.85));
         const arrayBuffer = await blob.arrayBuffer();
         const jpegData = new Uint8Array(arrayBuffer);
@@ -612,20 +618,14 @@
         const totalGross = totalNet + totalVat;
 
         try {
-          // 1. Rysujemy fakturę na Canvas
           const canvas = renderInvoiceToCanvas(sellerData, buyerData, invoiceNum, invDate, dueDate, payMethod, totalNet, totalVat, totalGross);
-          
-          // 2. Generujemy PDF w tle
           const pdfBlob = await generatePDFBlob(canvas);
           const filename = `faktura_${invoiceNum.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-
-          // 3. Tworzymy obrazek z canvasu dla podglądu (JPEG)
           const previewUrl = canvas.toDataURL("image/jpeg", 0.85);
 
-          // 4. Pokazujemy modal z podglądem
           const modalContent = `
             <div style="width: 100%; height: 80vh; max-height: 700px; display: flex; flex-direction: column; gap: 12px;">
-              <div style="flex: 1; background: #fff; border-radius: 8px; overflow-y: auto; border: 1px solid var(--line);">
+              <div style="flex: 1; background: #fff; border-radius: 8px; overflow: auto; border: 1px solid var(--line);">
                 <img src="${previewUrl}" style="width: 100%; height: auto; display: block;">
               </div>
               <div style="display: flex; gap: 8px;">
