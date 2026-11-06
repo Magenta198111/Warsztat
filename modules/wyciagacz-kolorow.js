@@ -6,8 +6,8 @@
 
     async mount(container, signal) {
       let targetColorCount = 6;
-      let sensitivity = 40;
       let currentImgUrl = null;
+      let isProcessing = false;
 
       container.innerHTML = `
         <style>
@@ -77,6 +77,19 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.4); pointer-events: none;
             transition: transform 0.1s;
           }
+
+          .pal-progress-wrapper {
+            width: 100%; display: none; flex-direction: column; gap: 8px; margin-top: 12px;
+          }
+          .pal-progress-bar {
+            width: 100%; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden;
+          }
+          .pal-progress-fill {
+            height: 100%; width: 0%; background: var(--accent); transition: width 0.1s linear;
+          }
+          .pal-progress-text {
+            font-size: 12px; color: var(--muted); font-family: monospace; text-align: center;
+          }
         </style>
 
         ${Hub.backButtonHtml}
@@ -93,6 +106,11 @@
               <div style="font-size: 14px; color: var(--muted); line-height: 1.5;">Wybierz zdjęcie, a my znajdziemy jego dominujące kolory.</div>
             </div>
             <button id="pal-pick-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; margin-top: 8px;">Wybierz zdjęcie</button>
+            
+            <div id="pal-progress" class="pal-progress-wrapper">
+              <div class="pal-progress-bar"><div id="pal-progress-fill" class="pal-progress-fill"></div></div>
+              <div id="pal-progress-text" class="pal-progress-text">Analizowanie: 0%</div>
+            </div>
           </div>
 
           <div class="pal-flat-section">
@@ -103,17 +121,6 @@
               </div>
               <div id="pal-count-val" class="pal-slider-value">6</div>
             </div>
-          </div>
-
-          <div class="pal-flat-section">
-            <label class="pal-label">Czułość grupowania</label>
-            <div class="pal-slider-wrapper">
-              <div id="pal-sens-track" class="pal-range-track">
-                <div id="pal-sens-thumb" class="pal-range-thumb"></div>
-              </div>
-              <div id="pal-sens-val" class="pal-slider-value">40</div>
-            </div>
-            <div style="font-size: 12px; color: var(--muted); margin-top: -4px;">Im wyższa, tym bardziej odrzucane są podobne kolory.</div>
           </div>
         </div>
 
@@ -138,14 +145,14 @@
       const swatchesContainer = $("pal-swatches");
       const warningText = $("pal-warning");
       const btnReset = $("pal-btn-reset");
+      
+      const progressWrapper = $("pal-progress");
+      const progressFill = $("pal-progress-fill");
+      const progressText = $("pal-progress-text");
 
       const countTrack = $("pal-count-track");
       const countThumb = $("pal-count-thumb");
       const countVal = $("pal-count-val");
-
-      const sensTrack = $("pal-sens-track");
-      const sensThumb = $("pal-sens-thumb");
-      const sensVal = $("pal-sens-val");
 
       function updateSliderUI(track, thumb, valEl, value, min, max) {
         const percent = ((value - min) / (max - min)) * 100;
@@ -190,7 +197,6 @@
       }
 
       setupSlider(countTrack.parentElement, countTrack, countThumb, countVal, 3, 12, () => targetColorCount, (v) => { targetColorCount = v; });
-      setupSlider(sensTrack.parentElement, sensTrack, sensThumb, sensVal, 1, 100, () => sensitivity, (v) => { sensitivity = v; });
 
       function getContrastColor(hex) {
         const r = parseInt(hex.slice(1, 3), 16);
@@ -200,14 +206,80 @@
         return (yiq >= 128) ? '#000000' : '#ffffff';
       }
 
-      function colorDistance(c1, c2) {
-        const r1 = parseInt(c1.slice(1, 3), 16), g1 = parseInt(c1.slice(3, 5), 16), b1 = parseInt(c1.slice(5, 7), 16);
-        const r2 = parseInt(c2.slice(1, 3), 16), g2 = parseInt(c2.slice(3, 5), 16), b2 = parseInt(c2.slice(5, 7), 16);
-        return Math.sqrt(Math.pow(r2 - r1, 2) + Math.pow(g2 - g1, 2) + Math.pow(b2 - b1, 2));
+      function rgbToLab(r, g, b) {
+        let r_ = r / 255, g_ = g / 255, b_ = b / 255;
+        r_ = r_ > 0.04045 ? Math.pow((r_ + 0.055) / 1.055, 2.4) : r_ / 12.92;
+        g_ = g_ > 0.04045 ? Math.pow((g_ + 0.055) / 1.055, 2.4) : g_ / 12.92;
+        b_ = b_ > 0.04045 ? Math.pow((b_ + 0.055) / 1.055, 2.4) : b_ / 12.92;
+
+        let x = (r_ * 0.4124 + g_ * 0.3576 + b_ * 0.1805) / 0.95047;
+        let y = (r_ * 0.2126 + g_ * 0.7152 + b_ * 0.0722) / 1.00000;
+        let z = (r_ * 0.0193 + g_ * 0.1192 + b_ * 0.9505) / 1.08883;
+
+        x = x > 0.008856 ? Math.pow(x, 1/3) : (7.787 * x) + 16/116;
+        y = y > 0.008856 ? Math.pow(y, 1/3) : (7.787 * y) + 16/116;
+        z = z > 0.008856 ? Math.pow(z, 1/3) : (7.787 * z) + 16/116;
+
+        return {
+          L: (116 * y) - 16,
+          a: 500 * (x - y),
+          b: 200 * (y - z)
+        };
+      }
+
+      function deltaE(lab1, lab2) {
+        const dL = lab1.L - lab2.L;
+        const da = lab1.a - lab2.a;
+        const db = lab1.b - lab2.b;
+        return Math.sqrt(dL * dL + da * da + db * db);
+      }
+
+      function labToRgb(lab) {
+        let y = (lab.L + 16) / 116;
+        let x = lab.a / 500 + y;
+        let z = y - lab.b / 200;
+
+        let x3 = x * x * x, y3 = y * y * y, z3 = z * z * z;
+        x = x3 > 0.008856 ? x3 : (x - 16/116) / 7.787;
+        y = y3 > 0.008856 ? y3 : (y - 16/116) / 7.787;
+        z = z3 > 0.008856 ? z3 : (z - 16/116) / 7.787;
+
+        x *= 0.95047;
+        y *= 1.00000;
+        z *= 1.08883;
+
+        let r = x *  3.2406 + y * -1.5372 + z * -0.4986;
+        let g = x * -0.9689 + y *  1.8758 + z *  0.0415;
+        let b = x *  0.0557 + y * -0.2040 + z *  1.0570;
+
+        r = r > 0.0031308 ? 1.055 * Math.pow(r, 1/2.4) - 0.055 : 12.92 * r;
+        g = g > 0.0031308 ? 1.055 * Math.pow(g, 1/2.4) - 0.055 : 12.92 * g;
+        b = b > 0.0031308 ? 1.055 * Math.pow(b, 1/2.4) - 0.055 : 12.92 * b;
+
+        return {
+          r: Math.max(0, Math.min(255, Math.round(r * 255))),
+          g: Math.max(0, Math.min(255, Math.round(g * 255))),
+          b: Math.max(0, Math.min(255, Math.round(b * 255)))
+        };
+      }
+
+      function rgbToHex(r, g, b) {
+        return "#" + 
+          Math.round(r).toString(16).padStart(2, '0') + 
+          Math.round(g).toString(16).padStart(2, '0') + 
+          Math.round(b).toString(16).padStart(2, '0');
       }
 
       async function extractColors(file) {
+        if (isProcessing) return;
         if (!file || !file.type.startsWith('image/')) return showToast("Wybierz prawidłowy plik graficzny.");
+
+        isProcessing = true;
+        pickBtn.disabled = true;
+        pickBtn.style.opacity = "0.5";
+        progressWrapper.style.display = "flex";
+        progressFill.style.width = "0%";
+        progressText.textContent = "Wczytywanie zdjęcia...";
 
         if (currentImgUrl) URL.revokeObjectURL(currentImgUrl);
         currentImgUrl = URL.createObjectURL(file);
@@ -217,92 +289,129 @@
           const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
           
           const canvas = document.createElement('canvas');
-          canvas.width = 128;
-          canvas.height = 128;
+          canvas.width = 256;
+          canvas.height = 256;
           const ctx = canvas.getContext('2d', { willReadFrequently: true });
           
-          ctx.drawImage(bitmap, 0, 0, 128, 128);
-          const imgData = ctx.getImageData(0, 0, 128, 128).data;
+          ctx.drawImage(bitmap, 0, 0, 256, 256);
+          const imgData = ctx.getImageData(0, 0, 256, 256).data;
           
-          const colorCounts = {};
-          
+          const pixels = [];
           for (let i = 0; i < imgData.length; i += 4) {
-            const r = imgData[i];
-            const g = imgData[i + 1];
-            const b = imgData[i + 2];
             const a = imgData[i + 3];
-            
             if (a < 128) continue;
-            
-            const qr = Math.round(r / 16) * 16;
-            const qg = Math.round(g / 16) * 16;
-            const qb = Math.round(b / 16) * 16;
-            
-            const hex = "#" + 
-              Math.min(255, qr).toString(16).padStart(2, '0') + 
-              Math.min(255, qg).toString(16).padStart(2, '0') + 
-              Math.min(255, qb).toString(16).padStart(2, '0');
-              
-            colorCounts[hex] = (colorCounts[hex] || 0) + 1;
+            pixels.push({
+              r: imgData[i],
+              g: imgData[i + 1],
+              b: imgData[i + 2]
+            });
           }
 
-          const sortedColors = Object.keys(colorCounts).sort((a, b) => colorCounts[b] - colorCounts[a]);
-          
-          const finalColors = [];
-          let skippedCount = 0;
+          progressText.textContent = "Konwersja przestrzeni kolorów...";
+          await new Promise(r => setTimeout(r, 50));
 
-          for (const color of sortedColors) {
-            if (finalColors.length >= targetColorCount) break;
+          const labPixels = pixels.map(p => {
+            const lab = rgbToLab(p.r, p.g, p.b);
+            return { ...lab, original: p };
+          });
+
+          const numClusters = targetColorCount;
+          let centroids = [];
+
+          for (let i = 0; i < numClusters; i++) {
+            centroids.push(labPixels[Math.floor(Math.random() * labPixels.length)]);
+          }
+
+          const maxIterations = 15;
+          for (let iter = 0; iter < maxIterations; iter++) {
+            const clusters = Array.from({ length: numClusters }, () => []);
             
-            let isDistinct = true;
-            for (const selected of finalColors) {
-              if (colorDistance(color, selected) < sensitivity) {
-                isDistinct = false;
-                break;
+            for (const pixel of labPixels) {
+              let minDist = Infinity;
+              let bestCluster = 0;
+              for (let k = 0; k < numClusters; k++) {
+                const dist = deltaE(pixel, centroids[k]);
+                if (dist < minDist) {
+                  minDist = dist;
+                  bestCluster = k;
+                }
+              }
+              clusters[bestCluster].push(pixel);
+            }
+
+            for (let k = 0; k < numClusters; k++) {
+              if (clusters[k].length > 0) {
+                let sumL = 0, sumA = 0, sumB = 0;
+                for (const p of clusters[k]) {
+                  sumL += p.L; sumA += p.a; sumB += p.b;
+                }
+                centroids[k] = {
+                  L: sumL / clusters[k].length,
+                  a: sumA / clusters[k].length,
+                  b: sumB / clusters[k].length
+                };
               }
             }
+
+            const progressPercent = Math.round(((iter + 1) / maxIterations) * 100);
+            progressFill.style.width = progressPercent + "%";
+            progressText.textContent = `Grupowanie kolorów: ${progressPercent}%`;
             
-            if (isDistinct) {
-              finalColors.push(color);
-            } else {
-              skippedCount++;
+            await new Promise(r => setTimeout(r, 10));
+          }
+
+          progressText.textContent = "Generowanie palety...";
+          await new Promise(r => setTimeout(r, 100));
+
+          const finalColors = [];
+          for (const centroid of centroids) {
+            const rgb = labToRgb(centroid);
+            const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+            
+            const isDuplicate = finalColors.some(c => {
+              const cLab = rgbToLab(c.r, c.g, c.b);
+              return deltaE(cLab, centroid) < 5;
+            });
+
+            if (!isDuplicate) {
+              finalColors.push({ ...rgb, hex });
             }
           }
+
+          finalColors.sort((a, b) => {
+            const labA = rgbToLab(a.r, a.g, a.b);
+            const labB = rgbToLab(b.r, b.g, b.b);
+            return labA.L - labB.L;
+          });
 
           swatchesContainer.innerHTML = "";
           warningText.textContent = "";
-          
-          if (finalColors.length === 0) {
-            swatchesContainer.innerHTML = '<div style="grid-column: span 3; text-align: center; color: var(--muted); padding: 20px;">Brak kolorów do wyświetlenia.</div>';
-            warningText.textContent = "Odrzucono wszystkie kolory jako zbyt podobne. Zmniejsz czułość.";
-            warningText.style.color = "var(--danger)";
-          } else {
-            finalColors.forEach((hex) => {
-              const textColor = getContrastColor(hex);
-              const swatch = document.createElement("div");
-              swatch.className = "pal-swatch";
-              swatch.style.backgroundColor = hex;
-              swatch.innerHTML = `<span class="pal-hex-text" style="color: ${textColor}">${hex.toUpperCase()}</span>`;
-              
-              swatch.addEventListener("click", () => {
-                navigator.clipboard.writeText(hex.toUpperCase()).then(() => {
-                  Hub.haptic('success');
-                  const originalHTML = swatch.innerHTML;
-                  swatch.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="${textColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-                  setTimeout(() => { swatch.innerHTML = originalHTML; }, 1500);
-                }).catch(() => showToast("Błąd kopiowania"));
-              });
-              
-              swatchesContainer.appendChild(swatch);
-            });
 
-            if (finalColors.length < targetColorCount) {
-              warningText.textContent = `Znaleziono ${finalColors.length} unikalnych kolorów. Pominięto ${skippedCount} zbyt podobnych.`;
-              warningText.style.color = "#fbbf24";
-            } else {
-              warningText.textContent = `Znaleziono ${finalColors.length} dominujących kolorów.`;
-              warningText.style.color = "var(--muted)";
-            }
+          finalColors.forEach((colorObj) => {
+            const textColor = getContrastColor(colorObj.hex);
+            const swatch = document.createElement("div");
+            swatch.className = "pal-swatch";
+            swatch.style.backgroundColor = colorObj.hex;
+            swatch.innerHTML = `<span class="pal-hex-text" style="color: ${textColor}">${colorObj.hex.toUpperCase()}</span>`;
+            
+            swatch.addEventListener("click", () => {
+              navigator.clipboard.writeText(colorObj.hex.toUpperCase()).then(() => {
+                Hub.haptic('success');
+                const originalHTML = swatch.innerHTML;
+                swatch.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="${textColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                setTimeout(() => { swatch.innerHTML = originalHTML; }, 1500);
+              }).catch(() => showToast("Błąd kopiowania"));
+            });
+            
+            swatchesContainer.appendChild(swatch);
+          });
+
+          if (finalColors.length < targetColorCount) {
+            warningText.textContent = `Znaleziono ${finalColors.length} wyrazistych kolorów. Reszta zlała się w tło.`;
+            warningText.style.color = "#fbbf24";
+          } else {
+            warningText.textContent = `Znaleziono ${finalColors.length} dominujących kolorów.`;
+            warningText.style.color = "var(--muted)";
           }
 
           setupCard.classList.add("hidden");
@@ -310,7 +419,13 @@
           Hub.haptic('success');
 
         } catch (err) {
+          console.error(err);
           showToast("Błąd podczas analizy zdjęcia.");
+        } finally {
+          isProcessing = false;
+          pickBtn.disabled = false;
+          pickBtn.style.opacity = "1";
+          progressWrapper.style.display = "none";
         }
       }
 
@@ -334,6 +449,7 @@
 
       signal.addEventListener('abort', () => {
         if (currentImgUrl) URL.revokeObjectURL(currentImgUrl);
+        isProcessing = false;
       });
     },
 
