@@ -46,14 +46,19 @@
             transform: translate(-50%, -50%);
           }
 
-          .sk-drop-zone { 
-            width: 100%; aspect-ratio: 4 / 3;
-            border: 2px dashed var(--line); border-radius: 8px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; color: var(--muted); cursor: pointer; 
-            transition: border-color 0.2s; 
+          .sk-intro-box {
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 12px; padding: 32px 20px; text-align: center;
+            margin-top: 16px; margin-bottom: 24px;
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
           }
-          .sk-drop-zone:active { border-color: var(--accent); }
+
+          .sk-icon-wrapper {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: var(--bg); border: 1px solid var(--line);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent);
+          }
 
           .sk-range { 
             -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; 
@@ -70,7 +75,6 @@
           
           .sk-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-          /* NOWA ANIMACJA CSS */
           @keyframes sk-spin-left {
             from { transform: rotate(0deg); }
             to { transform: rotate(-360deg); }
@@ -91,9 +95,15 @@
           
           <div id="sk-wrapper" style="position:relative; width: 80%; margin: 0 auto; margin-bottom: 24px;">
             
-            <div id="sk-pick-btn" class="sk-drop-zone">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px; opacity:0.5;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-              <div style="font-size: 14px; font-weight: 500;">Kliknij, aby wybrać zdjęcie</div>
+            <div id="sk-setup-card" class="sk-intro-box">
+              <div class="sk-icon-wrapper">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              </div>
+              <div>
+                <div style="font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 8px;">Skaner dokumentów</div>
+                <div style="font-size: 14px; color: var(--muted); line-height: 1.5;">Wybierz zdjęcie, aby poprawić perspektywę i zapisać jako PDF.</div>
+              </div>
+              <button id="sk-pick-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; margin-top: 8px;">Wybierz zdjęcie</button>
             </div>
 
             <div id="sk-canvas-container" style="display:none; width: 100%; border-radius: 8px; border: 1px solid var(--line); background:#000; overflow:hidden; touch-action: none;">
@@ -149,6 +159,7 @@
       const $ = id => container.querySelector("#" + id);
       const fileInput = $("sk-file");
       const pickBtn = $("sk-pick-btn");
+      const setupCard = $("sk-setup-card");
       const canvasContainer = $("sk-canvas-container");
       const displayCanvasEl = $("sk-display");
       const handles = container.querySelectorAll(".sk-handle");
@@ -200,7 +211,7 @@
         const srcX = (handleX / rect.width) * originalCanvas.width;
         const srcY = (handleY / rect.height) * originalCanvas.height;
 
-        loupeCtx.fillStyle = "#000";
+        loupeCtx.fillStyle = "#fff";
         loupeCtx.fillRect(0, 0, w, h);
         
         loupeCtx.filter = `contrast(${contrastSlider.value}%)`;
@@ -266,13 +277,13 @@
         $("sk-color-label").style.opacity = loaded ? "1" : "0.4";
         
         if (loaded) {
-          pickBtn.style.display = "none";
+          setupCard.style.display = "none";
           canvasContainer.style.display = "block";
           handles.forEach(h => h.style.display = "block");
           cropArea.style.display = "block";
           updateCropPath();
         } else {
-          pickBtn.style.display = "flex";
+          setupCard.style.display = "flex";
           canvasContainer.style.display = "none";
           handles.forEach(h => h.style.display = "none");
           cropArea.style.display = "none";
@@ -323,7 +334,7 @@
         
         svg.style.color = "var(--accent)";
         svg.classList.remove("sk-spin-anim");
-        void svg.offsetWidth; // Trigger reflow, aby animacja zadziałała ponownie
+        void svg.offsetWidth;
         svg.classList.add("sk-spin-anim");
         
         setTimeout(() => { 
