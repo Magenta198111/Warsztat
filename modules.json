@@ -28,8 +28,5 @@
   },
   {
     "file": "./modules/konwerter-rzymski.js"
-  },
-  {
-    "file": "./modules/generator-czcionek.js"
   }
 ]
