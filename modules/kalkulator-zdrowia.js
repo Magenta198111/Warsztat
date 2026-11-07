@@ -23,69 +23,77 @@
 
       container.innerHTML = `
         <style>
-          .h-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 16px; }
+          .h-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
           
-          /* Płaski przełącznik płci */
-          .h-gender-segment {
-            display: flex; gap: 8px; margin-bottom: 24px; margin-top: 8px;
+          /* Układ dwukolumnowy dla pól */
+          .h-grid-2 {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;
           }
-          .h-gender-btn {
-            flex: 1; padding: 10px; background: transparent; border: 1px solid var(--line);
-            border-radius: 6px; color: var(--muted); font-size: 14px; font-weight: 500; 
-            cursor: pointer; transition: all 0.2s; outline: none; font-family: inherit;
-          }
-          .h-gender-btn.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
-
-          /* Płaskie pola tekstowe (tylko dolna linia) */
+          
+          /* Zgrabne pola z dolną linią */
+          .h-field { display: flex; flex-direction: column; }
           .h-input-row { 
-            display: flex; align-items: flex-end; justify-content: space-between;
-            border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--line); padding-bottom: 8px;
             transition: border-color 0.2s;
           }
           .h-input-row:focus-within { border-bottom-color: var(--accent); }
           
           .h-input {
             width: 100%; background: transparent; border: none;
-            color: var(--ink); font-size: 28px; font-weight: 700;
+            color: var(--ink); font-size: 20px; font-weight: 600;
             outline: none; font-family: monospace;
           }
-          .h-input::placeholder { color: var(--line); }
-          .h-unit { font-size: 14px; color: var(--muted); font-weight: 500; margin-left: 12px; padding-bottom: 4px; }
+          .h-unit { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 8px; flex-shrink: 0; }
+
+          /* Przełącznik płci */
+          .h-gender-segment {
+            display: flex; background: var(--bg); border: 1px solid var(--line);
+            border-radius: 6px; overflow: hidden; margin-bottom: 24px;
+          }
+          .h-gender-btn {
+            flex: 1; padding: 10px; background: transparent; border: none;
+            color: var(--muted); font-size: 14px; font-weight: 500; cursor: pointer;
+            transition: background 0.2s, color 0.2s; outline: none; font-family: inherit;
+          }
+          .h-gender-btn.active { background: var(--surface-hover); color: var(--accent); font-weight: 600; }
 
           /* Standardowy trigger */
           .h-trigger { 
             display: flex; justify-content: space-between; align-items: center; 
             background: transparent; border: none; border-bottom: 1px solid var(--line); 
-            padding: 16px 0; color: var(--ink); font-size: 16px; font-weight: 500;
-            cursor: pointer; user-select: none; transition: color 0.2s; margin-bottom: 24px;
+            padding: 14px 0; color: var(--ink); font-size: 15px; font-weight: 500;
+            cursor: pointer; user-select: none; transition: color 0.2s; margin-bottom: 32px;
           }
           .h-trigger:active { color: var(--accent); }
           .h-trigger svg { color: var(--muted); flex-shrink: 0; width: 16px; height: 16px; }
 
-          /* Sekcje wyników - płaska lista */
-          .h-results { display: flex; flex-direction: column; margin-top: 8px; }
+          /* Lista wyników (jak w konwerterze) */
+          .h-results { display: flex; flex-direction: column; }
           
           .h-result-row {
-            display: flex; justify-content: space-between; align-items: flex-end;
+            display: flex; justify-content: space-between; align-items: center;
             padding: 16px 0; border-bottom: 1px solid var(--line);
           }
           .h-result-row:last-child { border-bottom: none; }
           
-          .h-result-left { display: flex; flex-direction: column; gap: 4px; }
+          .h-result-left { display: flex; flex-direction: column; gap: 4px; padding-right: 16px; }
           .h-result-title { font-size: 15px; font-weight: 500; color: var(--ink); }
-          .h-result-desc { font-size: 12px; color: var(--muted); line-height: 1.4; max-width: 80%; }
+          .h-result-desc { font-size: 12px; color: var(--muted); line-height: 1.3; }
           
+          .h-result-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
           .h-result-value { 
-            font-size: 24px; font-weight: 700; font-family: monospace; 
-            color: var(--ink); text-align: right; white-space: nowrap;
+            font-size: 22px; font-weight: 700; font-family: monospace; 
+            color: var(--ink); white-space: nowrap;
           }
-          .h-result-value span { font-size: 13px; font-weight: 400; color: var(--muted); font-family: -apple-system, sans-serif; }
+          .h-result-value span { font-size: 12px; font-weight: 400; color: var(--muted); font-family: -apple-system, sans-serif; }
 
-          /* Pasek BMI */
-          .h-bmi-wrapper { margin-top: 8px; width: 100%; max-width: 200px; align-self: flex-end; }
+          /* Specyficzne dla BMI */
+          .h-bmi-header { display: flex; justify-content: space-between; align-items: baseline; width: 100%; margin-bottom: 8px; }
+          .h-bmi-wrapper { width: 100%; margin-top: 4px; }
           .h-bmi-bar { width: 100%; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; position: relative; }
           .h-bmi-fill { height: 100%; width: 0%; transition: width 0.5s ease, background-color 0.5s ease; }
-          .h-bmi-labels { position: relative; height: 16px; margin-top: 4px; font-size: 9px; color: var(--muted); font-family: monospace; }
+          .h-bmi-labels { position: relative; height: 16px; margin-top: 4px; font-size: 10px; color: var(--muted); font-family: monospace; }
           .h-bmi-labels span { position: absolute; transform: translateX(-50%); }
           .h-bmi-labels span:nth-child(1) { left: 0%; transform: none; }
           .h-bmi-labels span:nth-child(2) { left: 10.4%; }
@@ -95,35 +103,46 @@
 
           .h-disclaimer {
             font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5;
-            padding: 24px 0; margin-bottom: 40px;
+            padding: 24px 0 40px 0; border-top: 1px dashed var(--line); margin-top: 16px;
           }
         </style>
 
         ${Hub.backButtonHtml}
 
         <div style="margin-top: 24px;">
+          
           <label class="h-label">Płeć</label>
           <div class="h-gender-segment">
             <button class="h-gender-btn" data-gender="male">Mężczyzna</button>
             <button class="h-gender-btn" data-gender="female">Kobieta</button>
           </div>
 
-          <label class="h-label">Wiek</label>
-          <div class="h-input-row">
-            <input type="number" id="h-age" class="h-input" value="${savedData.age}" min="10" max="120">
-            <span class="h-unit">lat</span>
+          <div class="h-grid-2">
+            <div class="h-field">
+              <label class="h-label">Wiek</label>
+              <div class="h-input-row">
+                <input type="number" id="h-age" class="h-input" value="${savedData.age}" min="10" max="120">
+                <span class="h-unit">lat</span>
+              </div>
+            </div>
+            <div></div> <!-- Pusty div dla zachowania siatki -->
           </div>
 
-          <label class="h-label">Wzrost</label>
-          <div class="h-input-row">
-            <input type="number" id="h-height" class="h-input" value="${savedData.height}" min="100" max="250">
-            <span class="h-unit">cm</span>
-          </div>
-
-          <label class="h-label">Waga</label>
-          <div class="h-input-row">
-            <input type="number" id="h-weight" class="h-input" value="${savedData.weight}" min="30" max="300">
-            <span class="h-unit">kg</span>
+          <div class="h-grid-2">
+            <div class="h-field">
+              <label class="h-label">Wzrost</label>
+              <div class="h-input-row">
+                <input type="number" id="h-height" class="h-input" value="${savedData.height}" min="100" max="250">
+                <span class="h-unit">cm</span>
+              </div>
+            </div>
+            <div class="h-field">
+              <label class="h-label">Waga</label>
+              <div class="h-input-row">
+                <input type="number" id="h-weight" class="h-input" value="${savedData.weight}" min="30" max="300">
+                <span class="h-unit">kg</span>
+              </div>
+            </div>
           </div>
 
           <label class="h-label">Poziom aktywności</label>
@@ -134,8 +153,8 @@
 
           <div class="h-results">
             
-            <div class="h-result-row" style="flex-direction: column; align-items: flex-start; gap: 12px;">
-              <div style="display: flex; justify-content: space-between; width: 100%; align-items: baseline;">
+            <div class="h-result-row" style="flex-direction: column; align-items: flex-start;">
+              <div class="h-bmi-header">
                 <div class="h-result-title">Wskaźnik BMI</div>
                 <div style="display: flex; align-items: baseline; gap: 8px;">
                   <div id="h-bmi-val" class="h-result-value">0.0</div>
@@ -146,23 +165,27 @@
                 <div class="h-bmi-bar"><div id="h-bmi-fill" class="h-bmi-fill"></div></div>
                 <div class="h-bmi-labels"><span>16</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
               </div>
-              <div id="h-bmi-desc" class="h-result-desc" style="max-width: 100%;">-</div>
+              <div id="h-bmi-desc" class="h-result-desc" style="margin-top: 8px;">-</div>
             </div>
 
             <div class="h-result-row">
               <div class="h-result-left">
                 <div class="h-result-title">BMR</div>
-                <div class="h-result-desc">Podstawowa przemiana materii (spoczynkowa).</div>
+                <div class="h-result-desc">Podstawowa przemiana materii.</div>
               </div>
-              <div id="h-bmr-val" class="h-result-value">0 <span>kcal</span></div>
+              <div class="h-result-right">
+                <div id="h-bmr-val" class="h-result-value">0 <span>kcal</span></div>
+              </div>
             </div>
 
             <div class="h-result-row">
               <div class="h-result-left">
                 <div class="h-result-title">TDEE</div>
-                <div class="h-result-desc">Całkowite dzienne zapotrzebowanie kaloryczne.</div>
+                <div class="h-result-desc">Całkowite dzienne zapotrzebowanie.</div>
               </div>
-              <div id="h-tdee-val" class="h-result-value">0 <span>kcal</span></div>
+              <div class="h-result-right">
+                <div id="h-tdee-val" class="h-result-value">0 <span>kcal</span></div>
+              </div>
             </div>
 
             <div class="h-result-row" style="border-top: 1px solid var(--accent); margin-top: 8px;">
@@ -170,7 +193,9 @@
                 <div class="h-result-title" style="color: var(--accent);">Aby schudnąć</div>
                 <div class="h-result-desc">Deficyt 500 kcal.</div>
               </div>
-              <div id="h-lose-val" class="h-result-value">0 <span>kcal</span></div>
+              <div class="h-result-right">
+                <div id="h-lose-val" class="h-result-value">0 <span>kcal</span></div>
+              </div>
             </div>
 
             <div class="h-result-row">
@@ -178,13 +203,15 @@
                 <div class="h-result-title" style="color: var(--accent);">Aby przytyć</div>
                 <div class="h-result-desc">Nadwyżka 300 kcal.</div>
               </div>
-              <div id="h-gain-val" class="h-result-value">0 <span>kcal</span></div>
+              <div class="h-result-right">
+                <div id="h-gain-val" class="h-result-value">0 <span>kcal</span></div>
+              </div>
             </div>
 
           </div>
 
           <div class="h-disclaimer">
-            ⚠️ Wyniki mają charakter wyłącznie orientacyjny. Kalkulator opiera się na uśrednionych wzorach matematycznych. W przypadku wątpliwości lub planowania diety, skonsultuj się z lekarzem lub dietetykiem.
+            ⚠️ Wyniki mają charakter orientacyjny. Kalkulator opiera się na uśrednionych wzorach. Skonsultuj się z lekarzem lub dietetykiem przed rozpoczęciem diety.
           </div>
         </div>
       `;
