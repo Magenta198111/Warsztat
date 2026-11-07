@@ -1,0 +1,33 @@
+[
+  {
+    "version": "1.0",
+    "date": "2024-05-24",
+    "changes": [
+      "Oficjalne wydanie aplikacji Workspace – Twojego osobistego, w 100% offline hubu z narzędziami.",
+      "Zaimplementowano 15 zaawansowanych modułów użytkowych.",
+      "Dodano wyszukiwarkę modułów na żywo (ignorującą polskie znaki).",
+      "Wprowadzono system ulubionych modułów (serduszka), które trafiają na sam szczyt listy.",
+      "Dodano opcję zabezpieczenia aplikacji 4-cyfrowym kodem PIN (z wyborem czasu bezczynności i podpowiedzią).",
+      "Wdrożono system kopii zapasowej (Eksport i Import ustawień oraz ulubionych).",
+      "Dodano system powiadomień o aktualizacjach 'Co nowego' z kropką powiadomienia.",
+      "Rozbudowana personalizacja: 8 gotowych kolorów akcentu, własny wybór z koła RGB, regulacja zasięgu kolorów.",
+      "Dodano opcje wyglądu: rozmiar tekstu, ukrywanie opisów, wyłączanie animacji oraz tryb siatki.",
+      "Zaimplementowano pełne wsparcie dla wibracji (Haptyka) oraz autorski system powiadomień Toast.",
+      "Moduł: Konwerter Zdjęć (kompresja, zmiana formatu WebP/JPEG/PNG).",
+      "Moduł: Generator & Skaner QR (własny silnik generowania).",
+      "Moduł: Konwerter Jednostek (precyzyjne przeliczenia na BigInt).",
+      "Moduł: Skaner do PDF (prostowanie perspektywy, lupka, filtry).",
+      "Moduł: Oczyszczacz Tekstu (usuwanie formatowania i zbędnych znaków).",
+      "Moduł: Przycinanie Zdjęć (gotowe formaty dokumentów, limity KB).",
+      "Moduł: Kalkulator Programistyczny (konwersje, siatka bitowa).",
+      "Moduł: Generator Haseł (kryptograficznie bezpieczne).",
+      "Moduł: Wyciągacz Kolorów (algorytm K-Means++ w CIELAB).",
+      "Moduł: Konwerter Liczb Rzymskich.",
+      "Moduł: Zdjęcia do PDF (łączenie nawet 1000 zdjęć).",
+      "Moduł: Kreator Ofert (z bazą klientów i produktów, generowaniem PDF).",
+      "Moduł: Poziomica i Kątomierz (z kalibracją i czujnikami ruchu).",
+      "Moduł: Kalkulator Zdrowia (BMI, BMR, TDEE).",
+      "Moduł: Generator QR do Wi-Fi (błyskawiczne udostępnianie sieci gościom)."
+    ]
+  }
+]
