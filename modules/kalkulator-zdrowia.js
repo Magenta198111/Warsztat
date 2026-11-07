@@ -118,8 +118,8 @@
           .h-cal-val small { font-size: 12px; font-weight: 500; color: var(--muted); font-family: -apple-system, sans-serif; margin-left: 4px; }
           
           .h-goals { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 24px; }
-          .h-goal { padding: 20px 16px; border: 1px solid var(--accent); border-radius: 8px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
-          .h-goal-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin-bottom: 8px; }
+          .h-goal { padding: 20px 16px; border: 1px solid var(--accent); border-radius: 8px; text-align: center; display: flex; flex-direction: column; }
+          .h-goal-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin-bottom: 12px; }
           .h-goal-val { font-size: 24px; font-weight: 800; font-family: monospace; color: var(--ink); margin-bottom: 12px; }
           .h-goal-val small { font-size: 10px; font-weight: 500; color: var(--muted); font-family: -apple-system, sans-serif; margin-left: 2px; }
           .h-goal-desc { font-size: 11px; color: var(--muted); line-height: 1.4; margin-top: auto; }
@@ -221,7 +221,7 @@
             <div class="h-goal">
               <div class="h-goal-title">Aby przytyć</div>
               <div class="h-goal-val" id="h-gain-val">0 <small>kcal</small></div>
-              <div class="h-goal-desc">Nadwyżka 300 kcal to zdrowszy przyrost masy (głównie mięśni).</div>
+              <div class="h-goal-desc">Nadwyżka 300 kcal to najzdrowsza opcja na przyrost masy.</div>
             </div>
           </div>
 
