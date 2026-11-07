@@ -37,5 +37,8 @@
   },
   {
     "file": "./modules/poziomica.js"
+  },
+  {
+    "file": "./modules/kalkulator-zdrowia.js"
   }
 ]
