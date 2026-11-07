@@ -122,6 +122,13 @@
 
         <div style="margin-top: 8px;">
           
+          <!-- PŁEĆ (na samej górze) -->
+          <label class="h-label" style="margin-top: 8px;">Płeć</label>
+          <div class="h-gender-segment">
+            <button class="h-gender-btn" data-gender="male">Mężczyzna</button>
+            <button class="h-gender-btn" data-gender="female">Kobieta</button>
+          </div>
+
           <!-- Główny input: Waga -->
           <div class="h-hero-input-wrapper">
             <label class="h-label" style="margin:0;">Waga</label>
@@ -145,13 +152,6 @@
                 <span class="h-unit">lat</span>
               </div>
             </div>
-          </div>
-
-          <!-- Płeć -->
-          <label class="h-label">Płeć</label>
-          <div class="h-gender-segment">
-            <button class="h-gender-btn" data-gender="male">Mężczyzna</button>
-            <button class="h-gender-btn" data-gender="female">Kobieta</button>
           </div>
 
           <!-- Aktywność -->
