@@ -5,7 +5,9 @@
     desc: "Twórz profesjonalne oferty handlowe i zapisuj je w PDF",
 
     async mount(container, signal) {
-      let savedSeller = await Hub.db.get("offer_seller", { name: "", nip: "", address: "", contact: "", bank: "" });
+      // Ładowanie zapisanych danych
+      let savedSeller = await Hub.db.get("offer_seller", { name: "", nip: "", address: "", email: "", phone: "", bank: "" });
+      let savedClients = await Hub.db.get("offer_clients", []);
       
       const today = new Date();
       const todayStr = today.toISOString().slice(0, 10);
@@ -90,6 +92,16 @@
             font-size: 12px; color: #a5b4fc; line-height: 1.5;
           }
           .inv-warning svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+
+          /* Nowy trigger do wczytywania klienta */
+          .inv-client-trigger {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 6px; padding: 12px 16px; color: var(--accent); font-size: 14px; font-weight: 600;
+            cursor: pointer; user-select: none; transition: background 0.2s; margin-bottom: 16px; display: none;
+          }
+          .inv-client-trigger:active { background: var(--surface-hover); }
+          .inv-client-trigger svg { width: 16px; height: 16px; }
         </style>
 
         ${Hub.backButtonHtml}
@@ -103,31 +115,41 @@
           <div class="inv-section">
             <div class="inv-section-title">Wystawiający (Twoja firma)</div>
             <label class="inv-label">Nazwa / Imię i nazwisko</label>
-            <input type="text" id="seller-name" class="inv-input" placeholder="np. Jan Kowalski / Firma XYZ" value="${savedSeller.name || ''}">
+            <input type="text" id="seller-name" class="inv-input seller-field" placeholder="np. Jan Kowalski / Firma XYZ" value="${savedSeller.name || ''}">
             <div class="inv-row">
               <div>
                 <label class="inv-label">NIP</label>
-                <input type="text" id="seller-nip" class="inv-input" placeholder="np. 1234567890" value="${savedSeller.nip || ''}">
+                <input type="text" id="seller-nip" class="inv-input seller-field" placeholder="np. 1234567890" value="${savedSeller.nip || ''}">
               </div>
               <div>
                 <label class="inv-label">Adres (ulica, kod, miasto)</label>
-                <input type="text" id="seller-address" class="inv-input" placeholder="ul. Przykładowa 1, 00-000 Miasto" value="${savedSeller.address || ''}">
+                <input type="text" id="seller-address" class="inv-input seller-field" placeholder="ul. Przykładowa 1, 00-000 Miasto" value="${savedSeller.address || ''}">
               </div>
             </div>
             <div class="inv-row">
               <div>
-                <label class="inv-label">E-mail / Telefon</label>
-                <input type="text" id="seller-contact" class="inv-input" placeholder="np. kontakt@firma.pl, 123 456 789" value="${savedSeller.contact || ''}">
+                <label class="inv-label">E-mail</label>
+                <input type="text" id="seller-email" class="inv-input seller-field" placeholder="np. kontakt@firma.pl" value="${savedSeller.email || ''}">
               </div>
               <div>
-                <label class="inv-label">Numer konta (IBAN)</label>
-                <input type="text" id="seller-bank" class="inv-input" placeholder="np. 12 1234 5678 9012 3456 7890 1234" value="${savedSeller.bank || ''}">
+                <label class="inv-label">Numer telefonu</label>
+                <input type="text" id="seller-phone" class="inv-input seller-field" placeholder="np. 123 456 789" value="${savedSeller.phone || ''}">
               </div>
+            </div>
+            <div style="margin-top: 4px;">
+              <label class="inv-label">Numer konta (IBAN)</label>
+              <input type="text" id="seller-bank" class="inv-input seller-field" placeholder="np. 12 1234 5678 9012 3456 7890 1234" value="${savedSeller.bank || ''}">
             </div>
           </div>
 
           <div class="inv-section">
             <div class="inv-section-title">Klient (Odbiorca oferty)</div>
+            
+            <div id="client-select-trigger" class="inv-client-trigger">
+              <span>Wczytaj z listy klientów</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+
             <label class="inv-label">Nazwa / Imię i nazwisko</label>
             <input type="text" id="buyer-name" class="inv-input" placeholder="np. Firma ABC Sp. z o.o.">
             <div class="inv-row">
@@ -140,6 +162,7 @@
                 <input type="text" id="buyer-address" class="inv-input" placeholder="ul. Inna 2, 11-111 Miasto">
               </div>
             </div>
+            <button id="save-client-btn" class="n-btn" style="width: 100%; padding: 10px; margin-top: 16px; font-size: 13px;">Zapisz klienta w bazie</button>
           </div>
 
           <div class="inv-section">
@@ -188,6 +211,74 @@
 
       const $ = id => container.querySelector("#" + id);
 
+      // --- ZAPISYWANIE DANYCH WYSTAWCY (AUTO) ---
+      const sellerFields = container.querySelectorAll(".seller-field");
+      const saveSellerDebounced = Hub.debounce(() => {
+        Hub.db.set("offer_seller", {
+          name: $("seller-name").value,
+          nip: $("seller-nip").value,
+          address: $("seller-address").value,
+          email: $("seller-email").value,
+          phone: $("seller-phone").value,
+          bank: $("seller-bank").value
+        });
+      }, 500);
+
+      sellerFields.forEach(input => {
+        input.addEventListener("input", saveSellerDebounced, { signal });
+      });
+
+      // --- BAZA KLIENTÓW ---
+      const clientTrigger = $("client-select-trigger");
+      
+      function updateClientTrigger() {
+        if (savedClients.length > 0) {
+          clientTrigger.style.display = "flex";
+        } else {
+          clientTrigger.style.display = "none";
+        }
+      }
+      updateClientTrigger();
+
+      $("save-client-btn").onclick = async () => {
+        const name = $("buyer-name").value.trim();
+        const nip = $("buyer-nip").value.trim();
+        const address = $("buyer-address").value.trim();
+
+        if (!name) return showToast("Wpisz przynajmniej nazwę klienta.");
+
+        const newClient = { id: Date.now().toString(), name, nip, address };
+        
+        const existingIdx = savedClients.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
+        if (existingIdx > -1) {
+          savedClients[existingIdx] = newClient;
+          showToast("Zaktualizowano dane klienta.");
+        } else {
+          savedClients.push(newClient);
+          showToast("Zapisano nowego klienta.");
+        }
+
+        await Hub.db.set("offer_clients", savedClients);
+        updateClientTrigger();
+        Hub.haptic('success');
+      };
+
+      clientTrigger.onclick = async () => {
+        const opts = savedClients.map(c => ({ id: c.id, label: c.name }));
+        const choice = await Hub.showSelect({ title: "Wybierz klienta", options: opts, current: "", anchor: clientTrigger, signal });
+        
+        if (choice) {
+          const c = savedClients.find(x => x.id === choice);
+          if (c) {
+            $("buyer-name").value = c.name;
+            $("buyer-nip").value = c.nip;
+            $("buyer-address").value = c.address;
+            Hub.haptic('light');
+          }
+        }
+      };
+
+      // --- GENEROWANIE POZYCJI I OBLICZANIE ---
       function formatMoney(n) {
         return n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' zł';
       }
@@ -428,8 +519,11 @@
         ctx.fillText((buyer.address || "-").substring(0, 40), colR, y);
 
         y += 25;
-        if (seller.contact) ctx.fillText((seller.contact).substring(0, 40), colL, y);
-        if (seller.bank) ctx.fillText(`Nr konta: ${formatIBAN(seller.bank)}`, colL, y + 25);
+        if (seller.email) ctx.fillText(`E-mail: ${seller.email}`, colL, y);
+        if (seller.phone) ctx.fillText(`Tel: ${seller.phone}`, colL + 300, y); 
+        
+        y += 25;
+        if (seller.bank) ctx.fillText(`Nr konta: ${formatIBAN(seller.bank)}`, colL, y);
 
         y += 40;
         ctx.beginPath();
@@ -667,10 +761,10 @@
           name: $("seller-name").value,
           nip: $("seller-nip").value,
           address: $("seller-address").value,
-          contact: $("seller-contact").value,
+          email: $("seller-email").value,
+          phone: $("seller-phone").value,
           bank: $("seller-bank").value
         };
-        await Hub.db.set("offer_seller", sellerData);
 
         const buyerData = {
           name: $("buyer-name").value || 'Odbiorca',
