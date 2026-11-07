@@ -25,12 +25,10 @@
         <style>
           .h-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
           
-          /* Układ dwukolumnowy dla pól */
           .h-grid-2 {
             display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;
           }
           
-          /* Zgrabne pola z dolną linią */
           .h-field { display: flex; flex-direction: column; }
           .h-input-row { 
             display: flex; align-items: center; justify-content: space-between;
@@ -46,7 +44,6 @@
           }
           .h-unit { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 8px; flex-shrink: 0; }
 
-          /* Przełącznik płci */
           .h-gender-segment {
             display: flex; background: var(--bg); border: 1px solid var(--line);
             border-radius: 6px; overflow: hidden; margin-bottom: 24px;
@@ -58,7 +55,6 @@
           }
           .h-gender-btn.active { background: var(--surface-hover); color: var(--accent); font-weight: 600; }
 
-          /* Standardowy trigger */
           .h-trigger { 
             display: flex; justify-content: space-between; align-items: center; 
             background: transparent; border: none; border-bottom: 1px solid var(--line); 
@@ -68,12 +64,12 @@
           .h-trigger:active { color: var(--accent); }
           .h-trigger svg { color: var(--muted); flex-shrink: 0; width: 16px; height: 16px; }
 
-          /* Lista wyników (jak w konwerterze) */
           .h-results { display: flex; flex-direction: column; }
           
           .h-result-row {
             display: flex; justify-content: space-between; align-items: center;
             padding: 16px 0; border-bottom: 1px solid var(--line);
+            width: 100%;
           }
           .h-result-row:last-child { border-bottom: none; }
           
@@ -81,19 +77,27 @@
           .h-result-title { font-size: 15px; font-weight: 500; color: var(--ink); }
           .h-result-desc { font-size: 12px; color: var(--muted); line-height: 1.3; }
           
-          .h-result-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+          .h-result-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
           .h-result-value { 
             font-size: 22px; font-weight: 700; font-family: monospace; 
             color: var(--ink); white-space: nowrap;
           }
           .h-result-value span { font-size: 12px; font-weight: 400; color: var(--muted); font-family: -apple-system, sans-serif; }
 
-          /* Specyficzne dla BMI */
-          .h-bmi-header { display: flex; justify-content: space-between; align-items: baseline; width: 100%; margin-bottom: 8px; }
-          .h-bmi-wrapper { width: 100%; margin-top: 4px; }
+          /* Sekcja BMI - rozciągnięta na całą szerokość */
+          .h-bmi-section {
+            display: flex; flex-direction: column; align-items: stretch;
+            width: 100%; padding: 16px 0; border-bottom: 1px solid var(--line);
+          }
+          .h-bmi-header { 
+            display: flex; justify-content: space-between; align-items: baseline; 
+            width: 100%; margin-bottom: 12px;
+          }
+          .h-bmi-wrapper { width: 100%; margin-bottom: 8px; }
           .h-bmi-bar { width: 100%; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; position: relative; }
           .h-bmi-fill { height: 100%; width: 0%; transition: width 0.5s ease, background-color 0.5s ease; }
-          .h-bmi-labels { position: relative; height: 16px; margin-top: 4px; font-size: 10px; color: var(--muted); font-family: monospace; }
+          
+          .h-bmi-labels { position: relative; height: 16px; margin-top: 4px; font-size: 10px; color: var(--muted); font-family: monospace; width: 100%; }
           .h-bmi-labels span { position: absolute; transform: translateX(-50%); }
           .h-bmi-labels span:nth-child(1) { left: 0%; transform: none; }
           .h-bmi-labels span:nth-child(2) { left: 10.4%; }
@@ -125,7 +129,7 @@
                 <span class="h-unit">lat</span>
               </div>
             </div>
-            <div></div> <!-- Pusty div dla zachowania siatki -->
+            <div></div>
           </div>
 
           <div class="h-grid-2">
@@ -153,7 +157,8 @@
 
           <div class="h-results">
             
-            <div class="h-result-row" style="flex-direction: column; align-items: flex-start;">
+            <!-- Sekcja BMI -->
+            <div class="h-bmi-section">
               <div class="h-bmi-header">
                 <div class="h-result-title">Wskaźnik BMI</div>
                 <div style="display: flex; align-items: baseline; gap: 8px;">
@@ -165,7 +170,7 @@
                 <div class="h-bmi-bar"><div id="h-bmi-fill" class="h-bmi-fill"></div></div>
                 <div class="h-bmi-labels"><span>16</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
               </div>
-              <div id="h-bmi-desc" class="h-result-desc" style="margin-top: 8px;">-</div>
+              <div id="h-bmi-desc" class="h-result-desc" style="width: 100%;">-</div>
             </div>
 
             <div class="h-result-row">
