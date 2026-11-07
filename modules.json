@@ -34,5 +34,11 @@
   },
   {
     "file": "./modules/kreator-faktur.js"
+  },
+  {
+    "file": "./modules/kody-kreskowe.js"
+  },
+  {
+    "file": "./modules/poziomica.js"
   }
 ]
