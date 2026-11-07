@@ -1,7 +1,7 @@
 (() => {
   Hub.register({
     id: "kalkulator-zdrowia",
-    title: "Kalkulator BMI",
+    title: "Kalkulator Zdrowia",
     desc: "Oblicz swoje BMI, zapotrzebowanie kaloryczne (BMR) i TDEE",
 
     async mount(container, signal) {
@@ -76,7 +76,6 @@
           .h-bmi-bar { width: 100%; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; position: relative; margin-top: 8px; }
           .h-bmi-fill { height: 100%; width: 0%; transition: width 0.5s ease, background-color 0.5s ease; }
           
-          /* Poprawione etykiety skali - proporcjonalne do pozycji paska */
           .h-bmi-labels { position: relative; height: 16px; margin-top: 4px; font-size: 10px; color: var(--muted); font-family: monospace; }
           .h-bmi-labels span { position: absolute; transform: translateX(-50%); }
           .h-bmi-labels span:nth-child(1) { left: 0%; transform: none; }
@@ -84,11 +83,6 @@
           .h-bmi-labels span:nth-child(3) { left: 37.5%; }
           .h-bmi-labels span:nth-child(4) { left: 58.3%; }
           .h-bmi-labels span:nth-child(5) { left: 100%; transform: translateX(-100%); }
-
-          .h-target-hint {
-            font-size: 11px; color: var(--muted); line-height: 1.4;
-            padding-top: 8px; border-top: 1px dashed var(--line); margin-top: 4px;
-          }
 
           .h-disclaimer {
             font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5;
@@ -175,9 +169,6 @@
                   <div id="h-gain-val" style="font-size: 20px; font-weight: 700; font-family: monospace;">0 <span style="font-size:14px; font-family:-apple-system,sans-serif; color:var(--muted); font-weight:400;">kcal / dzień</span></div>
                 </div>
               </div>
-              <div class="h-target-hint">
-                Redukcja: deficyt 500 kcal. Budowa masy: nadwyżka 300 kcal (dla zdrowszego przyrostu z mniejszym udziałem tłuszczu).
-              </div>
             </div>
           </div>
 
@@ -215,7 +206,6 @@
         });
       }
 
-      // Funkcja mapująca BMI (16-40) na procent (0-100%) dla paska
       function bmiToPercent(bmi) {
         const min = 16, max = 40;
         if (bmi <= min) return 0;
@@ -230,7 +220,6 @@
 
         if (age <= 0 || weight <= 0 || height <= 0) return;
 
-        // --- BMI ---
         const heightM = height / 100;
         const bmi = weight / (heightM * heightM);
         
@@ -251,11 +240,11 @@
         } else if (bmi < 25) {
           bmiStatus = "Waga prawidłowa";
           bmiColor = "#34d399";
-          bmiDesc = "Świetnie! Twoja waga jest w normie. Kontynuuj zdrowe nawyki. Uwaga: BMI nie odróżnia mięśni od tłuszczu – osoby z dużą masą mięśniową mogą mieć wynik zawyżony.";
+          bmiDesc = "Świetnie! Twoja waga jest w normie. Kontynuuj zdrowe nawyki.";
         } else if (bmi < 30) {
           bmiStatus = "Nadwaga";
           bmiColor = "#fbbf24";
-          bmiDesc = "Masz lekką nadwagę. Warto zwiększyć aktywność fizyczną. Uwaga: BMI nie odróżnia mięśni od tłuszczu.";
+          bmiDesc = "Masz lekką nadwagę. Warto zwiększyć aktywność fizyczną.";
         } else {
           bmiStatus = "Otyłość";
           bmiColor = "#ef4444";
@@ -266,25 +255,21 @@
         $("h-bmi-status").style.color = bmiColor;
         $("h-bmi-desc").textContent = bmiDesc;
         
-        // Proporcjonalne wypełnienie paska BMI
         const percent = bmiToPercent(bmi);
         $("h-bmi-fill").style.width = percent + "%";
         $("h-bmi-fill").style.backgroundColor = bmiColor;
 
-        // --- BMR (Wzór Mifflina-St Jeora) ---
         let bmr = (10 * weight) + (6.25 * height) - (5 * age);
         if (currentGender === "male") bmr += 5;
         else bmr -= 161;
 
         $("h-bmr-val").innerHTML = Math.round(bmr) + ' <span>kcal / dzień</span>';
 
-        // --- TDEE ---
         const multiplier = activityLevels[currentActivity].multiplier;
         const tdee = bmr * multiplier;
 
         $("h-tdee-val").innerHTML = Math.round(tdee) + ' <span>kcal / dzień</span>';
 
-        // --- Cele (redukcja -500, masa +300) ---
         $("h-lose-val").innerHTML = Math.round(tdee - 500) + ' <span style="font-size:14px; font-family:-apple-system,sans-serif; color:var(--muted); font-weight:400;">kcal / dzień</span>';
         $("h-gain-val").innerHTML = Math.round(tdee + 300) + ' <span style="font-size:14px; font-family:-apple-system,sans-serif; color:var(--muted); font-weight:400;">kcal / dzień</span>';
       }
