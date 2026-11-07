@@ -25,36 +25,46 @@
         <style>
           .h-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
           
-          .h-grid-2 {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;
+          /* Główne pole (Waga) */
+          .h-hero-input-wrapper {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 24px 0 32px 0; border-bottom: 1px solid var(--line); margin-bottom: 24px;
           }
-          
+          .h-hero-input {
+            width: 100%; background: transparent; border: none;
+            color: var(--ink); font-size: 56px; font-weight: 700; text-align: center;
+            outline: none; font-family: monospace; letter-spacing: -0.03em;
+          }
+          .h-hero-unit { font-size: 16px; color: var(--muted); font-weight: 600; margin-top: 4px; }
+
+          /* Pola obok siebie (Wzrost / Wiek) */
+          .h-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
           .h-field { display: flex; flex-direction: column; }
           .h-input-row { 
-            display: flex; align-items: center; justify-content: space-between;
-            border-bottom: 1px solid var(--line); padding-bottom: 8px;
-            transition: border-color 0.2s;
+            display: flex; align-items: baseline; justify-content: space-between;
+            border-bottom: 1px solid var(--line); padding-bottom: 8px; transition: border-color 0.2s;
           }
           .h-input-row:focus-within { border-bottom-color: var(--accent); }
-          
           .h-input {
             width: 100%; background: transparent; border: none;
-            color: var(--ink); font-size: 20px; font-weight: 600;
+            color: var(--ink); font-size: 24px; font-weight: 700;
             outline: none; font-family: monospace;
           }
-          .h-unit { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 8px; flex-shrink: 0; }
+          .h-unit { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 8px; }
 
+          /* Przełącznik płci */
           .h-gender-segment {
             display: flex; background: var(--bg); border: 1px solid var(--line);
             border-radius: 6px; overflow: hidden; margin-bottom: 24px;
           }
           .h-gender-btn {
-            flex: 1; padding: 10px; background: transparent; border: none;
+            flex: 1; padding: 12px; background: transparent; border: none;
             color: var(--muted); font-size: 14px; font-weight: 500; cursor: pointer;
             transition: background 0.2s, color 0.2s; outline: none; font-family: inherit;
           }
           .h-gender-btn.active { background: var(--surface-hover); color: var(--accent); font-weight: 600; }
 
+          /* Trigger aktywności */
           .h-trigger { 
             display: flex; justify-content: space-between; align-items: center; 
             background: transparent; border: none; border-bottom: 1px solid var(--line); 
@@ -64,12 +74,12 @@
           .h-trigger:active { color: var(--accent); }
           .h-trigger svg { color: var(--muted); flex-shrink: 0; width: 16px; height: 16px; }
 
+          /* Sekcja wyników - lista */
           .h-results { display: flex; flex-direction: column; }
           
           .h-result-row {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 16px 0; border-bottom: 1px solid var(--line);
-            width: 100%;
+            padding: 16px 0; border-bottom: 1px solid var(--line); width: 100%;
           }
           .h-result-row:last-child { border-bottom: none; }
           
@@ -79,20 +89,17 @@
           
           .h-result-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
           .h-result-value { 
-            font-size: 22px; font-weight: 700; font-family: monospace; 
+            font-size: 24px; font-weight: 700; font-family: monospace; 
             color: var(--ink); white-space: nowrap;
           }
           .h-result-value span { font-size: 12px; font-weight: 400; color: var(--muted); font-family: -apple-system, sans-serif; }
 
-          /* Sekcja BMI - rozciągnięta na całą szerokość */
+          /* BMI na pełną szerokość */
           .h-bmi-section {
             display: flex; flex-direction: column; align-items: stretch;
             width: 100%; padding: 16px 0; border-bottom: 1px solid var(--line);
           }
-          .h-bmi-header { 
-            display: flex; justify-content: space-between; align-items: baseline; 
-            width: 100%; margin-bottom: 12px;
-          }
+          .h-bmi-header { display: flex; justify-content: space-between; align-items: baseline; width: 100%; margin-bottom: 12px; }
           .h-bmi-wrapper { width: 100%; margin-bottom: 8px; }
           .h-bmi-bar { width: 100%; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; position: relative; }
           .h-bmi-fill { height: 100%; width: 0%; transition: width 0.5s ease, background-color 0.5s ease; }
@@ -113,51 +120,50 @@
 
         ${Hub.backButtonHtml}
 
-        <div style="margin-top: 24px;">
+        <div style="margin-top: 8px;">
           
+          <!-- Główny input: Waga -->
+          <div class="h-hero-input-wrapper">
+            <label class="h-label" style="margin:0;">Waga</label>
+            <input type="number" id="h-weight" class="h-hero-input" value="${savedData.weight}" min="30" max="300" inputmode="decimal">
+            <span class="h-hero-unit">kg</span>
+          </div>
+
+          <!-- Wzrost i Wiek -->
+          <div class="h-grid-2">
+            <div class="h-field">
+              <label class="h-label">Wzrost</label>
+              <div class="h-input-row">
+                <input type="number" id="h-height" class="h-input" value="${savedData.height}" min="100" max="250" inputmode="decimal">
+                <span class="h-unit">cm</span>
+              </div>
+            </div>
+            <div class="h-field">
+              <label class="h-label">Wiek</label>
+              <div class="h-input-row">
+                <input type="number" id="h-age" class="h-input" value="${savedData.age}" min="10" max="120" inputmode="decimal">
+                <span class="h-unit">lat</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Płeć -->
           <label class="h-label">Płeć</label>
           <div class="h-gender-segment">
             <button class="h-gender-btn" data-gender="male">Mężczyzna</button>
             <button class="h-gender-btn" data-gender="female">Kobieta</button>
           </div>
 
-          <div class="h-grid-2">
-            <div class="h-field">
-              <label class="h-label">Wiek</label>
-              <div class="h-input-row">
-                <input type="number" id="h-age" class="h-input" value="${savedData.age}" min="10" max="120">
-                <span class="h-unit">lat</span>
-              </div>
-            </div>
-            <div></div>
-          </div>
-
-          <div class="h-grid-2">
-            <div class="h-field">
-              <label class="h-label">Wzrost</label>
-              <div class="h-input-row">
-                <input type="number" id="h-height" class="h-input" value="${savedData.height}" min="100" max="250">
-                <span class="h-unit">cm</span>
-              </div>
-            </div>
-            <div class="h-field">
-              <label class="h-label">Waga</label>
-              <div class="h-input-row">
-                <input type="number" id="h-weight" class="h-input" value="${savedData.weight}" min="30" max="300">
-                <span class="h-unit">kg</span>
-              </div>
-            </div>
-          </div>
-
-          <label class="h-label">Poziom aktywności</label>
+          <!-- Aktywność -->
+          <label class="h-label">Aktywność</label>
           <div id="h-activity-trigger" class="h-trigger">
             <span id="h-activity-text">${activityLevels[savedData.activity].label}</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
 
+          <!-- Wyniki -->
           <div class="h-results">
             
-            <!-- Sekcja BMI -->
             <div class="h-bmi-section">
               <div class="h-bmi-header">
                 <div class="h-result-title">Wskaźnik BMI</div>
@@ -216,7 +222,7 @@
           </div>
 
           <div class="h-disclaimer">
-            ⚠️ Wyniki mają charakter orientacyjny. Kalkulator opiera się na uśrednionych wzorach. Skonsultuj się z lekarzem lub dietetykiem przed rozpoczęciem diety.
+            ⚠️ Wyniki mają charakter orientacyjny. Skonsultuj się z lekarzem lub dietetykiem przed rozpoczęciem diety.
           </div>
         </div>
       `;
