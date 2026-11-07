@@ -8,6 +8,7 @@
       // Ładowanie zapisanych danych
       let savedSeller = await Hub.db.get("offer_seller", { name: "", nip: "", address: "", email: "", phone: "", bank: "" });
       let savedClients = await Hub.db.get("offer_clients", []);
+      let savedProducts = await Hub.db.get("offer_products", []);
       
       const today = new Date();
       const todayStr = today.toISOString().slice(0, 10);
@@ -47,11 +48,15 @@
             margin-bottom: 8px;
           }
           .inv-item-num { font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; }
-          .inv-item-remove {
-            background: transparent; border: none; color: var(--danger); cursor: pointer;
-            padding: 4px; border-radius: 4px;
+          
+          .inv-item-actions { display: flex; gap: 4px; align-items: center; }
+          .inv-item-btn {
+            background: transparent; border: none; color: var(--muted); cursor: pointer;
+            padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
           }
-          .inv-item-remove:active { background: rgba(239, 68, 68, 0.1); }
+          .inv-item-btn:hover { background: var(--surface-hover); color: var(--ink); }
+          .inv-item-btn.danger { color: var(--danger); }
+          .inv-item-btn svg { width: 16px; height: 16px; }
           
           .inv-item-grid {
             display: grid; grid-template-columns: 1fr 1fr 1.5fr 1fr; gap: 12px;
@@ -93,15 +98,14 @@
           }
           .inv-warning svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
 
-          /* Nowy trigger do wczytywania klienta */
-          .inv-client-trigger {
+          .inv-trigger {
             display: flex; justify-content: space-between; align-items: center;
             background: var(--surface); border: 1px solid var(--line);
             border-radius: 6px; padding: 12px 16px; color: var(--accent); font-size: 14px; font-weight: 600;
-            cursor: pointer; user-select: none; transition: background 0.2s; margin-bottom: 16px; display: none;
+            cursor: pointer; user-select: none; transition: background 0.2s; margin-bottom: 16px;
           }
-          .inv-client-trigger:active { background: var(--surface-hover); }
-          .inv-client-trigger svg { width: 16px; height: 16px; }
+          .inv-trigger:active { background: var(--surface-hover); }
+          .inv-trigger svg { width: 16px; height: 16px; }
         </style>
 
         ${Hub.backButtonHtml}
@@ -145,7 +149,7 @@
           <div class="inv-section">
             <div class="inv-section-title">Klient (Odbiorca oferty)</div>
             
-            <div id="client-select-trigger" class="inv-client-trigger">
+            <div id="client-select-trigger" class="inv-trigger" style="display:none;">
               <span>Wczytaj z listy klientów</span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
@@ -193,6 +197,12 @@
 
           <div class="inv-section">
             <div class="inv-section-title">Pozycje w ofercie</div>
+            
+            <div id="product-select-trigger" class="inv-trigger" style="display:none;">
+              <span>Wczytaj z bazy produktów</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+
             <div id="items-list"></div>
             <button id="add-item-btn" class="inv-add-btn">+ Dodaj pozycję</button>
           </div>
@@ -232,11 +242,7 @@
       const clientTrigger = $("client-select-trigger");
       
       function updateClientTrigger() {
-        if (savedClients.length > 0) {
-          clientTrigger.style.display = "flex";
-        } else {
-          clientTrigger.style.display = "none";
-        }
+        clientTrigger.style.display = savedClients.length > 0 ? "flex" : "none";
       }
       updateClientTrigger();
 
@@ -278,6 +284,30 @@
         }
       };
 
+      // --- BAZA PRODUKTÓW ---
+      const productTrigger = $("product-select-trigger");
+      
+      function updateProductTrigger() {
+        productTrigger.style.display = savedProducts.length > 0 ? "flex" : "none";
+      }
+      updateProductTrigger();
+
+      productTrigger.onclick = async () => {
+        const opts = savedProducts.map(p => ({ id: p.id, label: `${p.name} (${p.price} zł)` }));
+        const choice = await Hub.showSelect({ title: "Wybierz produkt", options: opts, current: "", anchor: productTrigger, signal });
+        
+        if (choice) {
+          const p = savedProducts.find(x => x.id === choice);
+          if (p) {
+            items.push({ name: p.name, qty: 1, unit: p.unit || "szt.", price: p.price, vat: p.vat || 23 });
+            renderItems();
+            calculateTotals();
+            Hub.haptic('light');
+            showToast("Dodano produkt do oferty.");
+          }
+        }
+      };
+
       // --- GENEROWANIE POZYCJI I OBLICZANIE ---
       function formatMoney(n) {
         return n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' zł';
@@ -300,7 +330,12 @@
           el.innerHTML = `
             <div class="inv-item-header">
               <span class="inv-item-num">Pozycja ${i + 1}</span>
-              ${items.length > 1 ? `<button class="inv-item-remove" data-idx="${i}">✕ Usuń</button>` : ''}
+              <div class="inv-item-actions">
+                <button class="inv-item-btn save-btn" data-idx="${i}" title="Zapisz w bazie">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                </button>
+                ${items.length > 1 ? `<button class="inv-item-btn danger remove-btn" data-idx="${i}" title="Usuń">✕</button>` : ''}
+              </div>
             </div>
             <div class="inv-item-grid">
               <div class="full">
@@ -343,12 +378,42 @@
         container.querySelectorAll(".item-vat").forEach(el => {
           el.oninput = (e) => { items[e.target.dataset.idx].vat = parseFloat(e.target.value) || 0; calculateTotals(); };
         });
-        container.querySelectorAll(".inv-item-remove").forEach(el => {
+        
+        container.querySelectorAll(".remove-btn").forEach(el => {
           el.onclick = (e) => {
             Hub.haptic('light');
             items.splice(parseInt(e.target.dataset.idx), 1);
             renderItems();
             calculateTotals();
+          };
+        });
+
+        container.querySelectorAll(".save-btn").forEach(el => {
+          el.onclick = async (e) => {
+            const idx = parseInt(e.currentTarget.dataset.idx);
+            const item = items[idx];
+            if (!item.name) return showToast("Wpisz nazwę produktu przed zapisem.");
+            
+            const newProduct = { 
+              id: Date.now().toString(), 
+              name: item.name.trim(), 
+              price: item.price, 
+              unit: item.unit || "szt.", 
+              vat: item.vat 
+            };
+            
+            const existingIdx = savedProducts.findIndex(p => p.name.toLowerCase() === item.name.toLowerCase());
+            if (existingIdx > -1) {
+              savedProducts[existingIdx] = newProduct;
+              showToast("Zaktualizowano produkt w bazie.");
+            } else {
+              savedProducts.push(newProduct);
+              showToast("Zapisano nowy produkt w bazie.");
+            }
+            
+            await Hub.db.set("offer_products", savedProducts);
+            updateProductTrigger();
+            Hub.haptic('success');
           };
         });
       }
