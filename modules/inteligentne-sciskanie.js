@@ -9,8 +9,8 @@
       let currentImg = null;
       let originalWidth = 0, originalHeight = 0;
       let currentImgUrl = null;
+      let originalPreviewUrl = null;
       let activeWorker = null;
-      let resultBlob = null;
 
       container.innerHTML = `
         <style>
@@ -64,6 +64,33 @@
             font-size: 12px; color: #fbbf24; line-height: 1.5;
           }
           .sc-warning svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+
+          /* Style dla modala porównawczego */
+          .sc-compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 8px;
+          }
+          .sc-compare-item {
+            display: flex; flex-direction: column; gap: 6px;
+          }
+          .sc-compare-label {
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--muted); text-align: center;
+          }
+          .sc-compare-img {
+            width: 100%; background: #000; border-radius: 6px;
+            border: 1px solid var(--line); display: block;
+            max-height: 40vh; object-fit: contain;
+          }
+          .sc-compare-info {
+            font-size: 11px; color: var(--muted); text-align: center; font-family: monospace;
+          }
+          @media (max-width: 400px) {
+            .sc-compare-grid { grid-template-columns: 1fr; }
+            .sc-compare-img { max-height: 30vh; }
+          }
         </style>
 
         ${Hub.backButtonHtml}
@@ -149,7 +176,6 @@
         processBtn.disabled = false;
         processBtn.textContent = "Przetwórz i pokaż podgląd";
         isProcessing = false;
-        resultBlob = null;
       }
 
       pickBtn.onclick = () => fileInput.click();
@@ -175,6 +201,19 @@
           canvas.width = originalWidth;
           canvas.height = originalHeight;
           canvas.getContext("2d").drawImage(img, 0, 0);
+
+          // Tworzymy przeskalowany podgląd oryginału dla modala
+          const previewCanvas = document.createElement('canvas');
+          const maxPreview = 600;
+          let pw = originalWidth, ph = originalHeight;
+          if (pw > maxPreview) {
+            ph = Math.round(ph * (maxPreview / pw));
+            pw = maxPreview;
+          }
+          previewCanvas.width = pw;
+          previewCanvas.height = ph;
+          previewCanvas.getContext('2d').drawImage(img, 0, 0, pw, ph);
+          originalPreviewUrl = previewCanvas.toDataURL("image/jpeg", 0.85);
 
           introCard.classList.add("hidden");
           workspace.classList.remove("hidden");
@@ -333,14 +372,11 @@
             for (let i = 0; i < seamsToRemove; i++) {
               const seam = findSeam(energy, currentW, h);
               currentData = removeSeam(currentData, currentW, h, seam);
-              const newEnergy = shrinkEnergy(energy, currentW, h, seam);
-              energy = newEnergy;
+              energy = shrinkEnergy(energy, currentW, h, seam);
               currentW--;
               updateEnergyLocally(energy, currentData, currentW, h, seam);
               
-              if (i % 1 === 0 || i === seamsToRemove - 1) {
-                self.postMessage({ type: 'progress', current: i + 1, total: seamsToRemove });
-              }
+              self.postMessage({ type: 'progress', current: i + 1, total: seamsToRemove });
             }
             
             self.postMessage({ type: 'done', data: currentData.buffer, finalW: currentW, h: h }, [currentData.buffer]);
@@ -419,23 +455,33 @@
               activeWorker.terminate();
               activeWorker = null;
 
-              // Zapisujemy blob i pokazujemy podgląd
               setTimeout(() => {
                 resultCanvas.toBlob((blob) => {
-                  resultBlob = blob;
                   const filename = `scisniete_${finalW}x${h}.jpg`;
-                  const previewUrl = canvas.toDataURL("image/jpeg", 0.85);
+                  const resultPreviewUrl = canvas.toDataURL("image/jpeg", 0.85);
 
+                  // Budowa modala z porównaniem przed / po
                   const modalContent = `
-                    <div style="width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 12px;">
-                      <div style="text-align: center; margin-bottom: 8px;">
-                        <div style="font-size: 18px; font-weight: 600; color: var(--ink);">Podgląd wyniku</div>
-                        <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">Nowy wymiar: ${finalW} × ${h} px</div>
+                    <div style="width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 12px;">
+                      <div style="text-align: center; margin-bottom: 4px;">
+                        <div style="font-size: 18px; font-weight: 600; color: var(--ink);">Porównanie</div>
+                        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                          Oryginał: ${w} × ${h} px &nbsp;→&nbsp; Wynik: ${finalW} × ${h} px
+                        </div>
                       </div>
-                      <div style="background: #000; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); display: flex; justify-content: center;">
-                        <img src="${previewUrl}" style="max-width: 100%; max-height: 50vh; display: block;">
+                      <div class="sc-compare-grid">
+                        <div class="sc-compare-item">
+                          <div class="sc-compare-label">Przed</div>
+                          <img src="${originalPreviewUrl}" class="sc-compare-img">
+                          <div class="sc-compare-info">${w} × ${h} px</div>
+                        </div>
+                        <div class="sc-compare-item">
+                          <div class="sc-compare-label" style="color: var(--accent);">Po</div>
+                          <img src="${resultPreviewUrl}" class="sc-compare-img">
+                          <div class="sc-compare-info">${finalW} × ${h} px</div>
+                        </div>
                       </div>
-                      <div style="display: flex; gap: 8px; margin-top: 8px;">
+                      <div style="display: flex; gap: 8px; margin-top: 4px;">
                         <button id="sc-modal-cancel" class="n-btn" style="flex: 1;">Zamknij</button>
                         <button id="sc-modal-download" class="n-btn n-btn-outline" style="flex: 2;">Pobierz zdjęcie</button>
                       </div>
@@ -455,7 +501,6 @@
                     modal.close();
                   };
 
-                  // Wykrywanie zamknięcia (przez X lub kliknięcie w tło)
                   const observer = new MutationObserver(() => {
                     if (!document.body.contains(modal.element)) {
                       observer.disconnect();
