@@ -1,15 +1,15 @@
 (() => {
   Hub.register({
-    id: "kreator-faktur",
-    title: "Kreator Faktur",
-    desc: "Twórz profesjonalne faktury PDF z polskimi znakami",
+    id: "kreator-ofert",
+    title: "Kreator Ofert",
+    desc: "Twórz profesjonalne oferty handlowe i zapisuj je w PDF",
 
     async mount(container, signal) {
-      let savedSeller = await Hub.db.get("invoice_seller", { name: "", nip: "", address: "", bank: "" });
+      let savedSeller = await Hub.db.get("offer_seller", { name: "", nip: "", address: "" });
       
       const today = new Date();
       const todayStr = today.toISOString().slice(0, 10);
-      const paymentDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const validDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       
       let items = [{ name: "Usługa programistyczna", qty: 1, unit: "szt.", price: 100, vat: 23 }];
       let isGenerating = false;
@@ -51,11 +51,8 @@
           }
           .inv-item-remove:active { background: rgba(239, 68, 68, 0.1); }
           
-          /* POPRAWIONY LAYOUT POZYCJI (4 KOLUMNY ZAMIAST 5) */
           .inv-item-grid {
-            display: grid; 
-            grid-template-columns: 1fr 1fr 1.5fr 1fr; 
-            gap: 12px;
+            display: grid; grid-template-columns: 1fr 1fr 1.5fr 1fr; gap: 12px;
           }
           .inv-item-grid .full { grid-column: span 4; }
           
@@ -100,67 +97,61 @@
         <div style="margin-top: 16px;">
           <div class="inv-warning">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-            <div>Dane sprzedawcy zapisują się automatycznie. Wpisz pełny adres z kodem pocztowym i miejscowością.</div>
+            <div>Dokument ten nie jest fakturą VAT. Służy do przedstawienia oferty handlowej i nie wymaga systemu KSeF.</div>
           </div>
 
           <div class="inv-section">
-            <div class="inv-section-title">Sprzedawca</div>
+            <div class="inv-section-title">Wystawiający (Twoja firma)</div>
             <label class="inv-label">Nazwa / Imię i nazwisko</label>
             <input type="text" id="seller-name" class="inv-input" placeholder="np. Jan Kowalski / Firma XYZ" value="${savedSeller.name || ''}">
             <div class="inv-row">
               <div>
-                <label class="inv-label">NIP</label>
+                <label class="inv-label">NIP (opcjonalnie)</label>
                 <input type="text" id="seller-nip" class="inv-input" placeholder="np. 1234567890" value="${savedSeller.nip || ''}">
               </div>
               <div>
-                <label class="inv-label">Adres (ulica, kod, miasto)</label>
+                <label class="inv-label">Adres</label>
                 <input type="text" id="seller-address" class="inv-input" placeholder="ul. Przykładowa 1, 00-000 Miasto" value="${savedSeller.address || ''}">
               </div>
             </div>
-            <label class="inv-label">Numer konta bankowego</label>
-            <input type="text" id="seller-bank" class="inv-input" placeholder="np. 12 1234 5678 9012 3456 7890 1234" value="${savedSeller.bank || ''}">
           </div>
 
           <div class="inv-section">
-            <div class="inv-section-title">Nabywca</div>
+            <div class="inv-section-title">Klient (Odbiorca oferty)</div>
             <label class="inv-label">Nazwa / Imię i nazwisko</label>
             <input type="text" id="buyer-name" class="inv-input" placeholder="np. Firma ABC Sp. z o.o.">
             <div class="inv-row">
               <div>
-                <label class="inv-label">NIP</label>
+                <label class="inv-label">NIP (opcjonalnie)</label>
                 <input type="text" id="buyer-nip" class="inv-input" placeholder="np. 9876543210">
               </div>
               <div>
-                <label class="inv-label">Adres (ulica, kod, miasto)</label>
+                <label class="inv-label">Adres</label>
                 <input type="text" id="buyer-address" class="inv-input" placeholder="ul. Inna 2, 11-111 Miasto">
               </div>
             </div>
           </div>
 
           <div class="inv-section">
-            <div class="inv-section-title">Dane faktury</div>
-            <label class="inv-label">Numer faktury</label>
-            <input type="text" id="invoice-number" class="inv-input" value="F/${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/001">
+            <div class="inv-section-title">Dane oferty</div>
+            <label class="inv-label">Numer oferty</label>
+            <input type="text" id="offer-number" class="inv-input" value="O/${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/001">
             <div class="inv-row">
               <div>
                 <label class="inv-label">Data wystawienia</label>
-                <input type="date" id="invoice-date" class="inv-input" value="${todayStr}">
+                <input type="date" id="offer-date" class="inv-input" value="${todayStr}">
               </div>
               <div>
-                <label class="inv-label">Data sprzedaży</label>
-                <input type="date" id="sale-date" class="inv-input" value="${todayStr}">
-              </div>
-              <div>
-                <label class="inv-label">Termin płatności</label>
-                <input type="date" id="invoice-due" class="inv-input" value="${paymentDate}">
+                <label class="inv-label">Ważna do</label>
+                <input type="date" id="offer-valid" class="inv-input" value="${validDate}">
               </div>
             </div>
-            <label class="inv-label">Metoda płatności</label>
-            <input type="text" id="payment-method" class="inv-input" value="Przelew bankowy">
+            <label class="inv-label">Warunki współpracy</label>
+            <input type="text" id="payment-terms" class="inv-input" value="Płatność przelewem, 14 dni od akceptacji oferty">
           </div>
 
           <div class="inv-section">
-            <div class="inv-section-title">Pozycje na fakturze</div>
+            <div class="inv-section-title">Pozycje w ofercie</div>
             <div id="items-list"></div>
             <button id="add-item-btn" class="inv-add-btn">+ Dodaj pozycję</button>
           </div>
@@ -171,7 +162,7 @@
             <div class="inv-total-row grand"><span>Razem brutto</span><span id="total-gross">0,00 zł</span></div>
           </div>
 
-          <button id="generate-btn" class="n-btn n-btn-outline inv-generate-btn">Podgląd faktury</button>
+          <button id="generate-btn" class="n-btn n-btn-outline inv-generate-btn">Podgląd oferty</button>
         </div>
         
         <canvas id="invoice-canvas" style="display:none;"></canvas>
@@ -196,7 +187,7 @@
             </div>
             <div class="inv-item-grid">
               <div class="full">
-                <label class="inv-label" style="margin-top:0;">Nazwa towaru / usługi</label>
+                <label class="inv-label" style="margin-top:0;">Nazwa usługi / towaru</label>
                 <input type="text" class="inv-input item-name" data-idx="${i}" value="${item.name}" placeholder="np. Projekt graficzny">
               </div>
               <div>
@@ -343,7 +334,7 @@
         return n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
       }
 
-      function renderInvoiceToCanvas(seller, buyer, invNum, invDate, saleDate, dueDate, payMethod, totalNet, totalVat, totalGross) {
+      function renderOfferToCanvas(seller, buyer, offerNum, offerDate, validDate, paymentTerms, totalNet, totalVat, totalGross) {
         const canvas = $("invoice-canvas");
         const ctx = canvas.getContext("2d");
         const W = 1240, H = 1754, M = 100;
@@ -358,30 +349,23 @@
 
         ctx.font = "bold 44px sans-serif";
         ctx.textAlign = "left";
-        ctx.fillText("FAKTURA", M, y);
+        ctx.fillText("OFERTA HANDLOWA", M, y);
         
         ctx.font = "20px sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText(`nr ${invNum}`, W - M, y);
+        ctx.fillText(`nr ${offerNum}`, W - M, y);
         
         y += 35;
         ctx.font = "16px sans-serif";
         ctx.textAlign = "left";
-        ctx.fillText(`Data wystawienia: ${formatDate(invDate)}`, M, y);
+        ctx.fillText(`Data oferty: ${formatDate(offerDate)}`, M, y);
         
         ctx.textAlign = "right";
-        ctx.fillText(`Termin płatności: ${formatDate(dueDate)}`, W - M, y);
+        ctx.fillText(`Ważna do: ${formatDate(validDate)}`, W - M, y);
         
         y += 25;
         ctx.textAlign = "left";
-        ctx.fillText(`Data sprzedaży: ${formatDate(saleDate)}`, M, y);
-        
-        y += 25;
-        ctx.fillText(`Metoda płatności: ${payMethod}`, M, y);
-        if (seller.bank) {
-          ctx.fillText(`Nr konta: ${seller.bank}`, M, y + 25);
-          y += 25;
-        }
+        ctx.fillText(`Warunki: ${paymentTerms}`, M, y);
         
         y += 20;
         ctx.beginPath();
@@ -397,8 +381,8 @@
         const colR = M + (W - 2*M) / 2 + 20;
 
         ctx.font = "bold 20px sans-serif";
-        ctx.fillText("SPRZEDAWCA", colL, y);
-        ctx.fillText("NABYWCA", colR, y);
+        ctx.fillText("WYSTAWIAJĄCY", colL, y);
+        ctx.fillText("KLIENT", colR, y);
 
         y += 30;
         ctx.font = "22px sans-serif";
@@ -422,20 +406,19 @@
 
         y += 35;
 
-        // --- POPRAWIONE WSPÓŁRZĘDNE KOLUMN (DUŻO MIEJSCA) ---
-        const xLp = M;           // 100
-        const xName = M + 50;    // 150
-        const xQty = 540;        // Prawy
-        const xUnit = 570;       // Lewy
-        const xPrice = 740;      // Prawy
-        const xVat = 830;        // Prawy
-        const xNet = 940;        // Prawy
-        const xGross = 1140;     // Prawy (W - M)
+        const xLp = M;
+        const xName = M + 50;
+        const xQty = 540;
+        const xUnit = 570;
+        const xPrice = 740;
+        const xVat = 830;
+        const xNet = 940;
+        const xGross = 1140;
 
         ctx.font = "bold 16px sans-serif";
         ctx.textAlign = "left";
         ctx.fillText("Lp.", xLp, y);
-        ctx.fillText("Nazwa towaru / usługi", xName, y);
+        ctx.fillText("Nazwa usługi / towaru", xName, y);
         
         ctx.textAlign = "right";
         ctx.fillText("Ilość", xQty, y);
@@ -590,7 +573,7 @@
         ctx.fillText("Dokument wygenerowany w aplikacji Workspace", M, y);
         
         ctx.textAlign = "right";
-        ctx.fillText("Dziękujemy za zaufanie!", W - M, y);
+        ctx.fillText("Dziękujemy za zapytanie!", W - M, y);
 
         return canvas;
       }
@@ -639,7 +622,7 @@
         return new Blob(pdfChunks, { type: 'application/pdf' });
       }
 
-      async function previewInvoice() {
+      async function previewOffer() {
         if (isGenerating) return;
         isGenerating = true;
         
@@ -651,22 +634,20 @@
         const sellerData = {
           name: $("seller-name").value,
           nip: $("seller-nip").value,
-          address: $("seller-address").value,
-          bank: $("seller-bank").value
+          address: $("seller-address").value
         };
-        await Hub.db.set("invoice_seller", sellerData);
+        await Hub.db.set("offer_seller", sellerData);
 
         const buyerData = {
-          name: $("buyer-name").value || 'Nabywca',
+          name: $("buyer-name").value || 'Odbiorca',
           nip: $("buyer-nip").value,
           address: $("buyer-address").value
         };
         
-        const invoiceNum = $("invoice-number").value || 'F/2024/001';
-        const invDate = $("invoice-date").value;
-        const saleDate = $("sale-date").value;
-        const dueDate = $("invoice-due").value;
-        const payMethod = $("payment-method").value;
+        const offerNum = $("offer-number").value || 'O/2024/001';
+        const offerDate = $("offer-date").value;
+        const validDate = $("offer-valid").value;
+        const paymentTerms = $("payment-terms").value;
 
         let totalNet = 0, totalVat = 0;
         items.forEach(item => {
@@ -678,9 +659,9 @@
         const totalGross = totalNet + totalVat;
 
         try {
-          const canvas = renderInvoiceToCanvas(sellerData, buyerData, invoiceNum, invDate, saleDate, dueDate, payMethod, totalNet, totalVat, totalGross);
+          const canvas = renderOfferToCanvas(sellerData, buyerData, offerNum, offerDate, validDate, paymentTerms, totalNet, totalVat, totalGross);
           const pdfBlob = await generatePDFBlob(canvas);
-          const filename = `faktura_${invoiceNum.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+          const filename = `oferta_${offerNum.replace(/[^a-z0-9]/gi, '_')}.pdf`;
           const previewUrl = canvas.toDataURL("image/jpeg", 0.85);
 
           const modalContent = `
@@ -713,12 +694,12 @@
           showToast("Błąd podczas generowania: " + err.message);
         } finally {
           btn.disabled = false;
-          btn.textContent = "Podgląd faktury";
+          btn.textContent = "Podgląd oferty";
           isGenerating = false;
         }
       }
 
-      $("generate-btn").onclick = previewInvoice;
+      $("generate-btn").onclick = previewOffer;
     },
 
     unmount() {}
