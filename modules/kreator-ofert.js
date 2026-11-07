@@ -5,7 +5,7 @@
     desc: "Twórz profesjonalne oferty handlowe i zapisuj je w PDF",
 
     async mount(container, signal) {
-      let savedSeller = await Hub.db.get("offer_seller", { name: "", nip: "", address: "" });
+      let savedSeller = await Hub.db.get("offer_seller", { name: "", nip: "", address: "", contact: "", bank: "" });
       
       const today = new Date();
       const todayStr = today.toISOString().slice(0, 10);
@@ -106,12 +106,22 @@
             <input type="text" id="seller-name" class="inv-input" placeholder="np. Jan Kowalski / Firma XYZ" value="${savedSeller.name || ''}">
             <div class="inv-row">
               <div>
-                <label class="inv-label">NIP (opcjonalnie)</label>
+                <label class="inv-label">NIP</label>
                 <input type="text" id="seller-nip" class="inv-input" placeholder="np. 1234567890" value="${savedSeller.nip || ''}">
               </div>
               <div>
-                <label class="inv-label">Adres</label>
+                <label class="inv-label">Adres (ulica, kod, miasto)</label>
                 <input type="text" id="seller-address" class="inv-input" placeholder="ul. Przykładowa 1, 00-000 Miasto" value="${savedSeller.address || ''}">
+              </div>
+            </div>
+            <div class="inv-row">
+              <div>
+                <label class="inv-label">E-mail / Telefon</label>
+                <input type="text" id="seller-contact" class="inv-input" placeholder="np. kontakt@firma.pl, 123 456 789" value="${savedSeller.contact || ''}">
+              </div>
+              <div>
+                <label class="inv-label">Numer konta (IBAN)</label>
+                <input type="text" id="seller-bank" class="inv-input" placeholder="np. 12 1234 5678 9012 3456 7890 1234" value="${savedSeller.bank || ''}">
               </div>
             </div>
           </div>
@@ -122,11 +132,11 @@
             <input type="text" id="buyer-name" class="inv-input" placeholder="np. Firma ABC Sp. z o.o.">
             <div class="inv-row">
               <div>
-                <label class="inv-label">NIP (opcjonalnie)</label>
+                <label class="inv-label">NIP</label>
                 <input type="text" id="buyer-nip" class="inv-input" placeholder="np. 9876543210">
               </div>
               <div>
-                <label class="inv-label">Adres</label>
+                <label class="inv-label">Adres (ulica, kod, miasto)</label>
                 <input type="text" id="buyer-address" class="inv-input" placeholder="ul. Inna 2, 11-111 Miasto">
               </div>
             </div>
@@ -319,8 +329,7 @@
         const intPart = Math.floor(amount);
         const decPart = Math.round((amount - intPart) * 100);
         const zlotyForm = getForm(intPart, ['złoty', 'złote', 'złotych']);
-        const groszForm = getForm(decPart, ['grosz', 'grosze', 'groszy']);
-        return `${numberToWords(intPart)} ${zlotyForm} ${String(decPart).padStart(2, '0')}/100 ${groszForm}`;
+        return `${numberToWords(intPart)} ${zlotyForm} ${String(decPart).padStart(2, '0')}/100 gr`;
       }
 
       function formatDate(d) {
@@ -398,6 +407,15 @@
         ctx.fillText((seller.address || "-").substring(0, 40), colL, y);
         ctx.fillText((buyer.address || "-").substring(0, 40), colR, y);
 
+        if (seller.contact || seller.bank) {
+          y += 25;
+          if (seller.contact) ctx.fillText((seller.contact).substring(0, 40), colL, y);
+          if (seller.bank) {
+            ctx.fillText("Nr konta:", colR, y);
+            ctx.fillText((seller.bank).substring(0, 40), colR, y + 25);
+          }
+        }
+
         y += 40;
         ctx.beginPath();
         ctx.moveTo(M, y);
@@ -429,8 +447,8 @@
         ctx.textAlign = "right";
         ctx.fillText("Cena netto", xPrice, y);
         ctx.fillText("VAT", xVat, y);
-        ctx.fillText("Netto", xNet, y);
-        ctx.fillText("Brutto", xGross, y);
+        ctx.fillText("Wartość netto", xNet, y);
+        ctx.fillText("Wartość brutto", xGross, y);
 
         y += 15;
         ctx.beginPath();
@@ -512,19 +530,19 @@
         ctx.textAlign = "right";
         ctx.fillText("Razem netto:", xNet, totalY); 
         ctx.font = "bold 18px sans-serif";
-        ctx.fillText(formatMoneyPlain(totalNet) + " zł", xGross, totalY);
+        ctx.fillText(formatMoneyPlain(totalNet) + " PLN", xGross, totalY);
 
         totalY += 30;
         ctx.font = "18px sans-serif";
         ctx.textAlign = "right";
         ctx.fillText("Kwota VAT:", xNet, totalY);
-        ctx.fillText(formatMoneyPlain(totalVat) + " zł", xGross, totalY);
+        ctx.fillText(formatMoneyPlain(totalVat) + " PLN", xGross, totalY);
 
         totalY += 30;
         ctx.font = "bold 20px sans-serif";
         ctx.textAlign = "right";
         ctx.fillText("RAZEM BRUTTO:", xNet, totalY);
-        ctx.fillText(formatMoneyPlain(totalGross) + " zł", xGross, totalY);
+        ctx.fillText(formatMoneyPlain(totalGross) + " PLN", xGross, totalY);
 
         y = Math.max(summaryY, totalY) + 30;
         ctx.beginPath();
@@ -561,15 +579,22 @@
           y += 25;
         });
 
-        y = H - 80;
+        y = H - 150;
         ctx.beginPath();
         ctx.moveTo(M, y);
         ctx.lineTo(W - M, y);
         ctx.stroke();
 
+        y += 60;
+        ctx.textAlign = "right";
+        ctx.font = "16px sans-serif";
+        ctx.fillText("..............................................", W - M - 50, y);
         y += 25;
-        ctx.font = "14px sans-serif";
+        ctx.fillText("Podpis wystawiającego", W - M - 100, y);
+
+        y = H - 50;
         ctx.textAlign = "left";
+        ctx.font = "14px sans-serif";
         ctx.fillText("Dokument wygenerowany w aplikacji Workspace", M, y);
         
         ctx.textAlign = "right";
@@ -634,7 +659,9 @@
         const sellerData = {
           name: $("seller-name").value,
           nip: $("seller-nip").value,
-          address: $("seller-address").value
+          address: $("seller-address").value,
+          contact: $("seller-contact").value,
+          bank: $("seller-bank").value
         };
         await Hub.db.set("offer_seller", sellerData);
 
