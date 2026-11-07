@@ -98,14 +98,26 @@
           }
           .inv-warning svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
 
+          .inv-trigger-row {
+            display: flex; gap: 8px; margin-bottom: 16px;
+          }
           .inv-trigger {
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex; flex: 1; justify-content: space-between; align-items: center;
             background: var(--surface); border: 1px solid var(--line);
             border-radius: 6px; padding: 12px 16px; color: var(--accent); font-size: 14px; font-weight: 600;
-            cursor: pointer; user-select: none; transition: background 0.2s; margin-bottom: 16px;
+            cursor: pointer; user-select: none; transition: background 0.2s;
           }
           .inv-trigger:active { background: var(--surface-hover); }
           .inv-trigger svg { width: 16px; height: 16px; }
+          
+          .inv-del-btn {
+            background: transparent; border: 1px solid var(--line); border-radius: 6px;
+            color: var(--danger); padding: 0 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+          }
+          .inv-del-btn:active { background: rgba(239, 68, 68, 0.1); }
+          .inv-del-btn svg { width: 18px; height: 18px; }
         </style>
 
         ${Hub.backButtonHtml}
@@ -149,9 +161,14 @@
           <div class="inv-section">
             <div class="inv-section-title">Klient (Odbiorca oferty)</div>
             
-            <div id="client-select-trigger" class="inv-trigger" style="display:none;">
-              <span>Wczytaj z listy klientów</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <div id="client-trigger-row" class="inv-trigger-row" style="display:none;">
+              <div id="client-select-trigger" class="inv-trigger">
+                <span>Wczytaj z listy klientów</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+              <button id="client-delete-trigger" class="inv-del-btn" title="Usuń klienta z bazy">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
             </div>
 
             <label class="inv-label">Nazwa / Imię i nazwisko</label>
@@ -198,9 +215,14 @@
           <div class="inv-section">
             <div class="inv-section-title">Pozycje w ofercie</div>
             
-            <div id="product-select-trigger" class="inv-trigger" style="display:none;">
-              <span>Wczytaj z bazy produktów</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <div id="product-trigger-row" class="inv-trigger-row" style="display:none;">
+              <div id="product-select-trigger" class="inv-trigger">
+                <span>Wczytaj z bazy produktów</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+              <button id="product-delete-trigger" class="inv-del-btn" title="Usuń produkt z bazy">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
             </div>
 
             <div id="items-list"></div>
@@ -239,10 +261,12 @@
       });
 
       // --- BAZA KLIENTÓW ---
-      const clientTrigger = $("client-select-trigger");
+      const clientRow = $("client-trigger-row");
+      const clientSelectTrigger = $("client-select-trigger");
+      const clientDeleteTrigger = $("client-delete-trigger");
       
       function updateClientTrigger() {
-        clientTrigger.style.display = savedClients.length > 0 ? "flex" : "none";
+        clientRow.style.display = savedClients.length > 0 ? "flex" : "none";
       }
       updateClientTrigger();
 
@@ -269,9 +293,9 @@
         Hub.haptic('success');
       };
 
-      clientTrigger.onclick = async () => {
+      clientSelectTrigger.onclick = async () => {
         const opts = savedClients.map(c => ({ id: c.id, label: c.name }));
-        const choice = await Hub.showSelect({ title: "Wybierz klienta", options: opts, current: "", anchor: clientTrigger, signal });
+        const choice = await Hub.showSelect({ title: "Wybierz klienta", options: opts, current: "", anchor: clientSelectTrigger, signal });
         
         if (choice) {
           const c = savedClients.find(x => x.id === choice);
@@ -284,17 +308,37 @@
         }
       };
 
+      clientDeleteTrigger.onclick = async () => {
+        const opts = savedClients.map(c => ({ id: c.id, label: c.name }));
+        const choice = await Hub.showSelect({ title: "Wybierz klienta do usunięcia", options: opts, current: "", anchor: clientDeleteTrigger, signal });
+        
+        if (choice) {
+          const c = savedClients.find(x => x.id === choice);
+          const confirm = await Hub.showConfirm(`Czy na pewno chcesz usunąć klienta "${c.name}" z bazy?`, { okLabel: "Usuń", cancelLabel: "Anuluj" });
+          
+          if (confirm) {
+            savedClients = savedClients.filter(x => x.id !== choice);
+            await Hub.db.set("offer_clients", savedClients);
+            updateClientTrigger();
+            Hub.haptic('success');
+            showToast("Usunięto klienta z bazy.");
+          }
+        }
+      };
+
       // --- BAZA PRODUKTÓW ---
-      const productTrigger = $("product-select-trigger");
+      const productRow = $("product-trigger-row");
+      const productSelectTrigger = $("product-select-trigger");
+      const productDeleteTrigger = $("product-delete-trigger");
       
       function updateProductTrigger() {
-        productTrigger.style.display = savedProducts.length > 0 ? "flex" : "none";
+        productRow.style.display = savedProducts.length > 0 ? "flex" : "none";
       }
       updateProductTrigger();
 
-      productTrigger.onclick = async () => {
+      productSelectTrigger.onclick = async () => {
         const opts = savedProducts.map(p => ({ id: p.id, label: `${p.name} (${p.price} zł)` }));
-        const choice = await Hub.showSelect({ title: "Wybierz produkt", options: opts, current: "", anchor: productTrigger, signal });
+        const choice = await Hub.showSelect({ title: "Wybierz produkt", options: opts, current: "", anchor: productSelectTrigger, signal });
         
         if (choice) {
           const p = savedProducts.find(x => x.id === choice);
@@ -304,6 +348,24 @@
             calculateTotals();
             Hub.haptic('light');
             showToast("Dodano produkt do oferty.");
+          }
+        }
+      };
+
+      productDeleteTrigger.onclick = async () => {
+        const opts = savedProducts.map(p => ({ id: p.id, label: p.name }));
+        const choice = await Hub.showSelect({ title: "Wybierz produkt do usunięcia", options: opts, current: "", anchor: productDeleteTrigger, signal });
+        
+        if (choice) {
+          const p = savedProducts.find(x => x.id === choice);
+          const confirm = await Hub.showConfirm(`Czy na pewno chcesz usunąć produkt "${p.name}" z bazy?`, { okLabel: "Usuń", cancelLabel: "Anuluj" });
+          
+          if (confirm) {
+            savedProducts = savedProducts.filter(x => x.id !== choice);
+            await Hub.db.set("offer_products", savedProducts);
+            updateProductTrigger();
+            Hub.haptic('success');
+            showToast("Usunięto produkt z bazy.");
           }
         }
       };
