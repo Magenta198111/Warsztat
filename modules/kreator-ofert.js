@@ -156,8 +156,16 @@
                 <input type="date" id="offer-valid" class="inv-input" value="${validDate}">
               </div>
             </div>
-            <label class="inv-label">Warunki współpracy</label>
-            <input type="text" id="payment-terms" class="inv-input" value="Płatność przelewem, 14 dni od akceptacji oferty">
+            <div class="inv-row">
+              <div>
+                <label class="inv-label">Miejsce wystawienia</label>
+                <input type="text" id="offer-place" class="inv-input" placeholder="np. Warszawa">
+              </div>
+              <div>
+                <label class="inv-label">Warunki współpracy</label>
+                <input type="text" id="payment-terms" class="inv-input" value="Płatność przelewem, 14 dni od akceptacji oferty">
+              </div>
+            </div>
           </div>
 
           <div class="inv-section">
@@ -182,6 +190,14 @@
 
       function formatMoney(n) {
         return n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' zł';
+      }
+
+      function formatIBAN(iban) {
+        if (!iban) return "";
+        let clean = iban.replace(/\s+/g, '').toUpperCase();
+        if (clean.startsWith('PL')) clean = clean.substring(2);
+        let formatted = clean.replace(/(.{4})/g, '$1 ').trim();
+        return `PL ${formatted}`;
       }
 
       function renderItems() {
@@ -329,7 +345,7 @@
         const intPart = Math.floor(amount);
         const decPart = Math.round((amount - intPart) * 100);
         const zlotyForm = getForm(intPart, ['złoty', 'złote', 'złotych']);
-        return `${numberToWords(intPart)} ${zlotyForm} ${String(decPart).padStart(2, '0')}/100 gr`;
+        return `${numberToWords(intPart)} ${zlotyForm} ${String(decPart).padStart(2, '0')}/100`;
       }
 
       function formatDate(d) {
@@ -343,7 +359,7 @@
         return n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
       }
 
-      function renderOfferToCanvas(seller, buyer, offerNum, offerDate, validDate, paymentTerms, totalNet, totalVat, totalGross) {
+      function renderOfferToCanvas(seller, buyer, offerNum, offerDate, validDate, offerPlace, paymentTerms, totalNet, totalVat, totalGross) {
         const canvas = $("invoice-canvas");
         const ctx = canvas.getContext("2d");
         const W = 1240, H = 1754, M = 100;
@@ -367,7 +383,11 @@
         y += 35;
         ctx.font = "16px sans-serif";
         ctx.textAlign = "left";
-        ctx.fillText(`Data oferty: ${formatDate(offerDate)}`, M, y);
+        if (offerPlace) {
+          ctx.fillText(`${offerPlace}, ${formatDate(offerDate)}`, M, y);
+        } else {
+          ctx.fillText(`Data oferty: ${formatDate(offerDate)}`, M, y);
+        }
         
         ctx.textAlign = "right";
         ctx.fillText(`Ważna do: ${formatDate(validDate)}`, W - M, y);
@@ -407,14 +427,9 @@
         ctx.fillText((seller.address || "-").substring(0, 40), colL, y);
         ctx.fillText((buyer.address || "-").substring(0, 40), colR, y);
 
-        if (seller.contact || seller.bank) {
-          y += 25;
-          if (seller.contact) ctx.fillText((seller.contact).substring(0, 40), colL, y);
-          if (seller.bank) {
-            ctx.fillText("Nr konta:", colR, y);
-            ctx.fillText((seller.bank).substring(0, 40), colR, y + 25);
-          }
-        }
+        y += 25;
+        if (seller.contact) ctx.fillText((seller.contact).substring(0, 40), colL, y);
+        if (seller.bank) ctx.fillText(`Nr konta: ${formatIBAN(seller.bank)}`, colL, y + 25);
 
         y += 40;
         ctx.beginPath();
@@ -426,14 +441,14 @@
 
         const xLp = M;
         const xName = M + 50;
-        const xQty = 540;
-        const xUnit = 570;
-        const xPrice = 740;
-        const xVat = 830;
-        const xNet = 940;
+        const xQty = 500;
+        const xUnit = 530;
+        const xPrice = 700;
+        const xVat = 790;
+        const xNet = 930;
         const xGross = 1140;
 
-        ctx.font = "bold 16px sans-serif";
+        ctx.font = "bold 14px sans-serif";
         ctx.textAlign = "left";
         ctx.fillText("Lp.", xLp, y);
         ctx.fillText("Nazwa usługi / towaru", xName, y);
@@ -447,8 +462,8 @@
         ctx.textAlign = "right";
         ctx.fillText("Cena netto", xPrice, y);
         ctx.fillText("VAT", xVat, y);
-        ctx.fillText("Wartość netto", xNet, y);
-        ctx.fillText("Wartość brutto", xGross, y);
+        ctx.fillText("Wartość netto (PLN)", xNet, y);
+        ctx.fillText("Wartość brutto (PLN)", xGross, y);
 
         y += 15;
         ctx.beginPath();
@@ -458,7 +473,7 @@
 
         y += 30;
 
-        ctx.font = "18px sans-serif";
+        ctx.font = "16px sans-serif";
         items.forEach((item, idx) => {
           const net = item.qty * item.price;
           const vat = net * item.vat / 100;
@@ -579,7 +594,7 @@
           y += 25;
         });
 
-        y = H - 150;
+        y = H - 200;
         ctx.beginPath();
         ctx.moveTo(M, y);
         ctx.lineTo(W - M, y);
@@ -591,14 +606,6 @@
         ctx.fillText("..............................................", W - M - 50, y);
         y += 25;
         ctx.fillText("Podpis wystawiającego", W - M - 100, y);
-
-        y = H - 50;
-        ctx.textAlign = "left";
-        ctx.font = "14px sans-serif";
-        ctx.fillText("Dokument wygenerowany w aplikacji Workspace", M, y);
-        
-        ctx.textAlign = "right";
-        ctx.fillText("Dziękujemy za zapytanie!", W - M, y);
 
         return canvas;
       }
@@ -674,6 +681,7 @@
         const offerNum = $("offer-number").value || 'O/2024/001';
         const offerDate = $("offer-date").value;
         const validDate = $("offer-valid").value;
+        const offerPlace = $("offer-place").value;
         const paymentTerms = $("payment-terms").value;
 
         let totalNet = 0, totalVat = 0;
@@ -686,7 +694,7 @@
         const totalGross = totalNet + totalVat;
 
         try {
-          const canvas = renderOfferToCanvas(sellerData, buyerData, offerNum, offerDate, validDate, paymentTerms, totalNet, totalVat, totalGross);
+          const canvas = renderOfferToCanvas(sellerData, buyerData, offerNum, offerDate, validDate, offerPlace, paymentTerms, totalNet, totalVat, totalGross);
           const pdfBlob = await generatePDFBlob(canvas);
           const filename = `oferta_${offerNum.replace(/[^a-z0-9]/gi, '_')}.pdf`;
           const previewUrl = canvas.toDataURL("image/jpeg", 0.85);
