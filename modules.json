@@ -33,7 +33,7 @@
     "file": "./modules/obrazy-do-pdf.js"
   },
   {
-    "file": "./modules/kreator-faktur.js"
+    "file": "./modules/kreator-ofert.js"
   },
   {
     "file": "./modules/poziomica.js"
