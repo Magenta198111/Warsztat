@@ -25,204 +25,302 @@
         <style>
           .h-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
           
-          /* Główne pole (Waga) */
-          .h-hero-input-wrapper {
+          /* PŁEĆ - pigułki */
+          .h-gender-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 20px; border-bottom: 1px solid var(--line); margin-bottom: 24px;
+          }
+          .h-gender-label {
+            font-size: 14px; font-weight: 600; color: var(--ink);
+          }
+          .h-gender-pills {
+            display: flex; gap: 6px;
+          }
+          .h-gender-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+            font-family: inherit;
+          }
+          .h-gender-btn.active {
+            background: var(--accent);
+            color: var(--accent-ink);
+            border-color: var(--accent);
+            font-weight: 600;
+          }
+          
+          /* WAGA - hero */
+          .h-hero {
             display: flex; flex-direction: column; align-items: center;
-            padding: 24px 0 32px 0; border-bottom: 1px solid var(--line); margin-bottom: 24px;
+            padding: 8px 0 28px 0; border-bottom: 1px solid var(--line); margin-bottom: 24px;
           }
           .h-hero-input {
             width: 100%; background: transparent; border: none;
-            color: var(--ink); font-size: 56px; font-weight: 700; text-align: center;
-            outline: none; font-family: monospace; letter-spacing: -0.03em;
+            color: var(--ink); font-size: 64px; font-weight: 800;
+            text-align: center; outline: none; font-family: monospace;
+            letter-spacing: -0.04em; padding: 0; line-height: 1;
           }
-          .h-hero-unit { font-size: 16px; color: var(--muted); font-weight: 600; margin-top: 4px; }
-
-          /* Pola obok siebie (Wzrost / Wiek) */
-          .h-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-          .h-field { display: flex; flex-direction: column; }
-          .h-input-row { 
+          .h-hero-unit {
+            font-size: 14px; color: var(--muted); font-weight: 600;
+            margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+          }
+          
+          /* WZROST / WIEK */
+          .h-row-2 {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;
+          }
+          .h-field-row {
             display: flex; align-items: baseline; justify-content: space-between;
-            border-bottom: 1px solid var(--line); padding-bottom: 8px; transition: border-color 0.2s;
+            border-bottom: 1px solid var(--line); padding-bottom: 8px;
+            transition: border-color 0.2s;
           }
-          .h-input-row:focus-within { border-bottom-color: var(--accent); }
-          .h-input {
+          .h-field-row:focus-within { border-bottom-color: var(--accent); }
+          .h-field-input {
             width: 100%; background: transparent; border: none;
             color: var(--ink); font-size: 24px; font-weight: 700;
             outline: none; font-family: monospace;
           }
-          .h-unit { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 8px; }
-
-          /* Przełącznik płci */
-          .h-gender-segment {
-            display: flex; background: var(--bg); border: 1px solid var(--line);
-            border-radius: 6px; overflow: hidden; margin-bottom: 24px;
+          .h-field-unit {
+            font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 6px;
           }
-          .h-gender-btn {
-            flex: 1; padding: 12px; background: transparent; border: none;
-            color: var(--muted); font-size: 14px; font-weight: 500; cursor: pointer;
-            transition: background 0.2s, color 0.2s; outline: none; font-family: inherit;
-          }
-          .h-gender-btn.active { background: var(--surface-hover); color: var(--accent); font-weight: 600; }
-
-          /* Trigger aktywności */
-          .h-trigger { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: transparent; border: none; border-bottom: 1px solid var(--line); 
+          
+          /* AKTYWNOŚĆ trigger */
+          .h-trigger {
+            display: flex; justify-content: space-between; align-items: center;
+            background: transparent; border: none; border-bottom: 1px solid var(--line);
             padding: 14px 0; color: var(--ink); font-size: 15px; font-weight: 500;
-            cursor: pointer; user-select: none; transition: color 0.2s; margin-bottom: 32px;
+            cursor: pointer; user-select: none; margin-bottom: 32px;
+            transition: color 0.2s;
           }
           .h-trigger:active { color: var(--accent); }
           .h-trigger svg { color: var(--muted); flex-shrink: 0; width: 16px; height: 16px; }
-
-          /* Sekcja wyników - lista */
-          .h-results { display: flex; flex-direction: column; }
           
-          .h-result-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 16px 0; border-bottom: 1px solid var(--line); width: 100%;
+          /* SEKCJA WYNIKÓW */
+          .h-results-header {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.5px; color: var(--accent);
+            padding-bottom: 20px; display: flex; align-items: center; gap: 12px;
           }
-          .h-result-row:last-child { border-bottom: none; }
+          .h-results-header::after {
+            content: ''; flex: 1; height: 1px; background: var(--line);
+          }
           
-          .h-result-left { display: flex; flex-direction: column; gap: 4px; padding-right: 16px; }
-          .h-result-title { font-size: 15px; font-weight: 500; color: var(--ink); }
-          .h-result-desc { font-size: 12px; color: var(--muted); line-height: 1.3; }
+          /* BMI - główny wskaźnik */
+          .h-bmi-card {
+            padding: 8px 0 24px 0; border-bottom: 1px solid var(--line);
+          }
+          .h-bmi-top {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            margin-bottom: 16px;
+          }
+          .h-bmi-label {
+            font-size: 13px; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+          }
+          .h-bmi-number {
+            font-size: 52px; font-weight: 800; font-family: monospace;
+            color: var(--ink); line-height: 1;
+          }
+          .h-bmi-badge {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; padding: 6px 12px; border-radius: 4px;
+            color: #000; margin-bottom: 8px;
+          }
+          .h-bmi-bar-wrap {
+            padding: 8px 0 4px 0;
+          }
+          .h-bmi-bar {
+            width: 100%; height: 8px; border-radius: 4px; position: relative;
+            background: linear-gradient(to right,
+              #3b82f6 0%, #3b82f6 10.4%,
+              #34d399 10.4%, #34d399 37.5%,
+              #fbbf24 37.5%, #fbbf24 58.3%,
+              #ef4444 58.3%, #ef4444 100%
+            );
+          }
+          .h-bmi-marker {
+            position: absolute; top: 50%;
+            width: 14px; height: 14px;
+            background: #ffffff;
+            border: 2px solid var(--bg);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+            transform: translate(-50%, -50%);
+            transition: left 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+          }
+          .h-bmi-scale {
+            display: flex; justify-content: space-between;
+            font-size: 10px; color: var(--muted); font-family: monospace;
+            margin-top: 8px;
+          }
+          .h-bmi-desc {
+            font-size: 13px; color: var(--muted); line-height: 1.5;
+            margin-top: 12px;
+          }
           
-          .h-result-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
-          .h-result-value { 
-            font-size: 24px; font-weight: 700; font-family: monospace; 
+          /* WIERSZE KALORII */
+          .h-cal-list {
+            padding: 4px 0;
+          }
+          .h-cal-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 0; border-bottom: 1px solid var(--line);
+          }
+          .h-cal-row:last-child { border-bottom: none; }
+          .h-cal-info {
+            display: flex; flex-direction: column; gap: 2px;
+          }
+          .h-cal-label {
+            font-size: 15px; font-weight: 600; color: var(--ink);
+          }
+          .h-cal-sub {
+            font-size: 11px; color: var(--muted); font-weight: 500;
+            text-transform: uppercase; letter-spacing: 0.3px;
+          }
+          .h-cal-val {
+            font-size: 26px; font-weight: 800; font-family: monospace;
             color: var(--ink); white-space: nowrap;
           }
-          .h-result-value span { font-size: 12px; font-weight: 400; color: var(--muted); font-family: -apple-system, sans-serif; }
-
-          /* BMI na pełną szerokość */
-          .h-bmi-section {
-            display: flex; flex-direction: column; align-items: stretch;
-            width: 100%; padding: 16px 0; border-bottom: 1px solid var(--line);
+          .h-cal-val small {
+            font-size: 12px; font-weight: 500; color: var(--muted);
+            font-family: -apple-system, sans-serif; margin-left: 4px;
           }
-          .h-bmi-header { display: flex; justify-content: space-between; align-items: baseline; width: 100%; margin-bottom: 12px; }
-          .h-bmi-wrapper { width: 100%; margin-bottom: 8px; }
-          .h-bmi-bar { width: 100%; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; position: relative; }
-          .h-bmi-fill { height: 100%; width: 0%; transition: width 0.5s ease, background-color 0.5s ease; }
           
-          .h-bmi-labels { position: relative; height: 16px; margin-top: 4px; font-size: 10px; color: var(--muted); font-family: monospace; width: 100%; }
-          .h-bmi-labels span { position: absolute; transform: translateX(-50%); }
-          .h-bmi-labels span:nth-child(1) { left: 0%; transform: none; }
-          .h-bmi-labels span:nth-child(2) { left: 10.4%; }
-          .h-bmi-labels span:nth-child(3) { left: 37.5%; }
-          .h-bmi-labels span:nth-child(4) { left: 58.3%; }
-          .h-bmi-labels span:nth-child(5) { left: 100%; transform: translateX(-100%); }
-
+          /* CELE */
+          .h-goals {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+            padding-top: 24px;
+          }
+          .h-goal {
+            padding: 20px 16px; border: 1px solid var(--accent);
+            border-radius: 8px; text-align: center;
+          }
+          .h-goal-title {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--accent); margin-bottom: 10px;
+          }
+          .h-goal-val {
+            font-size: 24px; font-weight: 800; font-family: monospace;
+            color: var(--ink);
+          }
+          .h-goal-val small {
+            font-size: 10px; font-weight: 500; color: var(--muted);
+            font-family: -apple-system, sans-serif; margin-left: 2px;
+          }
+          
           .h-disclaimer {
-            font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5;
-            padding: 24px 0 40px 0; border-top: 1px dashed var(--line); margin-top: 16px;
+            font-size: 11px; color: var(--muted); text-align: center;
+            line-height: 1.5; padding: 24px 0 40px 0;
           }
         </style>
 
         ${Hub.backButtonHtml}
 
-        <div style="margin-top: 8px;">
+        <div style="margin-top: 16px;">
           
-          <!-- PŁEĆ (na samej górze) -->
-          <label class="h-label" style="margin-top: 8px;">Płeć</label>
-          <div class="h-gender-segment">
-            <button class="h-gender-btn" data-gender="male">Mężczyzna</button>
-            <button class="h-gender-btn" data-gender="female">Kobieta</button>
+          <!-- PŁEĆ -->
+          <div class="h-gender-row">
+            <div class="h-gender-label">Płeć</div>
+            <div class="h-gender-pills">
+              <button class="h-gender-btn" data-gender="male">Mężczyzna</button>
+              <button class="h-gender-btn" data-gender="female">Kobieta</button>
+            </div>
           </div>
 
-          <!-- Główny input: Waga -->
-          <div class="h-hero-input-wrapper">
-            <label class="h-label" style="margin:0;">Waga</label>
+          <!-- WAGA -->
+          <div class="h-hero">
+            <label class="h-label">Waga</label>
             <input type="number" id="h-weight" class="h-hero-input" value="${savedData.weight}" min="30" max="300" inputmode="decimal">
             <span class="h-hero-unit">kg</span>
           </div>
 
-          <!-- Wzrost i Wiek -->
-          <div class="h-grid-2">
-            <div class="h-field">
+          <!-- WZROST / WIEK -->
+          <div class="h-row-2">
+            <div>
               <label class="h-label">Wzrost</label>
-              <div class="h-input-row">
-                <input type="number" id="h-height" class="h-input" value="${savedData.height}" min="100" max="250" inputmode="decimal">
-                <span class="h-unit">cm</span>
+              <div class="h-field-row">
+                <input type="number" id="h-height" class="h-field-input" value="${savedData.height}" min="100" max="250" inputmode="decimal">
+                <span class="h-field-unit">cm</span>
               </div>
             </div>
-            <div class="h-field">
+            <div>
               <label class="h-label">Wiek</label>
-              <div class="h-input-row">
-                <input type="number" id="h-age" class="h-input" value="${savedData.age}" min="10" max="120" inputmode="decimal">
-                <span class="h-unit">lat</span>
+              <div class="h-field-row">
+                <input type="number" id="h-age" class="h-field-input" value="${savedData.age}" min="10" max="120" inputmode="decimal">
+                <span class="h-field-unit">lat</span>
               </div>
             </div>
           </div>
 
-          <!-- Aktywność -->
+          <!-- AKTYWNOŚĆ -->
           <label class="h-label">Aktywność</label>
           <div id="h-activity-trigger" class="h-trigger">
             <span id="h-activity-text">${activityLevels[savedData.activity].label}</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
 
-          <!-- Wyniki -->
-          <div class="h-results">
-            
-            <div class="h-bmi-section">
-              <div class="h-bmi-header">
-                <div class="h-result-title">Wskaźnik BMI</div>
-                <div style="display: flex; align-items: baseline; gap: 8px;">
-                  <div id="h-bmi-val" class="h-result-value">0.0</div>
-                  <div id="h-bmi-status" style="font-weight: 600; font-size: 13px;">-</div>
-                </div>
-              </div>
-              <div class="h-bmi-wrapper">
-                <div class="h-bmi-bar"><div id="h-bmi-fill" class="h-bmi-fill"></div></div>
-                <div class="h-bmi-labels"><span>16</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
-              </div>
-              <div id="h-bmi-desc" class="h-result-desc" style="width: 100%;">-</div>
-            </div>
+          <!-- WYNIKI -->
+          <div class="h-results-header">Wyniki</div>
 
-            <div class="h-result-row">
-              <div class="h-result-left">
-                <div class="h-result-title">BMR</div>
-                <div class="h-result-desc">Podstawowa przemiana materii.</div>
+          <!-- BMI -->
+          <div class="h-bmi-card">
+            <div class="h-bmi-top">
+              <div>
+                <div class="h-bmi-label">Twoje BMI</div>
+                <div class="h-bmi-number" id="h-bmi-val">0.0</div>
               </div>
-              <div class="h-result-right">
-                <div id="h-bmr-val" class="h-result-value">0 <span>kcal</span></div>
+              <div id="h-bmi-status" class="h-bmi-badge">-</div>
+            </div>
+            <div class="h-bmi-bar-wrap">
+              <div class="h-bmi-bar">
+                <div class="h-bmi-marker" id="h-bmi-marker" style="left: 0%;"></div>
+              </div>
+              <div class="h-bmi-scale">
+                <span>16</span><span>18.5</span><span>25</span><span>30</span><span>40</span>
               </div>
             </div>
+            <div class="h-bmi-desc" id="h-bmi-desc">-</div>
+          </div>
 
-            <div class="h-result-row">
-              <div class="h-result-left">
-                <div class="h-result-title">TDEE</div>
-                <div class="h-result-desc">Całkowite dzienne zapotrzebowanie.</div>
+          <!-- KALORIE -->
+          <div class="h-cal-list">
+            <div class="h-cal-row">
+              <div class="h-cal-info">
+                <div class="h-cal-label">Dzienne zapotrzebowanie</div>
+                <div class="h-cal-sub">TDEE</div>
               </div>
-              <div class="h-result-right">
-                <div id="h-tdee-val" class="h-result-value">0 <span>kcal</span></div>
-              </div>
+              <div class="h-cal-val" id="h-tdee-val">0 <small>kcal</small></div>
             </div>
-
-            <div class="h-result-row" style="border-top: 1px solid var(--accent); margin-top: 8px;">
-              <div class="h-result-left">
-                <div class="h-result-title" style="color: var(--accent);">Aby schudnąć</div>
-                <div class="h-result-desc">Deficyt 500 kcal.</div>
+            <div class="h-cal-row">
+              <div class="h-cal-info">
+                <div class="h-cal-label">Spoczynkowe</div>
+                <div class="h-cal-sub">BMR</div>
               </div>
-              <div class="h-result-right">
-                <div id="h-lose-val" class="h-result-value">0 <span>kcal</span></div>
-              </div>
+              <div class="h-cal-val" id="h-bmr-val">0 <small>kcal</small></div>
             </div>
+          </div>
 
-            <div class="h-result-row">
-              <div class="h-result-left">
-                <div class="h-result-title" style="color: var(--accent);">Aby przytyć</div>
-                <div class="h-result-desc">Nadwyżka 300 kcal.</div>
-              </div>
-              <div class="h-result-right">
-                <div id="h-gain-val" class="h-result-value">0 <span>kcal</span></div>
-              </div>
+          <!-- CELE -->
+          <div class="h-goals">
+            <div class="h-goal">
+              <div class="h-goal-title">Schudnąć</div>
+              <div class="h-goal-val" id="h-lose-val">0 <small>kcal</small></div>
             </div>
-
+            <div class="h-goal">
+              <div class="h-goal-title">Przytyć</div>
+              <div class="h-goal-val" id="h-gain-val">0 <small>kcal</small></div>
+            </div>
           </div>
 
           <div class="h-disclaimer">
-            ⚠️ Wyniki mają charakter orientacyjny. Skonsultuj się z lekarzem lub dietetykiem przed rozpoczęciem diety.
+            ⚠️ Wyniki są orientacyjne. Skonsultuj się z lekarzem lub dietetykiem.
           </div>
         </div>
       `;
@@ -234,6 +332,7 @@
       const activityTrigger = $("h-activity-trigger");
       const activityText = $("h-activity-text");
       const genderBtns = container.querySelectorAll(".h-gender-btn");
+      const bmiMarker = $("h-bmi-marker");
 
       let currentGender = savedData.gender;
       let currentActivity = savedData.activity;
@@ -280,11 +379,11 @@
 
         if (bmi < 16) {
           bmiStatus = "Wygłodzenie";
-          bmiColor = "#ef4444";
+          bmiColor = "#3b82f6";
           bmiDesc = "Twoja waga jest zdecydowanie za niska. Skonsultuj się z lekarzem.";
         } else if (bmi < 18.5) {
           bmiStatus = "Niedowaga";
-          bmiColor = "#fbbf24";
+          bmiColor = "#3b82f6";
           bmiDesc = "Twoja waga jest nieco za niska. Warto zadbać o zdrową dietę.";
         } else if (bmi < 25) {
           bmiStatus = "Waga prawidłowa";
@@ -300,27 +399,27 @@
           bmiDesc = "Twoja waga jest zbyt wysoka. Rozważ konsultację z dietetykiem.";
         }
 
-        $("h-bmi-status").textContent = bmiStatus;
-        $("h-bmi-status").style.color = bmiColor;
+        const statusEl = $("h-bmi-status");
+        statusEl.textContent = bmiStatus;
+        statusEl.style.backgroundColor = bmiColor;
         $("h-bmi-desc").textContent = bmiDesc;
         
-        const percent = bmiToPercent(bmi);
-        $("h-bmi-fill").style.width = percent + "%";
-        $("h-bmi-fill").style.backgroundColor = bmiColor;
+        // Marker position
+        bmiMarker.style.left = bmiToPercent(bmi) + "%";
 
         let bmr = (10 * weight) + (6.25 * height) - (5 * age);
         if (currentGender === "male") bmr += 5;
         else bmr -= 161;
 
-        $("h-bmr-val").innerHTML = Math.round(bmr) + ' <span>kcal</span>';
+        $("h-bmr-val").innerHTML = Math.round(bmr) + ' <small>kcal</small>';
 
         const multiplier = activityLevels[currentActivity].multiplier;
         const tdee = bmr * multiplier;
 
-        $("h-tdee-val").innerHTML = Math.round(tdee) + ' <span>kcal</span>';
+        $("h-tdee-val").innerHTML = Math.round(tdee) + ' <small>kcal</small>';
 
-        $("h-lose-val").innerHTML = Math.round(tdee - 500) + ' <span>kcal</span>';
-        $("h-gain-val").innerHTML = Math.round(tdee + 300) + ' <span>kcal</span>';
+        $("h-lose-val").innerHTML = Math.round(tdee - 500) + ' <small>kcal</small>';
+        $("h-gain-val").innerHTML = Math.round(tdee + 300) + ' <small>kcal</small>';
       }
 
       genderBtns.forEach(btn => {
