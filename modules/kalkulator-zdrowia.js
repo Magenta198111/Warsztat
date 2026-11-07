@@ -1,7 +1,7 @@
 (() => {
   Hub.register({
     id: "kalkulator-zdrowia",
-    title: "Kalkulator Zdrowia",
+    title: "Kalkulator BMI",
     desc: "Oblicz swoje BMI, zapotrzebowanie kaloryczne (BMR) i TDEE",
 
     async mount(container, signal) {
@@ -62,7 +62,7 @@
           .h-trigger:active { background: var(--surface-hover); }
           .h-trigger svg { color: var(--muted); flex-shrink: 0; width: 16px; height: 16px; }
 
-          .h-results { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; padding-bottom: 40px; }
+          .h-results { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
           
           .h-card {
             background: var(--surface); border: 1px solid var(--line);
@@ -70,11 +70,31 @@
           }
           .h-card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; }
           .h-card-value { font-size: 32px; font-weight: 700; color: var(--ink); font-family: monospace; }
+          .h-card-value span { font-size: 16px; font-weight: 500; color: var(--muted); font-family: -apple-system, sans-serif; margin-left: 4px; }
           .h-card-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
 
           .h-bmi-bar { width: 100%; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; position: relative; margin-top: 8px; }
           .h-bmi-fill { height: 100%; width: 0%; transition: width 0.5s ease, background-color 0.5s ease; }
-          .h-bmi-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 4px; font-family: monospace; }
+          
+          /* Poprawione etykiety skali - proporcjonalne do pozycji paska */
+          .h-bmi-labels { position: relative; height: 16px; margin-top: 4px; font-size: 10px; color: var(--muted); font-family: monospace; }
+          .h-bmi-labels span { position: absolute; transform: translateX(-50%); }
+          .h-bmi-labels span:nth-child(1) { left: 0%; transform: none; }
+          .h-bmi-labels span:nth-child(2) { left: 10.4%; }
+          .h-bmi-labels span:nth-child(3) { left: 37.5%; }
+          .h-bmi-labels span:nth-child(4) { left: 58.3%; }
+          .h-bmi-labels span:nth-child(5) { left: 100%; transform: translateX(-100%); }
+
+          .h-target-hint {
+            font-size: 11px; color: var(--muted); line-height: 1.4;
+            padding-top: 8px; border-top: 1px dashed var(--line); margin-top: 4px;
+          }
+
+          .h-disclaimer {
+            font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5;
+            padding: 16px; margin-top: 8px; margin-bottom: 40px;
+            border-top: 1px dashed var(--line);
+          }
         </style>
 
         ${Hub.backButtonHtml}
@@ -133,13 +153,13 @@
 
             <div class="h-card">
               <div class="h-card-title">BMR (Podstawowa przemiana materii)</div>
-              <div id="h-bmr-val" class="h-card-value">0 kcal</div>
-              <div class="h-card-desc">Ilość kalorii, którą Twoje ciało spala w spoczynku, aby utrzymać podstawowe funkcje życiowe.</div>
+              <div id="h-bmr-val" class="h-card-value">0 <span>kcal / dzień</span></div>
+              <div class="h-card-desc">Ilość kalorii, którą Twoje ciało spala w ciągu doby w spoczynku, aby utrzymać podstawowe funkcje życiowe.</div>
             </div>
 
             <div class="h-card">
               <div class="h-card-title">TDEE (Całkowite zapotrzebowanie)</div>
-              <div id="h-tdee-val" class="h-card-value">0 kcal</div>
+              <div id="h-tdee-val" class="h-card-value">0 <span>kcal / dzień</span></div>
               <div class="h-card-desc">Szacowana ilość kalorii, którą powinieneś spożywać dziennie, aby utrzymać obecną wagę.</div>
             </div>
 
@@ -148,14 +168,21 @@
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                   <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px;">Aby schudnąć</div>
-                  <div id="h-lose-val" style="font-size: 20px; font-weight: 700; font-family: monospace;">0 kcal</div>
+                  <div id="h-lose-val" style="font-size: 20px; font-weight: 700; font-family: monospace;">0 <span style="font-size:14px; font-family:-apple-system,sans-serif; color:var(--muted); font-weight:400;">kcal / dzień</span></div>
                 </div>
                 <div style="text-align: right;">
                   <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px;">Aby przytyć</div>
-                  <div id="h-gain-val" style="font-size: 20px; font-weight: 700; font-family: monospace;">0 kcal</div>
+                  <div id="h-gain-val" style="font-size: 20px; font-weight: 700; font-family: monospace;">0 <span style="font-size:14px; font-family:-apple-system,sans-serif; color:var(--muted); font-weight:400;">kcal / dzień</span></div>
                 </div>
               </div>
+              <div class="h-target-hint">
+                Redukcja: deficyt 500 kcal. Budowa masy: nadwyżka 300 kcal (dla zdrowszego przyrostu z mniejszym udziałem tłuszczu).
+              </div>
             </div>
+          </div>
+
+          <div class="h-disclaimer">
+            ⚠️ Wyniki mają charakter wyłącznie orientacyjny. Kalkulator opiera się na uśrednionych wzorach matematycznych i nie uwzględnia indywidualnego składu ciała, stanu zdrowia ani genetyki. W przypadku wątpliwości lub planowania diety, skonsultuj się z lekarzem lub wykwalifikowanym dietetykiem.
           </div>
         </div>
       `;
@@ -188,6 +215,14 @@
         });
       }
 
+      // Funkcja mapująca BMI (16-40) na procent (0-100%) dla paska
+      function bmiToPercent(bmi) {
+        const min = 16, max = 40;
+        if (bmi <= min) return 0;
+        if (bmi >= max) return 100;
+        return ((bmi - min) / (max - min)) * 100;
+      }
+
       function calculate() {
         const age = parseInt(ageInput.value) || 0;
         const weight = parseFloat(weightInput.value) || 0;
@@ -204,39 +239,36 @@
         let bmiStatus = "";
         let bmiColor = "";
         let bmiDesc = "";
-        let bmiPercent = 0;
 
         if (bmi < 16) {
           bmiStatus = "Wygłodzenie";
           bmiColor = "#ef4444";
           bmiDesc = "Twoja waga jest zdecydowanie za niska. Skonsultuj się z lekarzem.";
-          bmiPercent = 5;
         } else if (bmi < 18.5) {
           bmiStatus = "Niedowaga";
           bmiColor = "#fbbf24";
           bmiDesc = "Twoja waga jest nieco za niska. Warto zadbać o zdrową dietę.";
-          bmiPercent = 18;
         } else if (bmi < 25) {
           bmiStatus = "Waga prawidłowa";
           bmiColor = "#34d399";
-          bmiDesc = "Świetnie! Twoja waga jest w normie. Kontynuuj zdrowe nawyki.";
-          bmiPercent = 45;
+          bmiDesc = "Świetnie! Twoja waga jest w normie. Kontynuuj zdrowe nawyki. Uwaga: BMI nie odróżnia mięśni od tłuszczu – osoby z dużą masą mięśniową mogą mieć wynik zawyżony.";
         } else if (bmi < 30) {
           bmiStatus = "Nadwaga";
           bmiColor = "#fbbf24";
-          bmiDesc = "Masz lekką nadwagę. Warto zwiększyć aktywność fizyczną.";
-          bmiPercent = 65;
+          bmiDesc = "Masz lekką nadwagę. Warto zwiększyć aktywność fizyczną. Uwaga: BMI nie odróżnia mięśni od tłuszczu.";
         } else {
           bmiStatus = "Otyłość";
           bmiColor = "#ef4444";
           bmiDesc = "Twoja waga jest zbyt wysoka. Rozważ konsultację z dietetykiem.";
-          bmiPercent = 95;
         }
 
         $("h-bmi-status").textContent = bmiStatus;
         $("h-bmi-status").style.color = bmiColor;
         $("h-bmi-desc").textContent = bmiDesc;
-        $("h-bmi-fill").style.width = bmiPercent + "%";
+        
+        // Proporcjonalne wypełnienie paska BMI
+        const percent = bmiToPercent(bmi);
+        $("h-bmi-fill").style.width = percent + "%";
         $("h-bmi-fill").style.backgroundColor = bmiColor;
 
         // --- BMR (Wzór Mifflina-St Jeora) ---
@@ -244,17 +276,17 @@
         if (currentGender === "male") bmr += 5;
         else bmr -= 161;
 
-        $("h-bmr-val").textContent = Math.round(bmr) + " kcal";
+        $("h-bmr-val").innerHTML = Math.round(bmr) + ' <span>kcal / dzień</span>';
 
         // --- TDEE ---
         const multiplier = activityLevels[currentActivity].multiplier;
         const tdee = bmr * multiplier;
 
-        $("h-tdee-val").textContent = Math.round(tdee) + " kcal";
+        $("h-tdee-val").innerHTML = Math.round(tdee) + ' <span>kcal / dzień</span>';
 
-        // --- Cele ---
-        $("h-lose-val").textContent = Math.round(tdee - 500) + " kcal";
-        $("h-gain-val").textContent = Math.round(tdee + 500) + " kcal";
+        // --- Cele (redukcja -500, masa +300) ---
+        $("h-lose-val").innerHTML = Math.round(tdee - 500) + ' <span style="font-size:14px; font-family:-apple-system,sans-serif; color:var(--muted); font-weight:400;">kcal / dzień</span>';
+        $("h-gain-val").innerHTML = Math.round(tdee + 300) + ' <span style="font-size:14px; font-family:-apple-system,sans-serif; color:var(--muted); font-weight:400;">kcal / dzień</span>';
       }
 
       genderBtns.forEach(btn => {
