@@ -10,6 +10,7 @@
       let originalWidth = 0, originalHeight = 0;
       let currentImgUrl = null;
       let activeWorker = null;
+      let resultBlob = null;
 
       container.innerHTML = `
         <style>
@@ -111,7 +112,7 @@
 
             <div style="display:flex; gap:12px; flex-direction: column;">
               <button id="sc-reset-btn" class="n-btn" style="padding: 14px;">Wybierz inne zdjęcie</button>
-              <button id="sc-process-btn" class="n-btn n-btn-outline" style="padding: 14px;">Przetwórz i pobierz</button>
+              <button id="sc-process-btn" class="n-btn n-btn-outline" style="padding: 14px;">Przetwórz i pokaż podgląd</button>
             </div>
           </div>
         </div>
@@ -141,6 +142,14 @@
         const targetW = Math.round(originalWidth * (percent / 100));
         widthVal.textContent = `${targetW} px (${percent}%)`;
         updateSliderFill(slider);
+      }
+
+      function resetAfterProcess() {
+        progressWrapper.style.display = "none";
+        processBtn.disabled = false;
+        processBtn.textContent = "Przetwórz i pokaż podgląd";
+        isProcessing = false;
+        resultBlob = null;
       }
 
       pickBtn.onclick = () => fileInput.click();
@@ -181,26 +190,23 @@
 
       slider.oninput = updateWidthLabel;
 
-      // === ALGORYTM W WEB WORKERZE ===
       function createSeamCarvingWorker() {
         const workerCode = `
           self.onmessage = function(e) {
             const { data: imgData, w, h, targetW } = e.data;
-            const data = new Uint8ClampedArray(imgData);
-            const seamsToRemove = w - targetW;
+            let currentData = new Uint8ClampedArray(imgData);
             let currentW = w;
-            let currentData = data;
-
-            // Próg dla uśredniania energii (zapobiega artefaktom)
+            const seamsToRemove = w - targetW;
+            
             function getPixel(data, w, x, y) {
               if (x < 0) x = 0;
               if (x >= w) x = w - 1;
               if (y < 0) y = 0;
+              if (y >= h) y = h - 1;
               const idx = (y * w + x) * 4;
               return [data[idx], data[idx+1], data[idx+2]];
             }
-
-            // Obliczanie energii z FORWARD ENERGY
+            
             function calculateEnergy(data, w, h) {
               const energy = new Float32Array(w * h);
               for (let y = 0; y < h; y++) {
@@ -214,7 +220,6 @@
                   const dX = Math.abs(rR - rL) + Math.abs(gR - gL) + Math.abs(bR - bL);
                   const dY = Math.abs(rD - rU) + Math.abs(gD - gU) + Math.abs(bD - bU);
                   
-                  // Forward energy: koszt nowych krawędzi, które powstaną
                   let fwdCost = 0;
                   if (y > 0) {
                     const dLeft = Math.abs(r - rU) + Math.abs(g - gU) + Math.abs(b - bU);
@@ -227,43 +232,30 @@
               }
               return energy;
             }
-
-            function removeSeam(data, w, h, energy) {
+            
+            function findSeam(energy, w, h) {
               const dp = new Float32Array(w * h);
               const parent = new Int8Array(w * h);
-
-              for (let x = 0; x < w; x++) {
-                dp[x] = energy[x];
-              }
-
+              
+              for (let x = 0; x < w; x++) dp[x] = energy[x];
+              
               for (let y = 1; y < h; y++) {
                 for (let x = 0; x < w; x++) {
                   let minVal = dp[(y - 1) * w + x];
                   let minIdx = 1;
-
-                  if (x > 0 && dp[(y - 1) * w + (x - 1)] < minVal) {
-                    minVal = dp[(y - 1) * w + (x - 1)];
-                    minIdx = 0;
-                  }
-                  if (x < w - 1 && dp[(y - 1) * w + (x + 1)] < minVal) {
-                    minVal = dp[(y - 1) * w + (x + 1)];
-                    minIdx = 2;
-                  }
-
+                  if (x > 0 && dp[(y - 1) * w + (x - 1)] < minVal) { minVal = dp[(y - 1) * w + (x - 1)]; minIdx = 0; }
+                  if (x < w - 1 && dp[(y - 1) * w + (x + 1)] < minVal) { minVal = dp[(y - 1) * w + (x + 1)]; minIdx = 2; }
                   dp[y * w + x] = energy[y * w + x] + minVal;
                   parent[y * w + x] = minIdx;
                 }
               }
-
+              
               let minEndX = 0;
               let minEndVal = dp[(h - 1) * w];
               for (let x = 1; x < w; x++) {
-                if (dp[(h - 1) * w + x] < minEndVal) {
-                  minEndVal = dp[(h - 1) * w + x];
-                  minEndX = x;
-                }
+                if (dp[(h - 1) * w + x] < minEndVal) { minEndVal = dp[(h - 1) * w + x]; minEndX = x; }
               }
-
+              
               const seam = new Int32Array(h);
               let currX = minEndX;
               for (let y = h - 1; y >= 0; y--) {
@@ -272,8 +264,10 @@
                 if (dir === 0) currX--;
                 else if (dir === 2) currX++;
               }
-
-              // Nowa tablica
+              return seam;
+            }
+            
+            function removeSeam(data, w, h, seam) {
               const newData = new Uint8ClampedArray((w - 1) * h * 4);
               for (let y = 0; y < h; y++) {
                 const seamX = seam[y];
@@ -282,38 +276,50 @@
                   const srcIdx = (y * w + x) * 4;
                   const dstX = x < seamX ? x : x - 1;
                   const dstIdx = (y * (w - 1) + dstX) * 4;
-                  
                   newData[dstIdx] = data[srcIdx];
                   newData[dstIdx+1] = data[srcIdx+1];
                   newData[dstIdx+2] = data[srcIdx+2];
                   newData[dstIdx+3] = data[srcIdx+3];
                 }
               }
-              return { newData, seam };
+              return newData;
             }
-
-            // Przyrostowa aktualizacja energii po usunięciu szwu
-            function updateEnergyLocally(energy, data, w, h, seam) {
+            
+            function shrinkEnergy(energy, w, h, seam) {
+              const newEnergy = new Float32Array((w - 1) * h);
               for (let y = 0; y < h; y++) {
                 const seamX = seam[y];
-                // Aktualizujemy tylko piksele wokół usuniętego szwu
-                for (let dx = -2; dx <= 2; dx++) {
-                  const x = seamX + dx;
-                  if (x < 0 || x >= w) continue;
-                  const idx = y * w + x;
-                  const [r, g, b] = getPixel(data, w, x, y);
-                  const [rL, gL, bL] = getPixel(data, w, x - 1, y);
-                  const [rR, gR, bR] = getPixel(data, w, x + 1, y);
-                  const [rU, gU, bU] = getPixel(data, w, x, y - 1);
-                  const [rD, gD, bD] = getPixel(data, w, x, y + 1);
+                for (let x = 0; x < w; x++) {
+                  if (x === seamX) continue;
+                  const newX = x < seamX ? x : x - 1;
+                  newEnergy[y * (w - 1) + newX] = energy[y * w + x];
+                }
+              }
+              return newEnergy;
+            }
+            
+            function updateEnergyLocally(energy, data, w_new, h, seam) {
+              for (let y = 0; y < h; y++) {
+                const oldSeamX = seam[y];
+                const affectedX = [];
+                if (oldSeamX - 1 >= 0) affectedX.push(oldSeamX - 1);
+                if (oldSeamX < w_new) affectedX.push(oldSeamX);
+                
+                for (const x of affectedX) {
+                  const idx = y * w_new + x;
+                  const idxC = idx * 4;
+                  const idxL = (y * w_new + Math.max(0, x - 1)) * 4;
+                  const idxR = (y * w_new + Math.min(w_new - 1, x + 1)) * 4;
+                  const idxU = (Math.max(0, y - 1) * w_new + x) * 4;
+                  const idxD = (Math.min(h - 1, y + 1) * w_new + x) * 4;
                   
-                  const dX = Math.abs(rR - rL) + Math.abs(gR - gL) + Math.abs(bR - bL);
-                  const dY = Math.abs(rD - rU) + Math.abs(gD - gU) + Math.abs(bD - bU);
+                  const dX = Math.abs(data[idxR] - data[idxL]) + Math.abs(data[idxR+1] - data[idxL+1]) + Math.abs(data[idxR+2] - data[idxL+2]);
+                  const dY = Math.abs(data[idxD] - data[idxU]) + Math.abs(data[idxD+1] - data[idxU+1]) + Math.abs(data[idxD+2] - data[idxU+2]);
                   
                   let fwdCost = 0;
                   if (y > 0) {
-                    const dLeft = Math.abs(r - rU) + Math.abs(g - gU) + Math.abs(b - bU);
-                    const dRight = Math.abs(rR - rU) + Math.abs(gR - gU) + Math.abs(bR - bU);
+                    const dLeft = Math.abs(data[idxC] - data[idxU]) + Math.abs(data[idxC+1] - data[idxU+1]) + Math.abs(data[idxC+2] - data[idxU+2]);
+                    const dRight = Math.abs(data[idxR] - data[idxU]) + Math.abs(data[idxR+1] - data[idxU+1]) + Math.abs(data[idxR+2] - data[idxU+2]);
                     fwdCost = Math.min(dLeft, dRight);
                   }
                   
@@ -321,33 +327,23 @@
                 }
               }
             }
-
+            
             let energy = calculateEnergy(currentData, currentW, h);
-
-            const batchSize = 1;
+            
             for (let i = 0; i < seamsToRemove; i++) {
-              const { newData, seam } = removeSeam(currentData, currentW, h, energy);
-              currentData = newData;
+              const seam = findSeam(energy, currentW, h);
+              currentData = removeSeam(currentData, currentW, h, seam);
+              const newEnergy = shrinkEnergy(energy, currentW, h, seam);
+              energy = newEnergy;
               currentW--;
-
-              // Przyrostowa aktualizacja - dużo szybsza!
               updateEnergyLocally(energy, currentData, currentW, h, seam);
-
-              if (i % batchSize === 0 || i === seamsToRemove - 1) {
-                self.postMessage({ 
-                  type: 'progress', 
-                  current: i + 1, 
-                  total: seamsToRemove 
-                });
+              
+              if (i % 1 === 0 || i === seamsToRemove - 1) {
+                self.postMessage({ type: 'progress', current: i + 1, total: seamsToRemove });
               }
             }
-
-            self.postMessage({ 
-              type: 'done', 
-              data: currentData.buffer, 
-              finalW: currentW, 
-              h: h 
-            }, [currentData.buffer]);
+            
+            self.postMessage({ type: 'done', data: currentData.buffer, finalW: currentW, h: h }, [currentData.buffer]);
           };
         `;
 
@@ -392,7 +388,6 @@
           const imgData = ctx.getImageData(0, 0, w, h);
           const targetW = Math.round(w * (parseInt(slider.value) / 100));
 
-          // Uruchamiamy Workera
           activeWorker = createSeamCarvingWorker();
 
           activeWorker.onmessage = (e) => {
@@ -421,31 +416,66 @@
               progressFill.style.width = "100%";
               Hub.haptic('success');
 
+              activeWorker.terminate();
+              activeWorker = null;
+
+              // Zapisujemy blob i pokazujemy podgląd
               setTimeout(() => {
                 resultCanvas.toBlob((blob) => {
-                  Hub.download(blob, `scisniete_${finalW}x${h}.jpg`);
-                  progressWrapper.style.display = "none";
-                  processBtn.disabled = false;
-                  processBtn.textContent = "Przetwórz i pobierz";
-                  isProcessing = false;
-                  activeWorker.terminate();
-                  activeWorker = null;
+                  resultBlob = blob;
+                  const filename = `scisniete_${finalW}x${h}.jpg`;
+                  const previewUrl = canvas.toDataURL("image/jpeg", 0.85);
+
+                  const modalContent = `
+                    <div style="width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 12px;">
+                      <div style="text-align: center; margin-bottom: 8px;">
+                        <div style="font-size: 18px; font-weight: 600; color: var(--ink);">Podgląd wyniku</div>
+                        <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">Nowy wymiar: ${finalW} × ${h} px</div>
+                      </div>
+                      <div style="background: #000; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); display: flex; justify-content: center;">
+                        <img src="${previewUrl}" style="max-width: 100%; max-height: 50vh; display: block;">
+                      </div>
+                      <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button id="sc-modal-cancel" class="n-btn" style="flex: 1;">Zamknij</button>
+                        <button id="sc-modal-download" class="n-btn n-btn-outline" style="flex: 2;">Pobierz zdjęcie</button>
+                      </div>
+                    </div>
+                  `;
+
+                  const modal = Hub.showModal({ content: modalContent });
+
+                  modal.element.querySelector('#sc-modal-cancel').onclick = () => {
+                    Hub.haptic('light');
+                    modal.close();
+                  };
+
+                  modal.element.querySelector('#sc-modal-download').onclick = () => {
+                    Hub.haptic('success');
+                    Hub.download(blob, filename);
+                    modal.close();
+                  };
+
+                  // Wykrywanie zamknięcia (przez X lub kliknięcie w tło)
+                  const observer = new MutationObserver(() => {
+                    if (!document.body.contains(modal.element)) {
+                      observer.disconnect();
+                      resetAfterProcess();
+                    }
+                  });
+                  observer.observe(document.body, { childList: true });
+
                 }, 'image/jpeg', 0.9);
-              }, 500);
+              }, 300);
             }
           };
 
           activeWorker.onerror = (err) => {
             console.error("Worker error:", err);
             showToast("Błąd algorytmu. Spróbuj z mniejszym zdjęciem.");
-            progressWrapper.style.display = "none";
-            processBtn.disabled = false;
-            processBtn.textContent = "Przetwórz i pobierz";
-            isProcessing = false;
             if (activeWorker) { activeWorker.terminate(); activeWorker = null; }
+            resetAfterProcess();
           };
 
-          // Wysyłamy dane do workera
           activeWorker.postMessage({
             data: imgData.data.buffer,
             w: w,
@@ -456,10 +486,8 @@
         } catch (err) {
           console.error(err);
           showToast("Błąd: " + err.message);
-          progressWrapper.style.display = "none";
-          processBtn.disabled = false;
-          processBtn.textContent = "Przetwórz i pobierz";
-          isProcessing = false;
+          if (activeWorker) { activeWorker.terminate(); activeWorker = null; }
+          resetAfterProcess();
         }
       }
 
@@ -471,8 +499,6 @@
       });
     },
 
-    unmount() {
-      // Worker jest bezpiecznie zamykany
-    }
+    unmount() {}
   });
 })();
