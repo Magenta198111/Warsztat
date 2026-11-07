@@ -36,6 +36,6 @@
     "file": "./modules/kreator-faktur.js"
   },
   {
-    "file": "./modules/czytnik-tekstu.js"
+    "file": "./modules/inteligentne-sciskanie.js"
   }
 ]
