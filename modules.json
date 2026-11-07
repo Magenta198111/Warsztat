@@ -40,5 +40,8 @@
   },
   {
     "file": "./modules/kalkulator-zdrowia.js"
+  },
+  {
+    "file": "./modules/generator-wifi-qr.js"
   }
 ]
