@@ -1,8 +1,8 @@
 (() => {
   Hub.register({
     id: "oczyszczacz",
-    title: "Oczyszczacz Tekstu",
-    desc: "Usuwanie formatowania, gwiazdek, myślników i zbędnych spacji",
+    title: "Oczyszczacz tekstu",
+    desc: "Usuwa formatowanie, gwiazdki i zbędne spacje",
 
     async mount(container, signal) {
       let currentCaseMode = "sentence";
@@ -17,7 +17,7 @@
 
       container.innerHTML = `
         <style>
-          .o-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .o-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
           .o-flat-section { margin-bottom: 28px; }
           .o-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
@@ -39,7 +39,7 @@
             cursor: pointer; user-select: none; transition: color 0.2s;
           }
           .o-trigger:active { color: var(--accent); }
-          .o-trigger .icon { color: var(--muted); font-family: monospace; font-size: 20px; font-weight: 300; line-height: 1; }
+          .o-trigger .icon { color: var(--muted); font-family: inherit; font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 300; line-height: 1; }
           
           .o-accordion { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
           .o-accordion.open { max-height: 800px; }
@@ -52,7 +52,7 @@
           
           .o-option-text { display: flex; flex-direction: column; }
           .o-option-title { font-size: 15px; font-weight: 500; color: var(--ink); }
-          .o-option-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+          .o-option-desc { font-size: 13px; color: var(--muted); margin-top: 4px; }
           
           .o-sub-arrow { 
             background: transparent; border: none; color: var(--muted); cursor: pointer; 
@@ -69,7 +69,7 @@
 
           .o-segmented-control { 
             display: flex; background: var(--bg); border: 1px solid var(--line); 
-            border-radius: 6px; overflow: hidden; width: 100%; margin-top: 8px; margin-bottom: 8px;
+            border-radius: var(--r); overflow: hidden; width: 100%; margin-top: 8px; margin-bottom: 8px;
           }
           .o-segment { 
             flex: 1; padding: 10px; background: transparent; border: none; 
@@ -81,7 +81,7 @@
           .switch.partial .switch-slider { opacity: 0.6; }
           .switch.partial .switch-slider:before { opacity: 0.8; }
 
-          .o-stats { display: flex; justify-content: space-between; font-family: monospace; font-size: 13px; color: var(--muted); padding: 16px 0 0 0; }
+          .o-stats { display: flex; justify-content: space-between; font-family: inherit; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); padding: 16px 0 0 0; }
           .o-action-row { display: flex; gap: 12px; margin-top: 16px; }
         </style>
 
@@ -214,7 +214,7 @@
         </div>
 
         <div class="o-action-row">
-          <button id="o-clear" class="n-btn" style="flex: 1; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);">Wyczyść</button>
+          <button id="o-clear" class="n-btn" style="flex: 1; color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent);">Wyczyść</button>
           <button id="o-copy" class="n-btn n-btn-outline" style="flex: 2;">Kopiuj wynik</button>
         </div>
       `;
