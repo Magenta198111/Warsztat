@@ -1,8 +1,8 @@
 (() => {
   Hub.register({
     id: "poziomica",
-    title: "Poziomica i Kątomierz",
-    desc: "Sprawdź nachylenie powierzchni za pomocą czujników telefonu",
+    title: "Poziomica i kątomierz",
+    desc: "Mierzy nachylenie i kąt czujnikami telefonu",
 
     async mount(container, signal) {
       let isListening = false;
@@ -14,7 +14,7 @@
 
       container.innerHTML = `
         <style>
-          .lv-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .lv-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
           
           .lv-intro-box {
             background: var(--surface); border: 1px solid var(--line);
@@ -45,7 +45,7 @@
             box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
             transition: border-color 0.3s;
           }
-          .lv-level-container.ok { border-color: #34d399; }
+          .lv-level-container.ok { border-color: var(--ok); }
 
           .lv-crosshair-h, .lv-crosshair-v {
             position: absolute; background: var(--line); pointer-events: none;
@@ -58,7 +58,7 @@
             width: 40px; height: 40px; border-radius: 50%;
             border: 1px dashed var(--muted); pointer-events: none; opacity: 0.5;
           }
-          .lv-center-circle.ok { border-color: #34d399; opacity: 1; border-style: solid; }
+          .lv-center-circle.ok { border-color: var(--ok); opacity: 1; border-style: solid; }
 
           .lv-bubble {
             position: absolute; top: 50%; left: 50%;
@@ -69,7 +69,7 @@
             transition: background 0.3s;
             pointer-events: none;
           }
-          .lv-bubble.ok { background: #34d399; box-shadow: 0 0 15px #34d399; }
+          .lv-bubble.ok { background: var(--ok); box-shadow: 0 0 15px var(--ok); }
 
           /* Odczyt cyfrowy */
           .lv-readings {
@@ -77,17 +77,17 @@
           }
           .lv-reading-box {
             flex: 1; background: var(--surface); border: 1px solid var(--line);
-            border-radius: 8px; padding: 16px; text-align: center;
+            border-radius: var(--r); padding: 16px; text-align: center;
           }
           .lv-reading-title {
-            font-size: 11px; font-weight: 600; text-transform: uppercase;
-            color: var(--muted); margin-bottom: 8px; letter-spacing: 0.5px;
+            font-size: 14px; font-weight: 600;
+            color: var(--muted); margin-bottom: 8px;
           }
           .lv-reading-val {
-            font-size: 28px; font-weight: 700; font-family: monospace;
+            font-size: 28px; font-weight: 700; font-family: inherit; font-variant-numeric: tabular-nums;
             color: var(--ink); transition: color 0.3s;
           }
-          .lv-reading-val.ok { color: #34d399; }
+          .lv-reading-val.ok { color: var(--ok); }
 
           .lv-calib-btn {
             width: 100%; padding: 16px; margin-bottom: 40px; font-size: 15px;
