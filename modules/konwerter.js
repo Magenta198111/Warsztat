@@ -8,8 +8,8 @@
 
   Hub.register({
     id: "konwerter",
-    title: "Konwerter Zdjęć",
-    desc: "Kompresja, zmiana formatu i rozmiaru zdjęć",
+    title: "Konwerter zdjęć",
+    desc: "Zmiana formatu, rozmiaru i kompresja zdjęć",
 
     async mount(container, signal) {
       let savedFmt = "image/jpeg";
@@ -38,7 +38,7 @@
 
       container.innerHTML = `
         <style>
-          .c-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 0; }
+          .c-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; margin-top: 0; }
           .c-flat-section { margin-bottom: 28px; }
           .c-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
@@ -68,13 +68,13 @@
           }
           
           .c-file-name { font-size: 13px; color: var(--muted); margin-top: 8px; text-align: center; word-break: break-all; min-height: 18px; }
-          .c-stats { font-family: monospace; text-align: center; font-size: 13px; line-height: 1.6; margin-bottom: 20px; color: var(--ink); }
+          .c-stats { font-family: inherit; font-variant-numeric: tabular-nums; text-align: center; font-size: 13px; line-height: 1.6; margin-bottom: 20px; color: var(--ink); }
           .c-stats span { color: var(--accent); font-weight: bold; }
           
           .c-preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-          .c-preview-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; text-align: center; }
+          .c-preview-label { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-align: center; }
           .c-preview-img { 
-            width: 100%; border-radius: 6px; border: 1px solid var(--line); 
+            width: 100%; border-radius: var(--r); border: 1px solid var(--line); 
             display: block; object-fit: contain; height: 150px; background: var(--surface); 
             cursor: zoom-in; transition: opacity 0.2s; 
           }
@@ -116,7 +116,7 @@
               <div style="font-size: 14px; color: var(--muted); line-height: 1.5;">Wybierz zdjęcie, aby zmienić jego format, rozmiar lub stopień kompresji.</div>
             </div>
             <button id="c-pick-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; margin-top: 8px;">Wybierz zdjęcie</button>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">lub wklej ze schowka (Ctrl+V)</div>
+            <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">lub wklej ze schowka (Ctrl+V)</div>
           </div>
           
           <div id="c-file-name" class="c-file-name">Nie wybrano pliku</div>
