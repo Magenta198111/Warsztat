@@ -1,30 +1,30 @@
 (() => {
   Hub.register({
     id: "konwerter-rzymski",
-    title: "Konwerter Liczb Rzymskich",
-    desc: "Błyskawiczna zamiana liczb arabskich na rzymskie i odwrotnie",
+    title: "Konwerter liczb rzymskich",
+    desc: "Liczby arabskie na rzymskie i odwrotnie",
 
     async mount(container, signal) {
       container.innerHTML = `
         <style>
-          .rom-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .rom-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
           
           .rom-input-group { margin-bottom: 24px; margin-top: 16px; }
           .rom-input {
             width: 100%; background: transparent; border: none; border-bottom: 2px solid var(--line);
             color: var(--ink); font-size: 28px; font-weight: 700; padding: 12px 0;
-            text-align: center; outline: none; transition: border-color 0.2s; font-family: monospace;
+            text-align: center; outline: none; transition: border-color 0.2s; font-family: inherit; font-variant-numeric: tabular-nums;
           }
           .rom-input:focus { border-bottom-color: var(--accent); }
-          .rom-input::placeholder { color: var(--line); font-size: 16px; font-weight: 500; font-family: -apple-system, sans-serif; }
+          .rom-input::placeholder { color: var(--muted); opacity: 0.75; font-size: 16px; font-weight: 500; font-family: inherit; }
 
           .rom-result-group { margin-bottom: 24px; text-align: center; }
           .rom-result {
-            font-size: 28px; font-weight: 700; font-family: monospace;
+            font-size: 28px; font-weight: 700; font-family: inherit; font-variant-numeric: tabular-nums;
             color: var(--accent); min-height: 42px; display: flex; align-items: center; justify-content: center;
             word-break: break-all; line-height: 1.2; padding: 0 12px;
           }
-          .rom-result.error { color: var(--danger); font-size: 14px; font-weight: 500; font-family: -apple-system, sans-serif; }
+          .rom-result.error { color: var(--danger); font-size: 14px; font-weight: 500; font-family: inherit; }
           .rom-result.empty { color: var(--muted); font-size: 24px; font-weight: 500; }
 
           .rom-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
@@ -33,7 +33,7 @@
             display: flex; 
             background: var(--bg);
             border: 1px solid var(--line);
-            border-radius: 6px;
+            border-radius: var(--r);
             overflow: hidden;
             margin-bottom: 12px;
           }
@@ -63,14 +63,14 @@
             margin-bottom: 24px;
           }
           .rom-key {
-            padding: 16px 0; text-align: center; font-family: monospace; font-size: 22px; font-weight: 600;
-            background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+            padding: 16px 0; text-align: center; font-family: inherit; font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 600;
+            background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
             color: var(--ink); cursor: pointer; user-select: none; 
             transition: background 0.1s, transform 0.1s;
           }
           .rom-key:active { background: var(--surface-hover); transform: scale(0.95); }
           .rom-key.del { background: transparent; color: var(--danger); border-color: transparent; font-size: 16px; }
-          .rom-key.del:active { background: rgba(239, 68, 68, 0.1); }
+          .rom-key.del:active { background: color-mix(in srgb, var(--danger) 12%, transparent); }
           .rom-key.clear { background: transparent; color: var(--muted); border-color: transparent; font-size: 16px; }
           .rom-key.clear:active { background: var(--surface); }
           .rom-key.empty { background: transparent; border: none; pointer-events: none; }
