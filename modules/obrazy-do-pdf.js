@@ -2,7 +2,7 @@
   Hub.register({
     id: "obrazy-do-pdf",
     title: "Zdjęcia do PDF",
-    desc: "Połącz wiele zdjęć w jeden wielostronicowy plik PDF",
+    desc: "Wiele zdjęć w jednym pliku PDF",
 
     async mount(container, signal) {
       const MAX_FILES = 1000;
@@ -12,7 +12,7 @@
 
       container.innerHTML = `
         <style>
-          .pdf-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .pdf-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
           
           .pdf-intro-box {
             background: var(--surface); border: 1px solid var(--line);
@@ -30,20 +30,20 @@
 
           .pdf-warning {
             display: flex; align-items: flex-start; gap: 10px;
-            background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3);
-            border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;
-            font-size: 12px; color: #fbbf24; line-height: 1.5; text-align: left;
+            background: color-mix(in srgb, var(--warn) 12%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent);
+            border-radius: var(--r); padding: 12px 14px; margin-bottom: 16px;
+            font-size: 13px; color: var(--warn); line-height: 1.5; text-align: left;
           }
           .pdf-warning svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
-          .pdf-warning strong { color: #fcd34d; }
-          .pdf-warning.info { background: rgba(129, 140, 248, 0.08); border-color: rgba(129, 140, 248, 0.3); color: #a5b4fc; }
-          .pdf-warning.info strong { color: #c7d2fe; }
+          .pdf-warning strong { color: inherit; }
+          .pdf-warning.info { background: color-mix(in srgb, var(--accent) 8%, transparent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--ink); }
+          .pdf-warning.info strong { color: var(--ink); }
 
           .pdf-tip {
-            font-size: 12px; color: var(--muted); text-align: left; line-height: 1.5;
+            font-size: 13px; color: var(--muted); text-align: left; line-height: 1.5;
             display: flex; align-items: flex-start; gap: 8px;
             background: var(--bg); border: 1px solid var(--line);
-            border-radius: 6px; padding: 10px 12px; margin-top: 8px;
+            border-radius: var(--r); padding: 10px 12px; margin-top: 8px;
           }
           .pdf-tip svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; color: var(--accent); }
 
@@ -52,7 +52,7 @@
           .pdf-item {
             display: flex; align-items: center; gap: 12px;
             background: var(--surface); border: 1px solid var(--line);
-            padding: 12px; border-radius: 8px;
+            padding: 12px; border-radius: var(--r);
           }
 
           .pdf-thumb {
@@ -62,7 +62,7 @@
 
           .pdf-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
           .pdf-name { font-size: 13px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-          .pdf-size { font-size: 11px; color: var(--muted); }
+          .pdf-size { font-size: 13px; color: var(--muted); }
 
           .pdf-controls { display: flex; align-items: center; gap: 4px; }
           .pdf-ctrl-btn {
@@ -71,7 +71,7 @@
           }
           .pdf-ctrl-btn:active { background: var(--surface-hover); color: var(--ink); }
           .pdf-ctrl-btn.danger { color: var(--danger); }
-          .pdf-ctrl-btn.danger:active { background: rgba(239, 68, 68, 0.1); }
+          .pdf-ctrl-btn.danger:active { background: color-mix(in srgb, var(--danger) 12%, transparent); }
           .pdf-ctrl-btn svg { width: 18px; height: 18px; }
           .pdf-ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
@@ -80,10 +80,10 @@
           .pdf-progress-wrapper { width: 100%; display: none; flex-direction: column; gap: 8px; margin-top: 12px; }
           .pdf-progress-bar { width: 100%; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
           .pdf-progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.2s ease; }
-          .pdf-progress-text { font-size: 12px; color: var(--muted); font-family: monospace; text-align: center; }
+          .pdf-progress-text { font-size: 13px; color: var(--muted); font-family: inherit; font-variant-numeric: tabular-nums; text-align: center; }
 
           .pdf-count-badge {
-            display: inline-block; font-size: 11px; font-weight: 600;
+            display: inline-block; font-size: 13px; font-weight: 600;
             background: var(--accent); color: var(--accent-ink);
             padding: 2px 8px; border-radius: 10px; margin-left: 8px;
           }
@@ -327,8 +327,8 @@
 
         if (skippedList.length > 0) {
           html += `
-            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 24px;">
-              <div style="color: var(--danger); font-weight: 600; font-size: 13px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+            <div style="background: color-mix(in srgb, var(--danger) 12%, transparent); border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent); border-radius: var(--r); padding: 16px; margin-bottom: 24px;">
+              <div style="color: var(--danger); font-weight: 600; font-size: 14px; margin-bottom: 12px;">
                 Pominięto ${skippedList.length} zdjęć z powodu błędów:
               </div>
               <div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px;">
@@ -336,11 +336,11 @@
 
           skippedList.forEach((item) => {
             html += `
-              <div style="display: flex; align-items: flex-start; gap: 10px; background: var(--surface); padding: 10px; border-radius: 6px; border: 1px solid var(--line);">
+              <div style="display: flex; align-items: flex-start; gap: 10px; background: var(--surface); padding: 10px; border-radius: var(--r); border: 1px solid var(--line);">
                 <img src="${item.url}" style="width: 36px; height: 36px; border-radius: 4px; object-fit: cover; border: 1px solid var(--line); flex-shrink: 0;">
                 <div style="flex: 1; min-width: 0; text-align: left;">
                   <div style="font-size: 13px; color: var(--ink); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">#${item.index}: ${item.name}</div>
-                  <div style="font-size: 11px; color: var(--danger); margin-top: 4px; line-height: 1.3;">${item.reason}</div>
+                  <div style="font-size: 13px; color: var(--danger); margin-top: 4px; line-height: 1.3;">${item.reason}</div>
                 </div>
               </div>
             `;
