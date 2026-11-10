@@ -1,8 +1,8 @@
 (() => {
   Hub.register({
     id: "jednostki",
-    title: "Konwerter Jednostek",
-    desc: "Błyskawiczne przeliczanie długości, masy, temperatury, objętości, prędkości, czasu i powierzchni",
+    title: "Konwerter jednostek",
+    desc: "Długość, masa, temperatura, objętość i inne",
 
     async mount(container, signal) {
       let savedPrecision = 2;
@@ -78,10 +78,10 @@
           .uc-row:last-child { border-bottom: none; }
           .uc-row-name { color: var(--muted); font-weight: 500; flex-shrink: 0; }
           .uc-row-val-container { display: flex; align-items: flex-start; justify-content: flex-end; gap: 8px; flex: 1; min-width: 0; }
-          .uc-row-val { color: var(--ink); font-family: monospace; font-size: 16px; font-weight: 600; text-align: right; white-space: normal; overflow-wrap: break-word; word-break: normal; }
+          .uc-row-val { color: var(--ink); font-family: inherit; font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 600; text-align: right; white-space: normal; overflow-wrap: break-word; word-break: normal; }
           .uc-copy-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 2px 0 0 0; flex-shrink: 0; }
           .uc-copy-btn svg { width: 16px; height: 16px; }
-          .uc-precision-box { width: 52px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); border-radius: 6px; text-align: center; padding: 6px 0; font-family: monospace; font-size: 16px; outline: none; font-weight: 600; }
+          .uc-precision-box { width: 52px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); border-radius: var(--r); text-align: center; padding: 6px 0; font-family: inherit; font-variant-numeric: tabular-nums; font-size: 16px; outline: none; font-weight: 600; }
         </style>
 
         ${Hub.backButtonHtml}
@@ -109,7 +109,7 @@
 
         <div>
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
-            <div style="font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px;">Przeliczenia</div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--muted);">Przeliczenia</div>
             <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted);">
               Miejsca po przecinku:
               <input type="number" id="u-precision" value="${savedPrecision}" min="0" max="20" class="uc-precision-box">
