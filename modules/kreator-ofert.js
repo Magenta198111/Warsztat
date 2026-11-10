@@ -1,8 +1,8 @@
 (() => {
   Hub.register({
     id: "kreator-ofert",
-    title: "Kreator Ofert",
-    desc: "Twórz profesjonalne oferty handlowe i zapisuj je w PDF",
+    title: "Kreator ofert",
+    desc: "Oferta handlowa zapisana jako PDF",
 
     async mount(container, signal) {
       // Ładowanie zapisanych danych
@@ -19,19 +19,19 @@
 
       container.innerHTML = `
         <style>
-          .inv-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; margin-top: 12px; }
+          .inv-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 6px; margin-top: 12px; }
           .inv-input {
             width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line);
             color: var(--ink); font-size: 15px; padding: 6px 0; outline: none;
             transition: border-color 0.2s; font-family: inherit; box-sizing: border-box;
           }
           .inv-input:focus { border-bottom-color: var(--accent); }
-          .inv-input::placeholder { color: var(--line); font-size: 14px; }
+          .inv-input::placeholder { color: var(--muted); opacity: 0.75; font-size: 14px; }
           
           .inv-section { margin-bottom: 24px; }
           .inv-section-title {
-            font-size: 12px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.5px; color: var(--accent);
+            font-size: 14px; font-weight: 700;
+ color: var(--accent);
             padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 4px;
           }
           
@@ -40,14 +40,14 @@
 
           .inv-item {
             background: var(--surface); border: 1px solid var(--line);
-            border-radius: 8px; padding: 12px; margin-bottom: 10px;
+            border-radius: var(--r); padding: 12px; margin-bottom: 10px;
             position: relative;
           }
           .inv-item-header {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 8px;
           }
-          .inv-item-num { font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; }
+          .inv-item-num { font-size: 14px; font-weight: 600; color: var(--accent); }
           
           .inv-item-actions { display: flex; gap: 4px; align-items: center; }
           .inv-item-btn {
@@ -65,14 +65,14 @@
           
           .inv-add-btn {
             width: 100%; padding: 12px; background: transparent; border: 1px dashed var(--line);
-            border-radius: 8px; color: var(--muted); font-size: 14px; font-weight: 500;
+            border-radius: var(--r); color: var(--muted); font-size: 14px; font-weight: 500;
             cursor: pointer; transition: all 0.2s; font-family: inherit;
           }
           .inv-add-btn:active { background: var(--surface); color: var(--accent); border-color: var(--accent); }
           
           .inv-total-box {
             background: var(--surface); border: 1px solid var(--accent);
-            border-radius: 8px; padding: 16px; margin-top: 16px;
+            border-radius: var(--r); padding: 16px; margin-top: 16px;
           }
           .inv-total-row {
             display: flex; justify-content: space-between; align-items: center;
@@ -82,7 +82,7 @@
             border-top: 1px solid var(--line); margin-top: 8px; padding-top: 12px;
             font-size: 18px; font-weight: 700; color: var(--accent);
           }
-          .inv-total-row span:first-child { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.3px; }
+          .inv-total-row span:first-child { color: var(--muted); font-size: 14px; }
           .inv-total-row.grand span:first-child { color: var(--ink); font-size: 14px; }
           
           .inv-generate-btn {
@@ -92,9 +92,9 @@
           
           .inv-warning {
             display: flex; align-items: flex-start; gap: 10px;
-            background: rgba(129, 140, 248, 0.08); border: 1px solid rgba(129, 140, 248, 0.3);
-            border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;
-            font-size: 12px; color: #a5b4fc; line-height: 1.5;
+            background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+            border-radius: var(--r); padding: 12px 14px; margin-bottom: 16px;
+            font-size: 13px; color: var(--ink); line-height: 1.5;
           }
           .inv-warning svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
 
@@ -104,19 +104,19 @@
           .inv-trigger {
             display: flex; flex: 1; justify-content: space-between; align-items: center;
             background: var(--surface); border: 1px solid var(--line);
-            border-radius: 6px; padding: 12px 16px; color: var(--accent); font-size: 14px; font-weight: 600;
+            border-radius: var(--r); padding: 12px 16px; color: var(--accent); font-size: 14px; font-weight: 600;
             cursor: pointer; user-select: none; transition: background 0.2s;
           }
           .inv-trigger:active { background: var(--surface-hover); }
           .inv-trigger svg { width: 16px; height: 16px; }
           
           .inv-del-btn {
-            background: transparent; border: 1px solid var(--line); border-radius: 6px;
+            background: transparent; border: 1px solid var(--line); border-radius: var(--r);
             color: var(--danger); padding: 0 16px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             transition: background 0.2s;
           }
-          .inv-del-btn:active { background: rgba(239, 68, 68, 0.1); }
+          .inv-del-btn:active { background: color-mix(in srgb, var(--danger) 12%, transparent); }
           .inv-del-btn svg { width: 18px; height: 18px; }
         </style>
 
@@ -922,7 +922,7 @@
 
           const modalContent = `
             <div style="width: 100%; height: 80vh; max-height: 700px; display: flex; flex-direction: column; gap: 12px;">
-              <div style="flex: 1; background: #fff; border-radius: 8px; overflow: auto; border: 1px solid var(--line);">
+              <div style="flex: 1; background: #fff; border-radius: var(--r); overflow: auto; border: 1px solid var(--line);">
                 <img src="${previewUrl}" style="width: 100%; height: auto; display: block;">
               </div>
               <div style="display: flex; gap: 8px;">
