@@ -1,8 +1,8 @@
 (() => {
   Hub.register({
     id: "zdjecie-dokument",
-    title: "Przycinanie Zdjęć",
-    desc: "Kadruj, przycinaj i kompresuj zdjęcia do dowolnych formatów i limitów rozmiaru",
+    title: "Przycinanie zdjęć",
+    desc: "Kadrowanie i kompresja do wybranego rozmiaru pliku",
 
     async mount(container, signal) {
       let img = new Image();
@@ -37,7 +37,7 @@
 
       container.innerHTML = `
         <style>
-          .zd-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .zd-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
           .zd-flat-section { margin-bottom: 28px; }
           .zd-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
@@ -55,7 +55,7 @@
           .zd-input {
             flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 1px solid var(--line);
             color: var(--ink); font-size: 16px; padding: 8px 0; outline: none;
-            text-align: center; transition: border-color 0.2s; font-family: monospace;
+            text-align: center; transition: border-color 0.2s; font-family: inherit; font-variant-numeric: tabular-nums;
           }
           .zd-input:focus { border-bottom-color: var(--accent); }
           
@@ -68,7 +68,7 @@
           
           #zd-crop-container {
             position: relative; overflow: hidden; background: #000;
-            border-radius: 8px; border: 1px solid var(--line);
+            border-radius: var(--r); border: 1px solid var(--line);
             touch-action: none; cursor: grab; margin: 0 auto;
           }
           
@@ -150,7 +150,7 @@
               <div style="font-size: 14px; color: var(--muted); line-height: 1.5;">Wybierz zdjęcie, aby przyciąć je do wybranego formatu i rozmiaru.</div>
             </div>
             <button id="zd-pick-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; margin-top: 8px;">Wybierz zdjęcie</button>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">lub wklej ze schowka (Ctrl+V)</div>
+            <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">lub wklej ze schowka (Ctrl+V)</div>
           </div>
         </div>
 
@@ -179,8 +179,8 @@
         
         <div id="zd-result" class="hidden" style="text-align:center; padding-top: 24px;">
           <h3 style="color: var(--accent); margin-top:0;">Gotowe!</h3>
-          <img id="zd-final-img" style="max-width:100%; border-radius:8px; border:1px solid var(--line); margin-bottom:16px;">
-          <div id="zd-final-info" style="color:var(--muted); font-size:14px; margin-bottom:24px; font-family: monospace;"></div>
+          <img id="zd-final-img" style="max-width:100%; border-radius: var(--r); border:1px solid var(--line); margin-bottom:16px;">
+          <div id="zd-final-info" style="color:var(--muted); font-size:14px; margin-bottom:24px; font-family: inherit; font-variant-numeric: tabular-nums;"></div>
           
           <a id="zd-dl" class="n-btn n-btn-outline" style="display:flex; text-decoration:none; padding:14px; margin-bottom:12px;">Pobierz zdjęcie</a>
           <button id="zd-reset" class="n-btn" style="width:100%; padding:14px;">Zrób kolejne</button>
