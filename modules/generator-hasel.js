@@ -1,8 +1,8 @@
 (() => {
   Hub.register({
     id: "generator-hasel",
-    title: "Generator Haseł",
-    desc: "Twórz bezpieczne i silne hasła kryptograficzne",
+    title: "Generator haseł",
+    desc: "Losowe, mocne hasła o wybranej długości",
 
     async mount(container, signal) {
       let savedLength = 16;
@@ -22,7 +22,7 @@
 
       container.innerHTML = `
         <style>
-          .gh-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 0; }
+          .gh-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; margin-top: 0; }
           .gh-flat-section { margin-bottom: 28px; }
           
           .gh-display-area {
@@ -37,7 +37,7 @@
           
           /* Styl textarea dopasowany do wyglądu aplikacji */
           .gh-password-text {
-            font-family: monospace; font-size: 22px; font-weight: 600; color: var(--ink);
+            font-family: var(--font-mono); font-size: 22px; font-weight: 600; color: var(--ink);
             text-align: center; line-height: 1.4; 
             white-space: pre; /* Zapobiega zawijaniu */
             overflow-x: auto; 
@@ -69,7 +69,7 @@
           }
           
           .gh-strength-text {
-            font-size: 12px; text-align: center; color: var(--muted); font-weight: 500;
+            font-size: 13px; text-align: center; color: var(--muted); font-weight: 500;
           }
 
           .gh-action-row { display: flex; gap: 12px; margin-bottom: 32px; }
@@ -79,7 +79,7 @@
             display: flex; align-items: center; height: 40px;
             touch-action: none; cursor: pointer; margin-bottom: 8px;
           }
-          .gh-slider-value { font-family: monospace; font-size: 18px; font-weight: 600; color: var(--accent); min-width: 30px; text-align: right; margin-left: 16px; }
+          .gh-slider-value { font-family: inherit; font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 600; color: var(--accent); min-width: 30px; text-align: right; margin-left: 16px; }
           
           .gh-range-track {
             position: relative; width: 100%; height: 6px; border-radius: 3px; flex: 1;
@@ -100,7 +100,7 @@
             cursor: pointer; user-select: none; transition: color 0.2s;
           }
           .gh-trigger:active { color: var(--accent); }
-          .gh-trigger .icon { color: var(--muted); font-family: monospace; font-size: 20px; font-weight: 300; line-height: 1; }
+          .gh-trigger .icon { color: var(--muted); font-family: inherit; font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 300; line-height: 1; }
           
           .gh-accordion { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
           .gh-accordion.open { max-height: 500px; }
@@ -262,8 +262,8 @@
         const entropy = length * Math.log2(poolSize);
         
         if (entropy < 40) return { percent: 25, text: "Słabe", color: "var(--danger)" };
-        if (entropy < 60) return { percent: 50, text: "Średnie", color: "#fbbf24" };
-        if (entropy < 80) return { percent: 75, text: "Silne", color: "#34d399" };
+        if (entropy < 60) return { percent: 50, text: "Średnie", color: "var(--warn)" };
+        if (entropy < 80) return { percent: 75, text: "Silne", color: "var(--ok)" };
         return { percent: 100, text: "Bardzo silne", color: "var(--accent)" };
       }
 
