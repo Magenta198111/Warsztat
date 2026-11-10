@@ -2,7 +2,7 @@
   Hub.register({
     id: "skaner-pdf",
     title: "Skaner do PDF",
-    desc: "Skanowanie dokumentów z prostowaniem perspektywy i PDF",
+    desc: "Zdjęcie kartki wyprostowane i zapisane jako PDF",
     
     async mount(container, signal) {
       let img = new Image();
@@ -14,7 +14,7 @@
 
       container.innerHTML = `
         <style>
-          .sk-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .sk-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
           .sk-flat-section { margin-bottom: 28px; }
           .sk-divider { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           
@@ -106,7 +106,7 @@
               <button id="sk-pick-btn" class="n-btn n-btn-outline" style="width: 100%; padding: 14px; margin-top: 8px;">Wybierz zdjęcie</button>
             </div>
 
-            <div id="sk-canvas-container" style="display:none; width: 100%; border-radius: 8px; border: 1px solid var(--line); background:#000; overflow:hidden; touch-action: none;">
+            <div id="sk-canvas-container" style="display:none; width: 100%; border-radius: var(--r); border: 1px solid var(--line); background:#000; overflow:hidden; touch-action: none;">
               <canvas id="sk-display" style="display:block; width:100%; height:auto; transition: filter 0.1s;"></canvas>
               <div id="sk-crop-area">
                 <svg preserveAspectRatio="none">
