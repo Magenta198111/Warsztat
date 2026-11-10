@@ -188,13 +188,13 @@
 
   Hub.register({
     id: "qr",
-    title: "Generator & Skaner QR",
-    desc: "Tworzenie kodów QR oraz skanowanie aparatem i z plików",
+    title: "Generator i skaner QR",
+    desc: "Tworzy kody QR i skanuje je aparatem lub z pliku",
 
     async mount(container, signal) {
       container.innerHTML = `
         <style>
-          .qr-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .qr-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
           
           /* Zmienione na textarea, dodane resize i overflow dla auto-dopasowania */
           .qr-input { 
@@ -213,30 +213,30 @@
           
           .qr-divider-line { width: 100%; height: 1px; background: var(--line); margin: 24px 0; }
           .qr-canvas-box { display: flex; justify-content: center; align-items: center; min-height: 150px; transition: all 0.3s ease; position: relative; }
-          .qr-canvas-box.has-canvas { background: #ffffff; padding: 8px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-height: auto; width: 40%; margin: 0 auto; cursor: pointer; }
+          .qr-canvas-box.has-canvas { background: #ffffff; padding: 8px; border-radius: var(--r); box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-height: auto; width: 40%; margin: 0 auto; cursor: pointer; }
           .qr-canvas-box.fullscreen { position: fixed; inset: 0; width: 100%; height: 100vh; max-height: 100vh; background: #ffffff; z-index: 9999; padding: 24px; margin: 0; border-radius: 0; display: flex; align-items: center; justify-content: center; box-shadow: none; }
           .qr-canvas-box.fullscreen canvas { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
-          .qr-placeholder { color: var(--line); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+          .qr-placeholder { color: var(--muted); font-size: 14px; font-weight: 600; text-align: center; }
           .qr-canvas-box.has-canvas .qr-placeholder { display: none; }
           .qr-canvas-box canvas { display: none; max-width: 100%; height: auto; }
           .qr-canvas-box.has-canvas canvas { display: block; }
           .qr-close-fullscreen-btn { display: none; position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.1); border: none; border-radius: 50%; width: 48px; height: 48px; align-items: center; justify-content: center; color: #333; cursor: pointer; z-index: 10000; }
           .qr-canvas-box.fullscreen .qr-close-fullscreen-btn { display: flex; }
           
-          .qr-cam-wrapper { width: 100%; aspect-ratio: 1; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; margin-top: 8px; margin-bottom: 24px; position: relative; }
+          .qr-cam-wrapper { width: 100%; aspect-ratio: 1; background: var(--surface); border-radius: var(--r); overflow: hidden; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; margin-top: 8px; margin-bottom: 24px; position: relative; }
           .qr-cam-wrapper video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
           .qr-cam-wrapper video.active { display: block; }
           .qr-cam-overlay { position: absolute; inset: 15%; border: 2px solid var(--accent); border-radius: 12px; pointer-events: none; display: none; }
           .qr-cam-overlay.active { display: block; }
           
-          .qr-status { text-align: center; color: var(--muted); font-size: 13px; font-family: monospace; margin-bottom: 24px; min-height: 18px; word-break: break-all; line-height: 1.4; }
+          .qr-status { text-align: center; color: var(--muted); font-size: 13px; font-family: inherit; font-variant-numeric: tabular-nums; margin-bottom: 24px; min-height: 18px; word-break: break-all; line-height: 1.4; }
           
-          .qr-result-box { background: var(--surface); border: 1px solid var(--accent); border-radius: 8px; padding: 16px; margin-bottom: 24px; }
-          .qr-result-header { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; letter-spacing: 0.5px; }
+          .qr-result-box { background: var(--surface); border: 1px solid var(--accent); border-radius: var(--r); padding: 16px; margin-bottom: 24px; }
+          .qr-result-header { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 8px; }
           .qr-result-body { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-          .qr-result-text { font-family: monospace; font-size: 14px; color: var(--ink); word-break: break-all; line-height: 1.5; flex: 1; }
+          .qr-result-text { font-family: inherit; font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink); word-break: break-all; line-height: 1.5; flex: 1; }
           
-          .qr-divider-text { text-align: center; color: var(--line); font-size: 11px; font-weight: 600; margin: 24px 0; letter-spacing: 1px; }
+          .qr-divider-text { text-align: center; color: var(--muted); font-size: 13px; font-weight: 600; margin: 24px 0; }
         </style>
 
         ${Hub.backButtonHtml}
@@ -301,7 +301,7 @@
           
           <input type="file" id="q-scan-file" accept="image/*" style="display:none;">
           <button id="q-scan-file-btn" class="n-btn" style="width:100%; padding:14px; font-size:15px;">Wybierz zdjęcie z kodem QR</button>
-          <div id="q-scan-file-name" style="font-size:12px; color:var(--muted); margin-top:12px; text-align:center; word-break:break-all;"></div>
+          <div id="q-scan-file-name" style="font-size: 13px; color:var(--muted); margin-top:12px; text-align:center; word-break:break-all;"></div>
         </div>
       `;
 
