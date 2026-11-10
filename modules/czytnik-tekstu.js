@@ -1,8 +1,8 @@
 (() => {
   Hub.register({
     id: "czytnik-tekstu",
-    title: "Czytnik Tekstu",
-    desc: "Zamień tekst na mowę (offline) i słuchaj go w drodze",
+    title: "Czytnik tekstu",
+    desc: "Czyta wpisany tekst na głos, także offline",
 
     async mount(container, signal) {
       const synth = window.speechSynthesis;
@@ -20,11 +20,11 @@
 
       container.innerHTML = `
         <style>
-          .tts-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 16px; }
+          .tts-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; margin-top: 16px; }
           
           .tts-textarea {
             width: 100%; background: var(--surface); border: 1px solid var(--line);
-            border-radius: 8px; padding: 16px; color: var(--ink);
+            border-radius: var(--r); padding: 16px; color: var(--ink);
             font-size: 16px; font-family: inherit; line-height: 1.5;
             resize: vertical; min-height: 180px; max-height: 400px;
             outline: none; transition: border-color 0.2s; box-sizing: border-box;
@@ -43,7 +43,7 @@
             background: var(--accent); color: var(--accent-ink);
             border: none; display: flex; align-items: center; justify-content: center;
             cursor: pointer; transition: transform 0.1s, background 0.2s;
-            box-shadow: 0 8px 20px rgba(129, 140, 248, 0.3);
+            box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 30%, transparent);
           }
           .tts-main-btn:active { transform: scale(0.92); }
           .tts-main-btn svg { width: 32px; height: 32px; }
@@ -54,7 +54,7 @@
             justify-content: center;
           }
           .tts-aux-btn {
-            flex: 1; padding: 12px; border-radius: 6px;
+            flex: 1; padding: 12px; border-radius: var(--r);
             background: transparent; border: 1px solid var(--line);
             color: var(--ink); font-weight: 500; font-size: 14px;
             display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -67,7 +67,7 @@
 
           .tts-slider-group { width: 100%; display: flex; flex-direction: column; gap: 8px; }
           .tts-slider-header { display: flex; justify-content: space-between; align-items: center; }
-          .tts-slider-val { font-family: monospace; font-size: 14px; color: var(--accent); font-weight: 600; }
+          .tts-slider-val { font-family: inherit; font-variant-numeric: tabular-nums; font-size: 14px; color: var(--accent); font-weight: 600; }
           
           .tts-range { 
             -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; 
@@ -84,7 +84,7 @@
           .tts-voice-trigger { 
             display: flex; justify-content: space-between; align-items: center; 
             background: transparent; border: 1px solid var(--line); 
-            border-radius: 6px; padding: 12px 16px; color: var(--ink); font-size: 14px; font-weight: 500;
+            border-radius: var(--r); padding: 12px 16px; color: var(--ink); font-size: 14px; font-weight: 500;
             cursor: pointer; user-select: none; transition: color 0.2s; width: 100%;
           }
           .tts-voice-trigger:active { background: var(--surface-hover); }
