@@ -4,8 +4,23 @@ self.addEventListener("install", event => {
   self.skipWaiting();
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    const coreAssets = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './changelog.json'];
-    await cache.addAll(coreAssets);
+    const coreAssets = [
+      './', './index.html', './manifest.json', './changelog.json',
+      './icon.svg', './icon-192.png', './icon-512.png',
+      './fonts/bricolage-grotesque-latin-wdth-normal.woff2',
+      './fonts/bricolage-grotesque-latin-ext-wdth-normal.woff2',
+      './fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2',
+      './fonts/atkinson-hyperlegible-next-latin-ext-wght-normal.woff2',
+      './fonts/atkinson-hyperlegible-mono-latin-wght-normal.woff2',
+      './fonts/atkinson-hyperlegible-mono-latin-ext-wght-normal.woff2'
+    ];
+    // Każdy plik osobno: brak jednego nie może zablokować instalacji i trybu offline.
+    await Promise.all(coreAssets.map(async (asset) => {
+      try {
+        const r = await fetch(asset, { cache: 'no-store' });
+        if (r.ok) await cache.put(asset, r);
+      } catch (err) {}
+    }));
 
     try {
       const res = await fetch('./modules.json');
