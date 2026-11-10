@@ -1,15 +1,15 @@
 (() => {
   Hub.register({
     id: "kalkulator-prog",
-    title: "Kalkulator Programistyczny",
-    desc: "Konwersja systemów, operacje bitowe i siatka 32-bitowa",
+    title: "Kalkulator programistyczny",
+    desc: "Systemy liczbowe i operacje bitowe",
 
     async mount(container, signal) {
       container.innerHTML = `
         <style>
           .hidden { display: none !important; }
           
-          .cp-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .cp-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
           
           .cp-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; margin-top: 16px; }
           .cp-input-group { display: flex; flex-direction: column; }
@@ -23,10 +23,10 @@
           
           .cp-input { 
             width: 100%; background: transparent; border: none; 
-            color: var(--ink); font-size: 18px; font-family: monospace; padding: 8px 0; 
+            color: var(--ink); font-size: 18px; font-family: var(--font-mono); padding: 8px 0; 
             outline: none; border-radius: 0;
           }
-          .cp-input::placeholder { color: var(--line); font-size: 14px; }
+          .cp-input::placeholder { color: var(--muted); opacity: 0.75; font-size: 14px; }
           
           .cp-copy-btn {
             background: transparent; border: none; padding: 8px; margin: 0;
@@ -48,14 +48,12 @@
           .cp-bit-cell {
             aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
             border-radius: 4px; border: 1px solid var(--line); background: var(--surface);
-            font-family: monospace; font-size: 14px; font-weight: 600; color: var(--muted);
+            font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--muted);
             cursor: pointer; transition: all 0.1s; user-select: none;
           }
           .cp-bit-cell.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
           .cp-bit-cell:active { transform: scale(0.9); }
           /* Wizualne oddzielenie bajtów co 8 bitów */
-          .cp-bit-cell:nth-child(8n) { margin-right: 8px; }
-          .cp-bit-cell:last-child { margin-right: 0; }
           
           .cp-op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
           .cp-op-inputs { display: flex; gap: 12px; margin-bottom: 16px; }
@@ -63,17 +61,17 @@
           .cp-op-inputs .cp-input { text-align: center; }
           
           .cp-btn {
-            width: 100%; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 14px;
+            width: 100%; padding: 12px; border-radius: var(--r); font-weight: 600; font-size: 14px;
             cursor: pointer; text-align: center; background: var(--surface); color: var(--ink);
             border: 1px solid var(--line); transition: background 0.2s, border-color 0.2s;
-            outline: none; -webkit-tap-highlight-color: transparent; font-family: monospace;
+            outline: none; -webkit-tap-highlight-color: transparent; font-family: var(--font-mono);
           }
           .cp-btn:active { background: var(--surface-hover); }
           
           .cp-result-wrapper {
             display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 8px;
           }
-          .cp-result { text-align: center; font-family: monospace; font-size: 24px; font-weight: 700; color: var(--accent); }
+          .cp-result { text-align: center; font-family: var(--font-mono); font-size: 24px; font-weight: 700; color: var(--accent); }
         </style>
 
         ${Hub.backButtonHtml}
