@@ -179,14 +179,14 @@
   Hub.register({
     id: "generator-wifi-qr",
     title: "QR do Wi-Fi",
-    desc: "Twórz kody QR ułatwiające gościom łączenie się z Twoją siecią",
+    desc: "Kod QR, którym goście połączą się z twoją siecią",
 
     async mount(container, signal) {
       let currentCanvasUrl = null;
 
       container.innerHTML = `
         <style>
-          .wq-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; margin-top: 16px; }
+          .wq-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; margin-top: 16px; }
           
           .wq-input {
             width: 100%; background: transparent; border: none; border-bottom: 2px solid var(--line);
@@ -194,7 +194,7 @@
             outline: none; transition: border-color 0.2s; font-family: inherit;
           }
           .wq-input:focus { border-bottom-color: var(--accent); }
-          .wq-input::placeholder { color: var(--line); font-size: 16px; }
+          .wq-input::placeholder { color: var(--muted); opacity: 0.75; font-size: 16px; }
 
           .wq-trigger { 
             display: flex; justify-content: space-between; align-items: center; 
@@ -209,14 +209,14 @@
           .wq-row-title { font-size: 15px; color: var(--ink); font-weight: 500; }
 
           .wq-canvas-box { 
-            background: #ffffff; padding: 16px; border-radius: 8px; 
+            background: #ffffff; padding: 16px; border-radius: var(--r); 
             display: flex; justify-content: center; align-items: center; 
             margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             min-height: 200px;
           }
           .wq-canvas-box canvas { max-width: 100%; height: auto; display: none; }
           .wq-canvas-box.has-canvas canvas { display: block; }
-          .wq-placeholder { color: var(--line); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+          .wq-placeholder { color: var(--muted); font-size: 14px; font-weight: 600; }
           .wq-canvas-box.has-canvas .wq-placeholder { display: none; }
 
           .wq-actions { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
