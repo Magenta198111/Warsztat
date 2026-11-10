@@ -1,12 +1,13 @@
 {
   "name": "Workspace",
   "short_name": "Workspace",
-  "description": "Twój osobisty hub z narzędziami offline.",
+  "description": "Podręczne narzędzia, które działają bez internetu.",
+  "lang": "pl",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#09090b",
-  "theme_color": "#09090b",
+  "background_color": "#121B24",
+  "theme_color": "#121B24",
   "orientation": "portrait",
   "icons": [
     {
@@ -16,14 +17,20 @@
       "purpose": "any maskable"
     },
     {
-      "src": "./icon-1024.png",
-      "sizes": "1024x1024",
+      "src": "./icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "./icon-192.png",
-      "sizes": "192x192",
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-1024.png",
+      "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any maskable"
     }
