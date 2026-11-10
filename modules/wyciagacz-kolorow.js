@@ -1,8 +1,8 @@
 (() => {
   Hub.register({
     id: "wyciagacz-kolorow",
-    title: "Wyciągacz Kolorów",
-    desc: "Wyodrębnij dominujące kolory ze zdjęcia",
+    title: "Wyciągacz kolorów",
+    desc: "Dominujące kolory z dowolnego zdjęcia",
 
     async mount(container, signal) {
       let targetColorCount = 6;
@@ -19,7 +19,7 @@
 
       container.innerHTML = `
         <style>
-          .pal-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .pal-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
           .pal-flat-section { margin-bottom: 24px; }
           
           .pal-intro-box {
@@ -37,7 +37,7 @@
           }
 
           .pal-preview-img {
-            width: 100%; border-radius: 8px; border: 1px solid var(--line);
+            width: 100%; border-radius: var(--r); border: 1px solid var(--line);
             display: block; object-fit: contain; max-height: 250px; background: var(--surface);
             margin-bottom: 16px;
           }
@@ -53,7 +53,7 @@
           }
           
           .pal-swatch {
-            aspect-ratio: 1; border-radius: 8px; display: flex; flex-direction: column;
+            aspect-ratio: 1; border-radius: var(--r); display: flex; flex-direction: column;
             align-items: center; justify-content: center; cursor: pointer;
             transition: transform 0.1s, opacity 0.2s; border: 1px solid var(--line);
             position: relative; overflow: hidden;
@@ -61,12 +61,12 @@
           .pal-swatch:active { transform: scale(0.95); opacity: 0.9; }
           
           .pal-hex-text {
-            font-family: monospace; font-size: 14px; font-weight: 700;
+            font-family: var(--font-mono); font-size: 14px; font-weight: 700;
             text-shadow: 0 1px 2px rgba(0,0,0,0.2); pointer-events: none;
           }
 
           .pal-warning-text {
-            text-align: center; font-size: 12px; color: #fbbf24;
+            text-align: center; font-size: 13px; color: var(--warn);
             margin-bottom: 24px; min-height: 16px; line-height: 1.4;
           }
           
@@ -77,7 +77,7 @@
             display: flex; align-items: center; height: 40px;
             touch-action: none; cursor: pointer; margin-bottom: 8px;
           }
-          .pal-slider-value { font-family: monospace; font-size: 16px; font-weight: 600; color: var(--accent); min-width: 40px; text-align: right; margin-left: 16px; }
+          .pal-slider-value { font-family: inherit; font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 600; color: var(--accent); min-width: 40px; text-align: right; margin-left: 16px; }
           
           .pal-range-track {
             position: relative; width: 100%; height: 6px; border-radius: 3px; flex: 1;
@@ -101,7 +101,7 @@
             height: 100%; width: 0%; background: var(--accent); transition: width 0.1s linear;
           }
           .pal-progress-text {
-            font-size: 12px; color: var(--muted); font-family: monospace; text-align: center;
+            font-size: 13px; color: var(--muted); font-family: inherit; font-variant-numeric: tabular-nums; text-align: center;
           }
 
           .pal-trigger { 
@@ -173,7 +173,7 @@
           
           <div class="pal-header-row">
             <label class="pal-label" style="margin-bottom:0;">Dominujące kolory</label>
-            <button id="pal-copy-all" class="n-btn" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Kopiuj wszystkie</button>
+            <button id="pal-copy-all" class="n-btn" style="padding: 6px 12px; font-size: 13px; border-radius: 4px;">Kopiuj wszystkie</button>
           </div>
           
           <div id="pal-swatches" class="pal-grid"></div>
@@ -544,7 +544,7 @@
 
           if (finalColors.length < targetColorCount) {
             warningText.textContent = `Znaleziono ${finalColors.length} wyrazistych kolorów. Reszta zlała się w tło.`;
-            warningText.style.color = "#fbbf24";
+            warningText.style.color = "var(--warn)";
           } else {
             warningText.textContent = `Znaleziono ${finalColors.length} dominujących kolorów.`;
             warningText.style.color = "var(--muted)";
