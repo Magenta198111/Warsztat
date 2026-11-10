@@ -3,433 +3,400 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#E7EAE7">
 <link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
 <title>Workspace</title>
+<script>
+(function () {
+  var root = document.documentElement;
+  try {
+    var pref = localStorage.getItem('ws_theme') || 'system';
+    var dark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    root.dataset.theme = dark ? 'dark' : 'light';
+    var acc = JSON.parse(localStorage.getItem('ws_accent') || 'null');
+    if (acc) for (var k in acc) root.style.setProperty(k, acc[k]);
+  } catch (e) { root.dataset.theme = 'light'; }
+})();
+</script>
 <style>
+@font-face { font-family: "Bricolage Grotesque"; font-style: normal; font-display: swap; font-weight: 200 800; font-stretch: 75% 100%; src: url(./fonts/bricolage-grotesque-latin-ext-wdth-normal.woff2) format("woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "Bricolage Grotesque"; font-style: normal; font-display: swap; font-weight: 200 800; font-stretch: 75% 100%; src: url(./fonts/bricolage-grotesque-latin-wdth-normal.woff2) format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Atkinson Hyperlegible Next"; font-style: normal; font-display: swap; font-weight: 200 800; src: url(./fonts/atkinson-hyperlegible-next-latin-ext-wght-normal.woff2) format("woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "Atkinson Hyperlegible Next"; font-style: normal; font-display: swap; font-weight: 200 800; src: url(./fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2) format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Atkinson Hyperlegible Mono"; font-style: normal; font-display: swap; font-weight: 200 800; src: url(./fonts/atkinson-hyperlegible-mono-latin-ext-wght-normal.woff2) format("woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "Atkinson Hyperlegible Mono"; font-style: normal; font-display: swap; font-weight: 200 800; src: url(./fonts/atkinson-hyperlegible-mono-latin-wght-normal.woff2) format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+
+/* Tokens. Modules read --bg, --surface, --surface-hover, --ink, --muted, --line, --accent, --accent-ink and --danger. */
 :root {
-  --bg: #000000; --surface: #09090b; --surface-hover: #18181b;
-  --ink: #ededed; --muted: #8b8b93; --line: #27272a;
-  --accent: #818cf8; --accent-ink: #000000; --danger: #ef4444;
+  --font: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Bricolage Grotesque", "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --bg: #E7EAE7; --surface: #F7F8F6; --surface-hover: #D8DDDA;
+  --ink: #172330; --muted: #55626D; --line: #C6CDCB;
+  --danger: #B5372A; --ok: #1D7A49; --warn: #855700;
+  --accent: var(--accent-l, #1F7A4D); --accent-ink: var(--accent-l-ink, #FFFFFF);
+  --scrim: rgba(23, 35, 48, 0.45);
+  --shadow: 0 10px 30px rgba(23, 35, 48, 0.18);
+
+  --r-s: 6px; --r: 10px; --r-l: 16px;
+  --scale: 1;
+  --bar: 56px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+  color-scheme: light;
 }
+:root[data-theme="dark"], .hub-modal-overlay:not(.dialog) {
+  --bg: #121B24; --surface: #1B2632; --surface-hover: #293847;
+  --ink: #E9ECE8; --muted: #97A3AD; --line: #314050;
+  --danger: #F07A6A; --ok: #4FCB8C; --warn: #F2B93B;
+  --accent: var(--accent-d, #4FBF85); --accent-ink: var(--accent-d-ink, #0B1A12);
+  --scrim: rgba(4, 8, 12, 0.62);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html, body {
   height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; background: var(--bg);
   touch-action: manipulation; -webkit-text-size-adjust: 100%;
 }
+#app-scroll { height: 100%; overflow-y: auto; overflow-x: hidden; overscroll-behavior: none; -webkit-overflow-scrolling: touch; }
 
-#app-scroll {
-  height: 100%; overflow-y: auto; overflow-x: hidden; overscroll-behavior: none; -webkit-overflow-scrolling: touch;
+body {
+  font-family: var(--font); font-size: 16px; line-height: 1.4; color: var(--ink);
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  -webkit-font-smoothing: antialiased;
 }
-
-body { 
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: var(--ink); 
-  -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
-  -webkit-touch-callout: none;
-}
-input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; }
+body.font-small { --scale: 0.9; }
+body.font-large { --scale: 1.15; }
+button, input, textarea, select { font-family: inherit; }
+input, textarea { -webkit-user-select: text; user-select: text; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .hidden { display: none !important; }
 
+/* Shared controls, also used inside modules */
 .n-btn {
-  padding: 12px 16px; border-radius: 6px; font-weight: 500; font-size: 14px;
-  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 12px 16px; border-radius: var(--r); font-weight: 600; font-size: calc(16px * var(--scale)); line-height: 1.25;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; text-align: center;
   background: var(--surface); border: 1px solid var(--line); color: var(--ink);
-  transition: background 0.2s, border-color 0.2s; outline: none;
+  transition: background 0.12s, border-color 0.12s, opacity 0.12s;
 }
-.n-btn:active { background: var(--surface-hover); border-color: var(--muted); }
-.n-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.n-btn:active { background: var(--surface-hover); }
+.n-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.n-btn svg { flex-shrink: 0; }
 
-.n-btn-outline {
-  background: transparent !important;
-  border: 1px solid var(--accent) !important;
-  color: var(--accent) !important;
-}
-.n-btn-outline:active {
-  background: var(--accent) !important;
-  color: var(--accent-ink) !important;
-}
+/* The main action on a screen. The class name is historical: it used to be an outline. */
+.n-btn-outline { background: var(--ink) !important; border-color: var(--ink) !important; color: var(--bg) !important; }
+.n-btn-outline:active { opacity: 0.8; }
+body.scope-action-btns .n-btn-outline { background: var(--accent) !important; border-color: var(--accent) !important; color: var(--accent-ink) !important; }
+.n-btn-danger { color: var(--danger); }
 
 .n-input {
-  width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line);
-  color: var(--ink); font-size: 16px; padding: 8px 0; outline: none;
-  transition: border-color 0.2s; border-radius: 0;
+  width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+  color: var(--ink); font-size: 16px; line-height: 1.5; padding: 11px 14px; outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
 }
-.n-input:focus { border-bottom-color: var(--accent); }
-.n-input::placeholder { color: var(--muted); }
+.n-input:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.n-input::placeholder { color: var(--muted); opacity: 0.8; }
 
-.n-back {
-  width: auto; padding: 8px 16px 8px 0; border: none; background: transparent;
-  color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
-}
-.n-back:active { opacity: 0.7; }
+.n-back { display: none; }
 
-.topbar { position: sticky; top: 0; z-index: 100; padding: 16px 20px; padding-top: calc(16px + var(--safe-top)); background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
-.topbar-title { font-size: 14px; font-weight: 600; letter-spacing: 0.05em; margin: 0; text-transform: uppercase; }
-.menu-btn { position: absolute; left: 16px; background: none; border: none; color: var(--ink); padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; }
-.menu-btn:active { background: var(--surface-hover); }
+/* Top bar: one control on the left. Menu at home, back everywhere else. */
+.topbar { position: sticky; top: 0; z-index: 100; background: var(--bg); padding-top: var(--safe-top); border-bottom: 1px solid var(--line); }
+.topbar-in { height: var(--bar); max-width: 600px; margin: 0 auto; display: flex; align-items: center; gap: 4px; padding: 0 12px 0 max(8px, var(--safe-left)); }
+.nav-btn { width: 44px; height: 44px; flex-shrink: 0; border: 0; background: none; color: var(--ink); border-radius: var(--r); display: grid; place-items: center; cursor: pointer; }
+.nav-btn:active { background: var(--surface-hover); }
+.nav-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nav-btn .ic-back { display: none; }
+body.sub .nav-btn .ic-menu { display: none; }
+body.sub .nav-btn .ic-back { display: block; }
+.topbar-title { font-family: var(--font-display); font-stretch: 80%; font-weight: 700; font-size: 24px; line-height: 1.15; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body:not(.sub) .topbar { border-bottom-color: transparent; }
 
-.drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+/* Menu */
+.drawer-overlay { position: fixed; inset: 0; background: var(--scrim); z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
 .drawer-overlay.open { opacity: 1; pointer-events: auto; }
-.drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 80%; max-width: 320px; background: var(--surface); border-right: 1px solid var(--line); z-index: 999; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; overflow-y: auto; padding-bottom: var(--safe-bottom); }
-.drawer.open { transform: translateX(0); }
-.drawer-header { padding: 24px 20px; padding-top: calc(24px + var(--safe-top)); border-bottom: 1px solid var(--line); }
-.drawer-title { font-size: 18px; font-weight: 700; margin: 0; }
-.drawer-menu { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
-.drawer-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 6px; color: var(--ink); font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s; position: relative; }
+.drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 84%; max-width: 320px; background: var(--surface); border-right: 1px solid var(--line); z-index: 999; transform: translateX(-100%); visibility: hidden; transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.24s; display: flex; flex-direction: column; overflow-y: auto; padding: calc(12px + var(--safe-top)) 12px calc(12px + var(--safe-bottom)) max(12px, var(--safe-left)); }
+.drawer.open { transform: translateX(0); visibility: visible; }
+.drawer-title { font-family: var(--font-display); font-stretch: 80%; font-weight: 700; font-size: 24px; line-height: 1.15; margin: 0; padding: 10px 12px 14px; }
+.drawer-menu { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.drawer-item { width: 100%; min-height: 50px; display: flex; align-items: center; gap: 14px; padding: 10px 12px; border: 0; background: none; text-align: left; border-radius: var(--r); color: var(--ink); font-size: 16px; font-weight: 500; cursor: pointer; }
 .drawer-item:active { background: var(--surface-hover); }
-.drawer-item.active { background: var(--surface-hover); color: var(--accent); }
-.drawer-item svg { width: 20px; height: 20px; color: var(--muted); stroke-width: 1.5; transition: color 0.2s; }
-.drawer-item.active svg { color: var(--accent); }
-
-.badge-dot {
-  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
-  width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
-  display: none;
-}
+.drawer-item.active { background: var(--bg); font-weight: 700; }
+.drawer-item svg { width: 22px; height: 22px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; color: var(--muted); }
+.drawer-item.active svg { color: var(--ink); }
+.drawer-item span { flex: 1; }
+.drawer-sep { height: 1px; background: var(--line); margin: 8px 12px; }
+.drawer-spacer { flex: 1; }
+.badge-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); display: none; flex-shrink: 0; }
 .badge-dot.show { display: block; }
 
-.container { max-width: 600px; margin: 0 auto; padding: 20px; padding-bottom: calc(100px + var(--safe-bottom)); padding-left: max(20px, var(--safe-left)); padding-right: max(20px, var(--safe-right)); }
-.list { display: flex; flex-direction: column; gap: 12px; }
-.list.grid-view { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.tile { position: relative; display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; transition: background 0.15s; }
-.tile:active { background: var(--surface-hover); border-color: var(--muted); }
-.list.grid-view .tile { flex-direction: column; align-items: flex-start; padding: 16px; height: 100%; justify-content: flex-start; }
-.tile-icon { width: 36px; height: 36px; border-radius: 4px; background: var(--bg); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.tile-icon svg { width: 18px; height: 18px; stroke-width: 1.5; stroke: currentColor; fill: none; transition: stroke 0.3s; }
-.list.grid-view .tile-icon { margin-bottom: 4px; }
-.tile-content { flex: 1; display: flex; flex-direction: column; gap: 4px; padding-right: 24px; }
-.list.grid-view .tile-content { gap: 2px; }
-.tile-title { font-weight: 500; font-size: 15px; }
-.list.grid-view .tile-title { font-size: 14px; }
-.tile-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
-.list.grid-view .tile-desc { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-.tile-heart {
-  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
-  width: 24px; height: 24px; color: var(--muted); cursor: pointer;
-  transition: color 0.2s, fill 0.2s, transform 0.1s;
-}
-.list.grid-view .tile-heart { position: absolute; right: 12px; top: 16px; transform: none; }
-.tile-heart:active { transform: translateY(-50%) scale(0.8); }
-.list.grid-view .tile-heart:active { transform: scale(0.8); }
-.tile-heart.active { color: var(--accent); fill: var(--accent); }
-
-.search-container {
-  position: sticky; 
-  top: calc(48px + var(--safe-top)); 
-  z-index: 90;
-  background: var(--bg); 
-  padding: 12px 0; 
-  border-bottom: 1px solid var(--line);
-  display: flex; 
-  align-items: center; 
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.search-icon { color: var(--muted); width: 20px; height: 20px; flex-shrink: 0; }
-.search-input {
-  flex: 1; background: transparent; border: none; color: var(--ink);
-  font-size: 16px; outline: none; padding: 4px 0;
-}
-.search-input::placeholder { color: var(--muted); }
-.search-clear { background: transparent; border: none; color: var(--muted); cursor: pointer; display: none; padding: 4px; }
-.search-clear.show { display: flex; }
-
-.changelog-item { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-.changelog-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
-.changelog-ver { font-size: 18px; font-weight: 700; color: var(--accent); }
-.changelog-date { font-size: 12px; color: var(--muted); font-family: monospace; }
-.changelog-list { margin: 0; padding-left: 16px; color: var(--ink); font-size: 14px; line-height: 1.6; }
-.changelog-list li { margin-bottom: 4px; }
-
-body.font-small .tile-title { font-size: 13px; }
-body.font-small .tile-desc { font-size: 11px; }
-body.font-small .settings-label { font-size: 13px; }
-body.font-small .settings-desc { font-size: 10px; }
-body.font-small .n-btn { font-size: 12px; }
-
-body.font-large .tile-title { font-size: 17px; }
-body.font-large .tile-desc { font-size: 15px; }
-body.font-large .settings-label { font-size: 17px; }
-body.font-large .settings-desc { font-size: 14px; }
-body.font-large .n-btn { font-size: 16px; }
-
-body.hide-desc .tile-desc { display: none; }
-body.no-anim * { transition: none !important; animation: none !important; }
-
-body.scope-home-icons .tile-icon svg { stroke: var(--accent); }
-body.scope-drawer-icons .drawer-item svg { color: var(--accent); }
-body.scope-action-btns .n-btn-outline { border-color: var(--accent); color: var(--accent); }
-
-body.no-accent { --accent: #52525b !important; --accent-ink: #ffffff !important; }
-body.no-accent .accent-layout-wrapper { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
-body.no-accent .cp-square-wrap, body.no-accent .cp-hue-slider { filter: grayscale(1); pointer-events: none; }
-body.no-accent .cp-preview-color { background: #52525b !important; }
-
-.switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
-.switch input { opacity: 0; width: 0; height: 0; }
-.switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--line); transition: .3s; border-radius: 24px; }
-.switch-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: var(--ink); transition: .3s; border-radius: 50%; }
-.switch input:checked + .switch-slider { background-color: var(--accent); }
-.switch input:checked + .switch-slider:before { transform: translateX(20px); background-color: var(--accent-ink); }
-
-.fab { position: fixed; bottom: calc(24px + var(--safe-bottom)); right: calc(24px + var(--safe-right)); width: 48px; height: 48px; border-radius: 8px; background: var(--ink); color: var(--bg); font-size: 24px; border: none; display: flex; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; }
-.fab:active { transform: scale(0.92); }
-
-#view-module { display: none; }
-#view-module.active { display: block; animation: moduleIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
-@keyframes moduleIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-#view-settings { display: none; }
-#view-settings.active { display: block; }
-#view-backup { display: none; }
-#view-backup.active { display: block; }
-#view-changelog { display: none; }
-#view-changelog.active { display: block; }
+/* Pages */
+.container { max-width: 600px; margin: 0 auto; padding: 16px 20px calc(48px + var(--safe-bottom)); padding-left: max(20px, var(--safe-left)); padding-right: max(20px, var(--safe-right)); }
+#view-home { padding-top: 0; }
 #view-home.hidden { display: none; }
-#fab-add.hidden { display: none; }
+#view-module, #view-settings, #view-backup, #view-changelog { display: none; }
+#view-module.active, #view-settings.active, #view-backup.active, #view-changelog.active { display: block; animation: viewIn 0.16s ease-out; }
+@keyframes viewIn { from { opacity: 0; } to { opacity: 1; } }
 
-.empty-state { border: 1px dashed var(--line); border-radius: 6px; padding: 40px 20px; text-align: center; color: var(--muted); background: var(--surface); }
+/* Search */
+.search-container { position: sticky; top: calc(var(--bar) + var(--safe-top)); z-index: 90; background: var(--bg); padding: 4px 0 12px; }
+.search-field { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 6px 0 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; transition: border-color 0.12s, box-shadow 0.12s; }
+.search-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.search-icon { color: var(--muted); width: 20px; height: 20px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.search-input { flex: 1; min-width: 0; height: 100%; background: transparent; border: none; color: var(--ink); font-size: 16px; outline: none; padding: 0; }
+.search-input::placeholder { color: var(--muted); }
+.search-clear { width: 36px; height: 36px; background: transparent; border: none; border-radius: 8px; color: var(--muted); cursor: pointer; display: none; align-items: center; justify-content: center; }
+.search-clear.show { display: flex; }
+.search-clear:active { background: var(--surface-hover); }
 
-#error-bar { position: fixed; top: 0; left: 0; width: 100%; background: var(--danger); color: #fff; padding: 10px; padding-top: calc(10px + var(--safe-top)); font-size: 12px; z-index: 9999; display: none; text-align: center; font-weight: bold; }
-.settings-block { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
-.settings-header { padding: 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); }
-.settings-row { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
-.settings-label { font-size: 15px; font-weight: 500; }
-.settings-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
-.settings-options { display: flex; gap: 8px; flex-wrap: wrap; }
-.settings-opt-btn { padding: 8px 16px; font-size: 13px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); cursor: pointer; }
-.settings-opt-btn.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+/* Tool list */
+.list { display: flex; flex-direction: column; }
+.group-label { font-size: 14px; font-weight: 600; color: var(--muted); margin: 22px 0 2px; }
+.group-label:first-child { margin-top: 4px; }
+.tile { position: relative; display: flex; align-items: stretch; border-bottom: 1px solid var(--line); }
+.tile-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; padding: 11px 0; background: none; border: 0; text-align: left; color: inherit; cursor: pointer; }
+.tile-main:active { opacity: 0.6; }
+.tile-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--ink); color: var(--bg); display: grid; place-items: center; flex-shrink: 0; }
+.tile-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+body.scope-home-icons .tile-icon { background: var(--accent); color: var(--accent-ink); }
+body.scope-drawer-icons .drawer-item svg { color: var(--accent); }
+.tile-text { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.tile-title { font-size: calc(16px * var(--scale)); font-weight: 600; line-height: 1.3; }
+.tile-desc { font-size: calc(14px * var(--scale)); color: var(--muted); line-height: 1.35; }
+body.hide-desc .tile-desc { display: none; }
+.tile-fav { width: 44px; flex-shrink: 0; margin-right: -10px; border: 0; background: none; color: var(--muted); display: grid; place-items: center; cursor: pointer; }
+.tile-fav svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linejoin: round; }
+.tile-fav[aria-pressed="true"] { color: var(--accent); }
+.tile-fav[aria-pressed="true"] svg { fill: currentColor; }
+.tile-fav:active { transform: scale(0.85); }
 
-.accent-layout-wrapper { display: flex; gap: 16px; align-items: center; width: 100%; margin-top: 4px; }
+.list.grid-view { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.list.grid-view .group-label { grid-column: 1 / -1; margin: 12px 0 -2px; }
+.list.grid-view .group-label:first-child { margin-top: 4px; }
+.list.grid-view .tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-l); }
+.list.grid-view .tile-main { flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px; }
+.list.grid-view .tile-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.list.grid-view .tile-fav { position: absolute; top: 12px; right: 6px; height: 44px; margin: 0; }
+.list.grid-view .suggest, .list.grid-view .empty-state { grid-column: 1 / -1; }
+
+.suggest { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; color: var(--muted); font-size: 15px; }
+.link-btn { background: none; border: 0; padding: 10px 0; color: var(--ink); font-size: 15px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+.empty-state { padding: 40px 12px; text-align: center; color: var(--muted); font-size: 16px; }
+.empty-state p { margin: 0 0 16px; }
+.empty-state .n-btn { margin: 0 auto; }
+
+/* What's new */
+.changelog-item { padding: 4px 0 20px; }
+.changelog-item + .changelog-item { border-top: 1px solid var(--line); padding-top: 20px; }
+.changelog-header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.changelog-ver { font-family: var(--font-display); font-stretch: 80%; font-size: 24px; font-weight: 700; }
+.changelog-date { font-size: 14px; color: var(--muted); }
+.changelog-list { margin: 0; padding-left: 20px; font-size: 16px; line-height: 1.5; }
+.changelog-list li { margin-bottom: 6px; }
+.changelog-list li::marker { color: var(--muted); }
+
+/* Settings */
+.settings-title { font-size: 15px; font-weight: 600; color: var(--muted); margin: 26px 4px 8px; }
+.container > .settings-title:first-child { margin-top: 4px; }
+.settings-block { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-l); overflow: hidden; }
+.settings-block + .settings-block { margin-top: 12px; }
+.settings-row { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 14px 16px; }
+.settings-row + .settings-row, #pin-settings-extra { border-top: 1px solid var(--line); }
+.settings-row.inline { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; }
+.settings-label { font-size: calc(16px * var(--scale)); font-weight: 500; }
+.settings-desc { font-size: calc(14px * var(--scale)); color: var(--muted); margin-top: 2px; line-height: 1.35; }
+.settings-options { display: flex; background: var(--bg); border-radius: var(--r); padding: 3px; }
+.settings-opt-btn { flex: 1; min-height: 40px; padding: 6px 8px; font-size: 15px; border-radius: 8px; background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer; }
+.settings-opt-btn.active { background: var(--surface); border-color: var(--line); color: var(--ink); font-weight: 700; }
+.select-btn { width: 100%; justify-content: space-between; font-weight: 500; background: var(--bg); }
+.select-btn svg { color: var(--muted); }
+
+.switch { position: relative; display: inline-block; width: 52px; height: 32px; flex-shrink: 0; }
+.switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 1; }
+.switch-slider { position: absolute; inset: 0; background: var(--muted); opacity: 0.55; transition: background 0.18s, opacity 0.18s; border-radius: 32px; }
+.switch-slider::before { position: absolute; content: ""; height: 26px; width: 26px; left: 3px; top: 3px; background: #fff; transition: transform 0.18s; border-radius: 50%; }
+.switch input:checked + .switch-slider { background: var(--accent); opacity: 1; }
+.switch input:checked + .switch-slider::before { transform: translateX(20px); background: var(--accent-ink); }
+.switch input:focus-visible + .switch-slider { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.accent-layout-wrapper { display: flex; gap: 16px; align-items: center; width: 100%; }
 .accent-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex: 1; }
-.accent-swatch { width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; transition: transform 0.2s; box-shadow: 0 0 0 0 transparent; }
-.accent-swatch.active { box-shadow: inset 0 0 0 3px var(--bg), inset 0 0 0 5px var(--ink); transform: scale(1.05); }
-.rgb-wheel-wrapper { width: 52px; height: 52px; border-radius: 50%; position: relative; cursor: pointer; flex-shrink: 0; box-shadow: 0 0 0 0 transparent; transition: transform 0.2s; }
-.rgb-wheel-wrapper.active { box-shadow: inset 0 0 0 3px var(--bg), inset 0 0 0 5px var(--ink); transform: scale(1.05); }
-.rgb-wheel-bg { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(from 90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000); }
+.accent-swatch { width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; border: 0; padding: 0; }
+.accent-swatch.active, .rgb-wheel-wrapper.active { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--ink); }
+.rgb-wheel-wrapper { width: 52px; height: 52px; border-radius: 50%; border: 0; padding: 0; position: relative; cursor: pointer; flex-shrink: 0; background: conic-gradient(from 90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000); }
+body.no-accent .accent-layout-wrapper, body.no-accent .accent-scope { opacity: 0.35; pointer-events: none; filter: grayscale(1); }
 
-.hub-select-overlay { position: fixed; inset: 0; z-index: 9000; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.25s; display: flex; align-items: flex-end; justify-content: center; }
+/* Choice sheets and dropdowns */
+.hub-select-overlay { position: fixed; inset: 0; z-index: 9000; background: var(--scrim); opacity: 0; pointer-events: none; transition: opacity 0.2s; display: flex; align-items: flex-end; justify-content: center; }
 .hub-select-overlay.open { opacity: 1; pointer-events: auto; }
-.hub-select-overlay.dropdown-mode { background: transparent; backdrop-filter: none; }
-.hub-select-sheet { width: 100%; max-width: 600px; background: var(--surface); border: 1px solid var(--line); border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 24px 16px calc(24px + var(--safe-bottom)); max-height: 80vh; overflow-y: auto; overscroll-behavior: contain; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.hub-select-overlay.dropdown-mode { background: transparent; }
+.hub-select-sheet { width: 100%; max-width: 600px; background: var(--surface); border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 10px 12px calc(16px + var(--safe-bottom)); max-height: 80vh; overflow-y: auto; overscroll-behavior: contain; transform: translateY(100%); transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: var(--shadow); }
+.hub-select-sheet::before { content: ""; display: block; width: 36px; height: 4px; border-radius: 4px; background: var(--line); margin: 0 auto 10px; }
 .hub-select-overlay.open .hub-select-sheet { transform: translateY(0); }
-.hub-select-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 16px; letter-spacing: 0.5px; }
-.hub-select-item { padding: 16px; border-radius: 6px; margin-bottom: 4px; font-size: 15px; color: var(--ink); display: flex; align-items: center; gap: 12px; cursor: pointer; background: var(--bg); }
-.hub-select-item:active { background: var(--line); }
-.hub-select-item.active { color: var(--accent); font-weight: 600; }
-.hub-select-item.centered { justify-content: center; text-align: center; gap: 0; }
-.hub-select-dropdown { position: fixed; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); overflow: hidden; opacity: 0; transform: translateY(-4px); transition: opacity 0.15s, transform 0.15s; max-height: 60vh; overflow-y: auto; overscroll-behavior: contain; }
+.hub-select-title { font-size: 14px; font-weight: 600; color: var(--muted); padding: 4px 12px 8px; }
+.hub-select-item, .hub-select-dd-item { min-height: 50px; padding: 10px 12px; font-size: 16px; color: var(--ink); display: flex; align-items: center; gap: 12px; cursor: pointer; border-radius: var(--r); }
+.hub-select-item:active, .hub-select-dd-item:active { background: var(--surface-hover); }
+.hub-select-item.active, .hub-select-dd-item.active { font-weight: 700; background: var(--bg); }
+.hub-select-item.active::after, .hub-select-dd-item.active::after { content: ""; margin-left: auto; flex-shrink: 0; width: 7px; height: 13px; border: solid var(--accent); border-width: 0 2.5px 2.5px 0; transform: translateY(-2px) rotate(45deg); }
+.hub-select-item.centered, .hub-select-dd-item.centered { justify-content: center; text-align: center; gap: 0; }
+.hub-select-item.centered.active::after, .hub-select-dd-item.centered.active::after { display: none; }
+.hub-select-item.centered.active, .hub-select-dd-item.centered.active { color: var(--accent); }
+.hub-select-dropdown { position: fixed; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px; box-shadow: var(--shadow); opacity: 0; transform: translateY(-4px); transition: opacity 0.12s, transform 0.12s; max-height: 60vh; overflow-y: auto; overscroll-behavior: contain; }
 .hub-select-overlay.open .hub-select-dropdown { opacity: 1; transform: translateY(0); }
-.hub-select-dd-item { padding: 14px 16px; font-size: 14px; color: var(--ink); display: flex; align-items: center; gap: 12px; cursor: pointer; border-bottom: 1px solid var(--line); }
-.hub-select-dd-item:last-child { border-bottom: none; }
-.hub-select-dd-item.active { color: var(--accent); font-weight: 600; background: rgba(129, 140, 248, 0.05); }
-.hub-select-dd-item.centered { justify-content: center; text-align: center; gap: 0; }
+.hub-select-dd-item { min-height: 46px; font-size: 15px; }
 
-.hub-modal-overlay { position: fixed; inset: 0; z-index: 9100; background: rgba(0,0,0,0.95); opacity: 0; pointer-events: none; transition: opacity 0.25s; display: flex; align-items: center; justify-content: center; padding: calc(20px + var(--safe-top)) max(20px, var(--safe-right)) calc(20px + var(--safe-bottom)) max(20px, var(--safe-left)); }
+/* Full-screen preview (always dark, it mostly shows images) and themed dialog */
+.hub-modal-overlay { position: fixed; inset: 0; z-index: 9100; background: rgba(8, 12, 17, 0.96); color: var(--ink); opacity: 0; pointer-events: none; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; padding: calc(20px + var(--safe-top)) max(20px, var(--safe-right)) calc(20px + var(--safe-bottom)) max(20px, var(--safe-left)); }
 .hub-modal-overlay.open { opacity: 1; pointer-events: auto; }
 .hub-modal-content { max-width: 100%; max-height: 100%; display: flex; align-items: center; justify-content: center; width: 100%; }
 .hub-modal-content > * { max-width: 100%; max-height: calc(100vh - 40px - var(--safe-top) - var(--safe-bottom)); }
-.hub-modal-close { position: absolute; top: calc(16px + var(--safe-top)); right: calc(16px + var(--safe-right)); width: 40px; height: 40px; border-radius: 50%; background: rgba(24, 24, 27, 0.8); border: 1px solid var(--line); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.hub-modal-close { position: absolute; top: calc(12px + var(--safe-top)); right: calc(12px + var(--safe-right)); width: 44px; height: 44px; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1; }
 .hub-modal-close:active { background: var(--surface-hover); }
+.hub-modal-overlay.dialog { background: var(--scrim); }
+.hub-modal-overlay.dialog .hub-modal-content { position: relative; display: block; width: 100%; max-width: 420px; background: var(--surface); border-radius: 20px; padding: 22px 20px 20px; box-shadow: var(--shadow); max-height: 100%; overflow-y: auto; }
+.hub-modal-overlay.dialog .hub-modal-close { position: absolute; top: 10px; right: 10px; border: 0; background: none; color: var(--muted); }
+.dialog-title { font-family: var(--font-display); font-stretch: 80%; font-weight: 700; font-size: 24px; line-height: 1.15; margin: 0 40px 8px 0; }
+.dialog-text { font-size: 16px; color: var(--muted); margin: 0 0 16px; line-height: 1.45; }
+.dialog-text:last-child { margin-bottom: 0; }
 
-.hub-confirm-overlay { position: fixed; inset: 0; z-index: 9200; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.25s; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.hub-confirm-overlay { position: fixed; inset: 0; z-index: 9200; background: var(--scrim); opacity: 0; pointer-events: none; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .hub-confirm-overlay.open { opacity: 1; pointer-events: auto; }
-.hub-confirm-box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 24px; width: 100%; max-width: 400px; }
-.hub-confirm-msg { font-size: 15px; color: var(--ink); margin-bottom: 20px; line-height: 1.5; }
+.hub-confirm-box { background: var(--surface); border-radius: 20px; padding: 22px 20px 20px; width: 100%; max-width: 400px; box-shadow: var(--shadow); }
+.hub-confirm-msg { font-size: 16px; color: var(--ink); margin-bottom: 20px; line-height: 1.45; }
 .hub-confirm-btns { display: flex; gap: 8px; }
 .hub-confirm-btns .n-btn { flex: 1; }
 
-.color-picker-overlay { position: fixed; inset: 0; z-index: 9500; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.25s; display: flex; align-items: center; justify-content: center; padding: 20px; }
+/* Colour picker */
+.color-picker-overlay { position: fixed; inset: 0; z-index: 9500; background: var(--scrim); opacity: 0; pointer-events: none; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .color-picker-overlay.open { opacity: 1; pointer-events: auto; }
-.color-picker-box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; width: 100%; max-width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto; }
-.cp-header { font-size: 16px; font-weight: 600; color: var(--ink); text-align: center; margin-bottom: 4px; }
-.cp-square-wrap { position: relative; width: 100%; aspect-ratio: 1.2; border-radius: 8px; overflow: hidden; cursor: crosshair; border: 1px solid var(--line); }
+.color-picker-box { background: var(--surface); border-radius: 20px; padding: 20px; width: 100%; max-width: 340px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 14px; max-height: 90vh; overflow-y: auto; }
+.cp-header { font-family: var(--font-display); font-stretch: 80%; font-size: 24px; font-weight: 700; line-height: 1.15; }
+.cp-square-wrap { position: relative; width: 100%; aspect-ratio: 1.2; border-radius: var(--r); overflow: hidden; cursor: crosshair; border: 1px solid var(--line); }
 .cp-square-bg { position: absolute; inset: 0; }
-.cp-square-cursor { position: absolute; width: 18px; height: 18px; border: 2px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 1px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(0,0,0,0.5); pointer-events: none; }
-.cp-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin-bottom: -8px; }
-.cp-hue-slider { width: 100%; height: 32px; border-radius: 8px; background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 66%, #f0f 83%, #f00 100%); position: relative; cursor: pointer; border: 1px solid var(--line); }
+.cp-square-cursor { position: absolute; width: 20px; height: 20px; border: 2px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 1px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(0,0,0,0.5); pointer-events: none; }
+.cp-label { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: -6px; }
+.cp-hue-slider { width: 100%; height: 32px; border-radius: var(--r); background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 66%, #f0f 83%, #f00 100%); position: relative; cursor: pointer; border: 1px solid var(--line); }
 .cp-hue-cursor { position: absolute; top: -4px; bottom: -4px; width: 12px; border: 2px solid #fff; border-radius: 4px; transform: translateX(-50%); box-shadow: 0 0 0 1px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.5); pointer-events: none; }
 .cp-preview-row { display: flex; align-items: center; gap: 12px; }
-.cp-preview-color { width: 48px; height: 48px; border-radius: 8px; border: 1px solid var(--line); flex-shrink: 0; }
-.cp-hex-input { flex: 1; background: var(--bg); border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 14px 12px; font-family: monospace; font-size: 16px; text-transform: uppercase; outline: none; text-align: center; font-weight: 600; }
-.cp-hex-input:focus { border-color: var(--accent); }
-.cp-actions { display: flex; gap: 8px; margin-top: 8px; }
+.cp-preview-color { width: 48px; height: 48px; border-radius: var(--r); border: 1px solid var(--line); flex-shrink: 0; }
+.cp-hex-input { flex: 1; min-width: 0; height: 48px; background: var(--bg); border: 1px solid var(--line); color: var(--ink); border-radius: var(--r); padding: 0 12px; font-family: var(--font-mono); font-size: 17px; text-transform: uppercase; outline: none; }
+.cp-hex-input:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.cp-actions { display: flex; gap: 8px; margin-top: 4px; }
 .cp-actions .n-btn { flex: 1; }
 
-#toast-container { position: fixed; top: calc(70px + var(--safe-top)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 10000; pointer-events: none; width: 90%; max-width: 400px; }
-.toast { background: var(--surface-hover); color: var(--ink); padding: 14px 20px; border-radius: 8px; border: 1px solid var(--line); font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); opacity: 0; transform: translateY(-20px); transition: all 0.3s; text-align: center; }
+/* Messages */
+#error-bar { position: fixed; top: 0; left: 0; width: 100%; background: var(--danger); color: #fff; padding: 10px 16px; padding-top: calc(10px + var(--safe-top)); font-size: 14px; z-index: 9999; display: none; text-align: center; font-weight: 600; }
+:root[data-theme="dark"] #error-bar { color: #1A0B08; }
+#toast-container { position: fixed; top: calc(var(--bar) + 12px + var(--safe-top)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 10000; pointer-events: none; width: 90%; max-width: 400px; }
+.toast { background: var(--ink); color: var(--bg); padding: 13px 18px; border-radius: 12px; font-size: 15px; font-weight: 500; box-shadow: var(--shadow); opacity: 0; transform: translateY(-12px); transition: opacity 0.2s, transform 0.2s; text-align: center; }
 .toast.show { opacity: 1; transform: translateY(0); }
-
-.update-toast {
-  position: fixed;
-  bottom: calc(16px + var(--safe-bottom));
-  left: 50%;
-  transform: translateX(-50%) translateY(100px);
-  background: var(--surface-hover);
-  border: 1px solid var(--accent);
-  padding: 12px 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  z-index: 10001;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  width: 90%;
-  max-width: 400px;
-}
+.update-toast { position: fixed; bottom: calc(16px + var(--safe-bottom)); left: 50%; transform: translateX(-50%) translateY(140px); background: var(--ink); color: var(--bg); padding: 8px 8px 8px 16px; border-radius: 14px; display: flex; align-items: center; gap: 8px; z-index: 10001; box-shadow: var(--shadow); transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1); width: 92%; max-width: 420px; }
 .update-toast.show { transform: translateX(-50%) translateY(0); }
-.update-toast span { flex: 1; font-size: 14px; color: var(--ink); }
-.update-toast button { background: var(--accent); color: var(--accent-ink); border: none; padding: 6px 12px; border-radius: 4px; font-weight: 600; cursor: pointer; }
-.update-toast button.close-btn { background: transparent; color: var(--muted); padding: 6px; }
+.update-toast span { flex: 1; font-size: 15px; }
+.update-toast button { min-height: 40px; background: var(--bg); color: var(--ink); border: none; padding: 6px 14px; border-radius: 9px; font-size: 15px; font-weight: 700; cursor: pointer; }
+.update-toast button.close-btn { background: transparent; color: var(--bg); width: 40px; padding: 0; display: grid; place-items: center; opacity: 0.75; }
 
-#pin-lock-overlay {
-  position: fixed; inset: 0; z-index: 99999; background: var(--bg);
-  display: none; flex-direction: column; align-items: center; justify-content: center;
-  padding: 24px;
-}
-#pin-lock-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.pin-header { text-align: center; margin-bottom: 32px; }
-.pin-icon { width: 40px; height: 40px; color: var(--accent); margin-bottom: 16px; opacity: 0.9; }
-.pin-title { font-size: 20px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
-.pin-hint-text { font-size: 14px; color: var(--muted); font-style: italic; min-height: 20px; }
-
-.pin-dots { display: flex; gap: 16px; margin-bottom: 40px; }
-.pin-dot { 
-  width: 14px; height: 14px; border-radius: 50%; 
-  background: var(--line); 
-  transition: background 0.15s, transform 0.15s; 
-}
-.pin-dot.filled { 
-  background: var(--accent); 
-  transform: scale(1.2); 
-}
-
-.pin-error { color: var(--danger); font-size: 14px; margin-bottom: 20px; min-height: 20px; font-weight: 500; text-align: center; }
+/* PIN lock */
+#pin-lock-overlay { position: fixed; inset: 0; z-index: 99999; background: var(--bg); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+#pin-lock-overlay.show { display: flex; animation: viewIn 0.2s ease; }
+.pin-header { text-align: center; margin-bottom: 28px; }
+.pin-title { font-family: var(--font-display); font-stretch: 80%; font-size: 30px; font-weight: 700; line-height: 1.15; margin-bottom: 6px; }
+.pin-hint-text { font-size: 15px; color: var(--muted); min-height: 21px; }
+.pin-dots { display: flex; gap: 18px; margin-bottom: 16px; }
+.pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--muted); transition: background 0.12s, border-color 0.12s; }
+.pin-dot.filled { background: var(--ink); border-color: var(--ink); }
+.pin-error { color: var(--danger); font-size: 15px; margin-bottom: 20px; min-height: 21px; font-weight: 600; text-align: center; }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
 .shake { animation: shake 0.3s ease-in-out; }
+.pin-numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 300px; }
+.pin-btn { height: 64px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.1s; }
+.pin-btn:active { background: var(--surface-hover); }
+.pin-btn.empty { background: transparent; border: none; pointer-events: none; }
+.pin-btn.backspace { background: transparent; border: none; color: var(--muted); }
+.pin-btn.backspace:active { background: var(--surface-hover); color: var(--ink); }
+.pin-cancel { margin-top: 20px; min-height: 48px; background: transparent; border: none; color: var(--ink); font-size: 16px; font-weight: 600; padding: 12px 24px; cursor: pointer; display: none; text-decoration: underline; text-underline-offset: 3px; }
 
-.pin-numpad { 
-  display: grid; 
-  grid-template-columns: repeat(3, 1fr); 
-  gap: 12px; 
-  width: 100%; 
-  max-width: 300px; 
+body.no-anim *, body.no-anim *::before, body.no-anim *::after { transition: none !important; animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
-.pin-btn { 
-  height: 64px; 
-  border-radius: 12px; 
-  background: var(--surface); 
-  border: 1px solid var(--line);
-  color: var(--ink); 
-  font-size: 24px; 
-  font-weight: 500; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center;
-  cursor: pointer; 
-  transition: background 0.1s, transform 0.1s; 
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-  font-family: inherit;
-}
-.pin-btn:active { 
-  background: var(--surface-hover); 
-  transform: scale(0.95);
-}
-.pin-btn.empty { 
-  background: transparent; 
-  border: none; 
-  pointer-events: none; 
-}
-.pin-btn.backspace { 
-  background: transparent; 
-  border: none; 
-  color: var(--muted); 
-}
-.pin-btn.backspace:active { 
-  background: var(--surface); 
-  color: var(--ink);
-}
-.pin-cancel {
-  margin-top: 24px;
-  background: transparent;
-  border: none;
-  color: var(--muted);
-  font-size: 16px;
-  font-weight: 500;
-  padding: 12px 24px;
-  cursor: pointer;
-  outline: none;
-  display: none;
-}
-.pin-cancel:active { opacity: 0.7; }
 </style>
 </head>
 <body>
 
 <div id="app-scroll">
-<div id="error-bar"></div>
+<div id="error-bar" role="alert"></div>
 
 <div class="drawer-overlay" id="drawer-overlay"></div>
-<div class="drawer" id="drawer">
-  <div class="drawer-header"><h2 class="drawer-title">Workspace</h2></div>
+<nav class="drawer" id="drawer" aria-label="Menu">
+  <h2 class="drawer-title">Workspace</h2>
   <div class="drawer-menu">
-    <div class="drawer-item" id="drawer-home" onclick="Hub.showHome(true)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-      <span>Główny hub</span>
-    </div>
-    <div class="drawer-item" id="drawer-settings" onclick="Hub.openSettings()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    <button class="drawer-item" id="drawer-home" onclick="Hub.showHome(true)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+      <span>Narzędzia</span>
+    </button>
+    <button class="drawer-item" id="drawer-settings" onclick="Hub.openSettings()">
+      <svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
       <span>Ustawienia</span>
-    </div>
-    <div class="drawer-item" id="drawer-changelog" onclick="Hub.openChangelog()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path><path d="M2 12h20"></path></svg>
+    </button>
+    <button class="drawer-item" id="drawer-backup" onclick="Hub.openBackup()">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      <span>Kopia zapasowa</span>
+    </button>
+    <button class="drawer-item" id="drawer-changelog" onclick="Hub.openChangelog()">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
       <span>Co nowego</span>
       <div id="changelog-badge" class="badge-dot"></div>
-    </div>
-    <div class="drawer-item" id="drawer-backup" onclick="Hub.openBackup()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
-      <span>Kopia zapasowa</span>
-    </div>
-    <div class="drawer-item" onclick="Hub.refreshApp()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+    </button>
+    <div class="drawer-sep"></div>
+    <button class="drawer-item" onclick="Hub.openSuggestionModal()">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      <span>Zaproponuj narzędzie</span>
+    </button>
+    <button class="drawer-item" onclick="Hub.refreshApp()">
+      <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
       <span>Odśwież aplikację</span>
-    </div>
-    <div class="drawer-item" onclick="Hub.showSupport()" style="margin-top: auto; border-top: 1px solid var(--line);">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+    </button>
+    <div class="drawer-spacer"></div>
+    <div class="drawer-sep"></div>
+    <button class="drawer-item" onclick="Hub.showSupport()">
+      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
       <span>Wsparcie</span>
-    </div>
-    <div class="drawer-item" onclick="Hub.showInfo()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+    </button>
+    <button class="drawer-item" onclick="Hub.showInfo()">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
       <span>Informacje</span>
-    </div>
+    </button>
   </div>
-</div>
+</nav>
 
-<div class="topbar">
-  <button class="menu-btn" id="menu-btn">
-    <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-  </button>
-  <h1 class="topbar-title" id="app-title">Workspace</h1>
-</div>
+<header class="topbar">
+  <div class="topbar-in">
+    <button class="nav-btn" id="menu-btn" aria-label="Menu">
+      <svg class="ic-menu" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      <svg class="ic-back" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+    </button>
+    <h1 class="topbar-title" id="app-title">Workspace</h1>
+  </div>
+</header>
 
 <main class="container" id="view-home">
   <div id="search-area" class="search-container">
-    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-    <input type="text" id="search-input" class="search-input" placeholder="Szukaj modułów..." autocomplete="off" spellcheck="false">
-    <button id="search-clear" class="search-clear">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-    </button>
+    <label class="search-field">
+      <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" inputmode="search" id="search-input" class="search-input" placeholder="Szukaj narzędzia" aria-label="Szukaj narzędzia" autocomplete="off" spellcheck="false" enterkeyhint="search">
+      <button id="search-clear" class="search-clear" aria-label="Wyczyść wyszukiwanie">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </label>
   </div>
   <div class="list" id="modules-grid"></div>
 </main>
@@ -442,191 +409,184 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
 
 <main class="container" id="view-backup">
   <div class="settings-block">
-    <div class="settings-header">Eksport danych</div>
     <div class="settings-row">
-      <div><div class="settings-label">Zapisz kopię zapasową</div><div class="settings-desc">Pobierz plik z ustawieniami, ulubionymi modułami i konfiguracją</div></div>
-      <button class="n-btn n-btn-outline" id="btn-export-data" style="width: 100%;">Eksportuj dane</button>
+      <div><div class="settings-label">Zapisz kopię do pliku</div><div class="settings-desc">Plik zawiera ustawienia, ulubione narzędzia i dane zapisane w aplikacji.</div></div>
+      <button class="n-btn n-btn-outline" id="btn-export-data">Zapisz kopię</button>
     </div>
   </div>
-  
   <div class="settings-block">
-    <div class="settings-header">Import danych</div>
     <div class="settings-row">
-      <div><div class="settings-label">Przywróć z pliku</div><div class="settings-desc">Wczytaj wcześniej pobraną kopię zapasową. Spowoduje to nadpisanie obecnych ustawień.</div></div>
-      <button class="n-btn" id="btn-import-data" style="width: 100%;">Importuj dane</button>
+      <div><div class="settings-label">Przywróć z pliku</div><div class="settings-desc">Wczytanie kopii zastąpi wszystko, co jest teraz zapisane w aplikacji.</div></div>
+      <button class="n-btn" id="btn-import-data">Wybierz plik kopii</button>
       <input type="file" id="import-file" accept=".json" style="display: none;">
     </div>
   </div>
 </main>
 
 <main class="container" id="view-settings">
-  <div class="settings-block" id="install-block" style="display: none;">
-    <div class="settings-header">Aplikacja</div>
-    <div class="settings-row">
-      <div><div class="settings-label">Zainstaluj na telefonie</div><div class="settings-desc">Dodaj skrót do pulpitu i uruchamiaj bez przeglądarki</div></div>
-      <button class="n-btn n-btn-outline" id="btn-install-pwa" style="width: 100%;">Zainstaluj aplikację</button>
+  <div id="install-block" style="display: none;">
+    <div class="settings-title">Aplikacja</div>
+    <div class="settings-block">
+      <div class="settings-row">
+        <div><div class="settings-label">Zainstaluj na telefonie</div><div class="settings-desc">Skrót na ekranie głównym, działa bez przeglądarki i bez internetu.</div></div>
+        <button class="n-btn n-btn-outline" id="btn-install-pwa">Zainstaluj aplikację</button>
+      </div>
     </div>
   </div>
 
+  <div class="settings-title">Wygląd</div>
   <div class="settings-block">
-    <div class="settings-header">Wygląd i Układ</div>
     <div class="settings-row">
-      <div><div class="settings-label">Animacja menu wyboru</div><div class="settings-desc">Sposób w jaki pojawiają się listy rozwijane</div></div>
+      <div><div class="settings-label">Motyw</div><div class="settings-desc">Auto dopasowuje się do ustawień telefonu</div></div>
       <div class="settings-options">
-        <button class="settings-opt-btn" id="opt-bottom">Z dołu ekranu</button>
-        <button class="settings-opt-btn" id="opt-dropdown">Z przycisku</button>
+        <button class="settings-opt-btn" id="opt-theme-system">Auto</button>
+        <button class="settings-opt-btn" id="opt-theme-light">Jasny</button>
+        <button class="settings-opt-btn" id="opt-theme-dark">Ciemny</button>
       </div>
     </div>
-    <div class="settings-row" style="border-top: 1px solid var(--line);">
-      <div><div class="settings-label">Gęstość widoku</div><div class="settings-desc">Wybierz jak mają wyglądać kafelki modułów</div></div>
+    <div class="settings-row">
+      <div class="settings-label">Układ listy narzędzi</div>
       <div class="settings-options">
         <button class="settings-opt-btn" id="opt-view-list">Lista</button>
-        <button class="settings-opt-btn" id="opt-view-grid">Siatka (2 kolumny)</button>
+        <button class="settings-opt-btn" id="opt-view-grid">Siatka</button>
       </div>
     </div>
-    <div class="settings-row" style="border-top: 1px solid var(--line);">
-      <div><div class="settings-label">Rozmiar tekstu</div><div class="settings-desc">Wpływa na czytelność całej aplikacji</div></div>
+    <div class="settings-row">
+      <div class="settings-label">Rozmiar tekstu</div>
       <div class="settings-options">
         <button class="settings-opt-btn" id="opt-font-small">Mały</button>
         <button class="settings-opt-btn" id="opt-font-med">Średni</button>
         <button class="settings-opt-btn" id="opt-font-large">Duży</button>
       </div>
     </div>
-    <div class="settings-row" style="border-top: 1px solid var(--line); flex-direction: row; justify-content: space-between; align-items: center;">
-      <div><div class="settings-label">Ukryj opisy modułów</div><div class="settings-desc">Zostaw tylko nazwy na kafelkach</div></div>
+    <div class="settings-row inline">
+      <div><div class="settings-label">Opisy narzędzi</div><div class="settings-desc">Krótki opis pod nazwą na liście</div></div>
       <label class="switch"><input type="checkbox" id="opt-hide-desc"><span class="switch-slider"></span></label>
     </div>
-    <div class="settings-row" style="border-top: 1px solid var(--line); flex-direction: row; justify-content: space-between; align-items: center;">
-      <div><div class="settings-label">Animacje</div><div class="settings-desc">Efekty wizualne i płynne przejścia</div></div>
-      <label class="switch"><input type="checkbox" id="opt-no-anim"><span class="switch-slider"></span></label>
-    </div>
   </div>
 
+  <div class="settings-title">Kolor akcentu</div>
   <div class="settings-block">
-    <div class="settings-header">Pola tekstowe</div>
-    <div class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
-      <div><div class="settings-label">Auto-dopasowanie wysokości</div><div class="settings-desc">Rozciągaj pole wraz z wpisywanym tekstem</div></div>
-      <label class="switch"><input type="checkbox" id="opt-auto-expand"><span class="switch-slider"></span></label>
-    </div>
-    <div class="settings-row" id="row-expand-lines" style="border-top: 1px solid var(--line);">
-      <div><div class="settings-label">Maksymalna liczba linii</div><div class="settings-desc">Po ilu linijkach pojawi się wewnętrzny pasek przewijania</div></div>
-      <div id="opt-expand-lines-trigger" class="n-btn" style="width: 100%; justify-content: space-between; padding: 10px 16px;">
-        <span id="opt-expand-lines-text">50 linii</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-      </div>
-    </div>
-  </div>
-
-  <div class="settings-block">
-    <div class="settings-header">Personalizacja</div>
-    <div class="settings-row">
-      <div><div class="settings-label">Paleta Akcentów</div><div class="settings-desc">Kolor wyróżnień, suwaków i aktywnych elementów</div></div>
-      <div class="accent-layout-wrapper">
-        <div class="accent-presets" id="accent-grid"></div>
-        <div class="rgb-wheel-wrapper" id="rgb-wheel-wrapper" title="Wybierz własny kolor">
-          <div class="rgb-wheel-bg"></div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="settings-row" style="border-top: 1px solid var(--line); flex-direction: row; justify-content: space-between; align-items: center;">
-      <div><div class="settings-label" style="font-weight: 600; color: var(--accent);">Włącz akcenty</div><div class="settings-desc">Główny wyłącznik kolorów</div></div>
+    <div class="settings-row inline">
+      <div><div class="settings-label">Używaj koloru</div><div class="settings-desc">Po wyłączeniu aplikacja jest czarno-biała</div></div>
       <label class="switch"><input type="checkbox" id="opt-accent-master"><span class="switch-slider"></span></label>
     </div>
-    <div class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
-      <div><div class="settings-label">Ikony modułów</div><div class="settings-desc">Koloruj ikony na stronie głównej</div></div>
+    <div class="settings-row">
+      <div><div class="settings-label">Kolor</div><div class="settings-desc">Wyróżnia zaznaczenia, przełączniki i wyniki. Koło po prawej otwiera własny kolor.</div></div>
+      <div class="accent-layout-wrapper">
+        <div class="accent-presets" id="accent-grid"></div>
+        <button class="rgb-wheel-wrapper" id="rgb-wheel-wrapper" aria-label="Wybierz własny kolor"></button>
+      </div>
+    </div>
+    <div class="settings-row inline accent-scope">
+      <div class="settings-label">Koloruj ikony narzędzi</div>
       <label class="switch"><input type="checkbox" id="opt-scope-home"><span class="switch-slider"></span></label>
     </div>
-    <div class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
-      <div><div class="settings-label">Ikony w menu</div><div class="settings-desc">Koloruj ikony w menu bocznym</div></div>
+    <div class="settings-row inline accent-scope">
+      <div class="settings-label">Koloruj ikony w menu</div>
       <label class="switch"><input type="checkbox" id="opt-scope-drawer"><span class="switch-slider"></span></label>
     </div>
-    <div class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
-      <div><div class="settings-label">Przyciski akcji</div><div class="settings-desc">Koloruj główne przyciski w modułach</div></div>
+    <div class="settings-row inline accent-scope">
+      <div class="settings-label">Koloruj główne przyciski</div>
       <label class="switch"><input type="checkbox" id="opt-scope-btns"><span class="switch-slider"></span></label>
     </div>
   </div>
 
+  <div class="settings-title">Zachowanie</div>
   <div class="settings-block">
-    <div class="settings-header">Funkcjonalność</div>
-    <div class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
-      <div><div class="settings-label">Wibracje (Haptyka)</div><div class="settings-desc">Krótkie wibracje przy klikaniu</div></div>
-      <label class="switch">
-        <input type="checkbox" id="opt-haptics">
-        <span class="switch-slider"></span>
-      </label>
+    <div class="settings-row inline">
+      <div><div class="settings-label">Wibracje</div><div class="settings-desc">Krótka wibracja przy dotknięciu</div></div>
+      <label class="switch"><input type="checkbox" id="opt-haptics"><span class="switch-slider"></span></label>
     </div>
+    <div class="settings-row inline">
+      <div><div class="settings-label">Animacje</div><div class="settings-desc">Płynne przejścia między ekranami</div></div>
+      <label class="switch"><input type="checkbox" id="opt-no-anim"><span class="switch-slider"></span></label>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">Listy wyboru</div><div class="settings-desc">Gdzie otwiera się lista opcji</div></div>
+      <div class="settings-options">
+        <button class="settings-opt-btn" id="opt-bottom">Na dole ekranu</button>
+        <button class="settings-opt-btn" id="opt-dropdown">Przy przycisku</button>
+      </div>
+    </div>
+    <div class="settings-row inline">
+      <div><div class="settings-label">Rosnące pola tekstowe</div><div class="settings-desc">Pole wydłuża się razem z wpisywanym tekstem</div></div>
+      <label class="switch"><input type="checkbox" id="opt-auto-expand"><span class="switch-slider"></span></label>
+    </div>
+    <div class="settings-row" id="row-expand-lines">
+      <div><div class="settings-label">Największa wysokość pola</div><div class="settings-desc">Dłuższy tekst przewija się wewnątrz pola</div></div>
+      <button id="opt-expand-lines-trigger" class="n-btn select-btn">
+        <span id="opt-expand-lines-text">50 linii</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+    </div>
+  </div>
 
-    <div class="settings-row" style="border-top: 1px solid var(--line); flex-direction: row; justify-content: space-between; align-items: center;">
-      <div><div class="settings-label">Blokada dostępu PIN</div><div class="settings-desc">Zabezpiecz aplikację kodem 4-cyfrowym</div></div>
+  <div class="settings-title">Blokada</div>
+  <div class="settings-block">
+    <div class="settings-row inline">
+      <div><div class="settings-label">Kod PIN</div><div class="settings-desc">Aplikacja pyta o 4-cyfrowy kod przy otwieraniu</div></div>
       <label class="switch"><input type="checkbox" id="opt-pin-toggle"><span class="switch-slider"></span></label>
     </div>
-
     <div id="pin-settings-extra" class="hidden">
-      <div class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
-        <div><div class="settings-label">Zmień kod PIN</div></div>
-        <button class="n-btn" id="btn-change-pin" style="padding: 8px 16px; font-size: 13px;">Zmień</button>
-      </div>
-
-      <div class="settings-row" style="border-top: 1px solid var(--line);">
-        <div><div class="settings-label">Czas bezczynności do blokady</div><div class="settings-desc">Po jakim czasie aplikacja ma się zablokować</div></div>
-        <div id="opt-pin-timeout-trigger" class="n-btn" style="width: 100%; justify-content: space-between; padding: 10px 16px; margin-top: 8px;">
+      <div class="settings-row">
+        <div class="settings-label">Blokuj aplikację</div>
+        <button id="opt-pin-timeout-trigger" class="n-btn select-btn">
           <span id="opt-pin-timeout-text">Natychmiast po wyjściu</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
       </div>
-
-      <div class="settings-row" style="border-top: 1px solid var(--line);">
-        <div><div class="settings-label">Podpowiedź do kodu</div><div class="settings-desc">Opcjonalny tekst wyświetlany na ekranie blokady</div></div>
-        <input type="text" id="input-pin-hint" class="n-input" placeholder="Np. Rok urodzenia..." maxlength="30" style="margin-top: 8px;">
+      <div class="settings-row">
+        <div><label class="settings-label" for="input-pin-hint">Podpowiedź do kodu</label><div class="settings-desc">Widoczna na ekranie blokady. Możesz zostawić puste.</div></div>
+        <input type="text" id="input-pin-hint" class="n-input" placeholder="np. rok ślubu" maxlength="30" style="background: var(--bg);">
+      </div>
+      <div class="settings-row">
+        <button class="n-btn" id="btn-change-pin">Zmień kod PIN</button>
       </div>
     </div>
   </div>
 
+  <div class="settings-title">Ustawienia domyślne</div>
   <div class="settings-block">
-    <div class="settings-header">Konserwacja</div>
     <div class="settings-row">
-      <div><div class="settings-label">Resetowanie danych</div><div class="settings-desc">Przywróć wszystkie ustawienia domyślne</div></div>
-      <button class="n-btn" id="btn-reset-settings" style="width: 100%; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);">Przywróć domyślne</button>
+      <div class="settings-desc" style="margin: 0;">Wygląd, kolory, zachowanie i blokada wracają do stanu początkowego. Ulubione i dane zapisane w narzędziach zostają.</div>
+      <button class="n-btn n-btn-danger" id="btn-reset-settings">Przywróć ustawienia domyślne</button>
     </div>
   </div>
 </main>
 
-<button class="fab" id="fab-add">+</button>
-
 <div class="color-picker-overlay" id="custom-color-picker">
   <div class="color-picker-box">
-    <div class="cp-header">Wybierz kolor</div>
+    <div class="cp-header">Własny kolor</div>
     <div class="cp-square-wrap" id="cp-square">
       <div class="cp-square-bg" id="cp-square-bg"></div>
       <div class="cp-square-cursor" id="cp-cursor"></div>
     </div>
-    <div class="cp-label">Odcień (Barwa)</div>
+    <div class="cp-label">Odcień</div>
     <div class="cp-hue-slider" id="cp-hue">
       <div class="cp-hue-cursor" id="cp-hue-cursor"></div>
     </div>
-    <div class="cp-label">Kod HEX</div>
+    <label class="cp-label" for="cp-hex">Kod koloru</label>
     <div class="cp-preview-row">
       <div class="cp-preview-color" id="cp-preview"></div>
-      <input type="text" class="cp-hex-input" id="cp-hex" maxlength="7" placeholder="#818CF8" autocomplete="off" spellcheck="false">
+      <input type="text" class="cp-hex-input" id="cp-hex" maxlength="7" placeholder="#2FA36B" autocomplete="off" spellcheck="false">
     </div>
     <div class="cp-actions">
       <button class="n-btn" id="cp-cancel">Anuluj</button>
-      <button class="n-btn" id="cp-apply" style="border-color:var(--accent); color:var(--accent);">Zastosuj</button>
+      <button class="n-btn n-btn-outline" id="cp-apply">Użyj koloru</button>
     </div>
   </div>
 </div>
 
 <div id="pin-lock-overlay">
   <div class="pin-header">
-    <svg class="pin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
     <div class="pin-title" id="pin-title">Wpisz kod PIN</div>
     <div class="pin-hint-text" id="pin-hint"></div>
   </div>
   <div class="pin-dots" id="pin-dots">
     <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
   </div>
-  <div class="pin-error" id="pin-error"></div>
+  <div class="pin-error" id="pin-error" role="alert"></div>
   <div class="pin-numpad">
     <button class="pin-btn" onclick="Hub.pinInput('1')">1</button>
     <button class="pin-btn" onclick="Hub.pinInput('2')">2</button>
@@ -637,27 +597,29 @@ body.no-accent .cp-preview-color { background: #52525b !important; }
     <button class="pin-btn" onclick="Hub.pinInput('7')">7</button>
     <button class="pin-btn" onclick="Hub.pinInput('8')">8</button>
     <button class="pin-btn" onclick="Hub.pinInput('9')">9</button>
-    <button class="pin-btn empty"></button>
+    <button class="pin-btn empty" tabindex="-1" aria-hidden="true"></button>
     <button class="pin-btn" onclick="Hub.pinInput('0')">0</button>
-    <button class="pin-btn backspace" onclick="Hub.pinDelete()">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+    <button class="pin-btn backspace" onclick="Hub.pinDelete()" aria-label="Usuń cyfrę">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
     </button>
   </div>
   <button id="pin-cancel-btn" class="pin-cancel" onclick="Hub.cancelPinFlow()">Anuluj</button>
 </div>
 
-<div id="toast-container"></div>
+<div id="toast-container" role="status"></div>
 
 <div id="update-toast" class="update-toast">
-  <span>Dostępna jest nowa wersja.</span>
+  <span>Jest nowa wersja aplikacji.</span>
   <button id="btn-update-reload">Odśwież</button>
-  <button id="btn-update-close" class="close-btn">✕</button>
+  <button id="btn-update-close" class="close-btn" aria-label="Zamknij">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+  </button>
 </div>
 
 </div>
 
 <script>
-window.addEventListener('error', e => { const b = document.getElementById('error-bar'); if(b){ b.style.display='block'; b.textContent = 'BŁĄD: ' + e.message; } });
+window.addEventListener('error', e => { const b = document.getElementById('error-bar'); if(b){ b.style.display='block'; b.textContent = 'Błąd: ' + e.message; } });
 
 window.showToast = m => { const c = document.getElementById('toast-container'); const t = document.createElement('div'); t.className='toast'; t.textContent=m; c.appendChild(t); requestAnimationFrame(()=>t.classList.add('show')); setTimeout(()=>{t.classList.remove('show'); setTimeout(()=>t.remove(),300)}, 3800); };
 
@@ -697,7 +659,7 @@ window.Hub = {
   pinIsFirstTime: false,
   
   settings: { 
-    accent: '#818cf8', menuStyle: 'bottom', gridView: false, haptics: true, 
+    accent: '#2FA36B', theme: 'system', menuStyle: 'bottom', gridView: false, haptics: true, 
     noAccent: false, scopeHome: false, scopeDrawer: false, scopeBtns: false,
     autoExpand: true, autoExpandLines: 50,
     fontSize: 'medium', hideDesc: false, noAnim: false,
@@ -710,7 +672,7 @@ window.Hub = {
     set: async function(k, v) { try { const db = await this.open(); return new Promise((res, rej) => { const r = db.transaction("kv","readwrite").objectStore("kv").put(v, k); r.onsuccess = () => res(true); r.onerror = () => rej(r.error); }); } catch(e) { return false; } }
   },
 
-  refreshApp: function() { showToast("Odświeżanie aplikacji..."); setTimeout(() => location.reload(), 300); },
+  refreshApp: function() { showToast("Odświeżam aplikację"); setTimeout(() => location.reload(), 300); },
 
   haptic: function(style = 'light') {
     if (!Hub.settings.haptics) return;
@@ -761,43 +723,78 @@ window.Hub = {
 
   getMenuStyle: function() { return Promise.resolve(Hub.settings.menuStyle); },
 
+  // Kolor akcentu jest jeden, ale w każdym motywie dostaje wersję czytelną na jego tle.
+  accentFor: function(hex, onDark) {
+    const toRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    const lum = rgb => { const [r, g, b] = rgb.map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+    const ratio = (a, b) => { const la = lum(a), lb = lum(b); return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); };
+    const ground = toRgb(onDark ? '#1B2632' : '#E7EAE7');
+    const pole = onDark ? 255 : 0;
+    let rgb = toRgb(hex);
+    for (let i = 0; i < 40 && ratio(rgb, ground) < 4.5; i++) rgb = rgb.map(v => Math.round(v + (pole - v) * 0.06));
+    const ink = ratio(rgb, [0, 0, 0]) >= ratio(rgb, [255, 255, 255]) ? '#0B1118' : '#FFFFFF';
+    return { color: '#' + rgb.map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase(), ink };
+  },
+
   applyAccent: function(hex, forceSave = false) {
-    if (!hex) hex = "#818cf8";
+    if (!hex) hex = "#2FA36B";
     hex = hex.toUpperCase();
     if (!hex.startsWith("#")) hex = "#" + hex;
-    if (hex.length !== 7) return;
-
-    let r = parseInt(hex.slice(1, 3), 16);
-    let g = parseInt(hex.slice(3, 5), 16);
-    let b = parseInt(hex.slice(5, 7), 16);
-    if (isNaN(r) || isNaN(g) || isNaN(b)) return;
-
-    let yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    let inkColor = (yiq >= 128) ? '#000000' : '#ffffff';
+    if (!/^#[0-9A-F]{6}$/.test(hex)) return;
 
     Hub.settings.accent = hex;
 
-    if (Hub.settings.noAccent) {
-      document.documentElement.style.setProperty('--accent', '#52525b');
-      document.documentElement.style.setProperty('--accent-ink', '#ffffff');
-    } else {
-      document.documentElement.style.setProperty('--accent', hex);
-      document.documentElement.style.setProperty('--accent-ink', inkColor);
-    }
+    const light = Hub.settings.noAccent ? { color: '#172330', ink: '#FFFFFF' } : Hub.accentFor(hex, false);
+    const dark = Hub.settings.noAccent ? { color: '#E9ECE8', ink: '#0B1118' } : Hub.accentFor(hex, true);
+    const vars = { '--accent-l': light.color, '--accent-l-ink': light.ink, '--accent-d': dark.color, '--accent-d-ink': dark.ink };
+    for (const k in vars) document.documentElement.style.setProperty(k, vars[k]);
+    try { localStorage.setItem('ws_accent', JSON.stringify(vars)); } catch (e) {}
 
     let isPreset = false;
     document.querySelectorAll('.accent-swatch').forEach(s => {
-      if (s.dataset.color.toUpperCase() === hex) { s.classList.add('active'); isPreset = true; }
-      else { s.classList.remove('active'); }
+      const on = s.dataset.color.toUpperCase() === hex;
+      s.classList.toggle('active', on);
+      if (on) isPreset = true;
     });
 
     const rgbWrapper = document.getElementById('rgb-wheel-wrapper');
-    if (rgbWrapper) {
-      if (isPreset) rgbWrapper.classList.remove('active');
-      else rgbWrapper.classList.add('active');
-    }
+    if (rgbWrapper) rgbWrapper.classList.toggle('active', !isPreset);
 
     if (forceSave) Hub.db.set("accent_color", hex);
+  },
+
+  applyTheme: function(pref) {
+    if (!['system', 'light', 'dark'].includes(pref)) pref = 'system';
+    Hub.settings.theme = pref;
+    try { localStorage.setItem('ws_theme', pref); } catch (e) {}
+    const dark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = dark ? '#121B24' : '#E7EAE7';
+    ['system', 'light', 'dark'].forEach(t => {
+      const btn = document.getElementById('opt-theme-' + t);
+      if (btn) btn.classList.toggle('active', t === pref);
+    });
+  },
+
+  setTitle: function(title, isHome = false) {
+    document.getElementById("app-title").textContent = title;
+    document.body.classList.toggle('sub', !isHome);
+    document.getElementById("menu-btn").setAttribute('aria-label', isHome ? 'Menu' : 'Wróć do listy narzędzi');
+  },
+
+  closeDrawer: function() {
+    document.getElementById("drawer").classList.remove("open");
+    document.getElementById("drawer-overlay").classList.remove("open");
+  },
+
+  goBack: function() {
+    if (Hub.canGoBack) history.back();
+    else Hub.showHome(false);
+  },
+
+  escapeHtml: function(str) {
+    return String(str).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   },
 
   applyScope: function() {
@@ -873,10 +870,11 @@ window.Hub = {
       const originalHTML = btnEl.innerHTML;
       btnEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
       setTimeout(() => { btnEl.innerHTML = originalHTML; }, 1500);
-    }).catch(() => showToast("Błąd kopiowania"));
+    }).catch(() => showToast("Nie udało się skopiować"));
   },
 
-  backButtonHtml: `<button class="n-back" onclick="history.back()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>`,
+  // Powrót jest teraz w górnym pasku. Moduły nadal wstawiają tę wartość, więc zostaje pusta.
+  backButtonHtml: '',
 
   showSelect: async function({ title, options, current, anchor, signal, center = false }) {
     const style = Hub.settings.menuStyle;
@@ -896,7 +894,7 @@ window.Hub = {
           <div class="hub-select-dropdown" style="top:${rect.bottom + 4}px; left:${ddLeft}px; width:${ddWidth}px;">
             ${options.map(o => `
               <div class="hub-select-dd-item ${o.id === current ? 'active' : ''}" data-id="${o.id}" style="${itemStyle}">
-                ${(!center && o.icon) ? `<div style="width:16px;height:16px;opacity:0.7;">${o.icon}</div>` : ''}
+                ${(!center && o.icon) ? `<div style="width:18px;height:18px;flex-shrink:0;color:var(--muted);">${o.icon}</div>` : ''}
                 <span>${o.label}</span>
               </div>
             `).join('')}
@@ -908,7 +906,7 @@ window.Hub = {
             ${title ? `<div class="hub-select-title">${title}</div>` : ''}
             ${options.map(o => `
               <div class="hub-select-item ${o.id === current ? 'active' : ''} ${center ? 'centered' : ''}" data-id="${o.id}">
-                ${(!center && o.icon) ? `<div style="width:18px;height:18px;opacity:0.7;">${o.icon}</div>` : ''}
+                ${(!center && o.icon) ? `<div style="width:20px;height:20px;flex-shrink:0;color:var(--muted);">${o.icon}</div>` : ''}
                 <span>${o.label}</span>
               </div>
             `).join('')}
@@ -944,17 +942,19 @@ window.Hub = {
     });
   },
 
-  showModal: function({ content }) {
+  showModal: function({ content, dialog = false }) {
     const overlay = document.createElement('div');
-    overlay.className = 'hub-modal-overlay';
+    overlay.className = 'hub-modal-overlay' + (dialog ? ' dialog' : '');
     const closeBtn = document.createElement('button');
     closeBtn.className = 'hub-modal-close';
+    closeBtn.setAttribute('aria-label', 'Zamknij');
     closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     const contentWrap = document.createElement('div');
     contentWrap.className = 'hub-modal-content';
     if (typeof content === 'string') contentWrap.innerHTML = content;
     else contentWrap.appendChild(content);
-    overlay.appendChild(closeBtn); overlay.appendChild(contentWrap);
+    if (dialog) { contentWrap.appendChild(closeBtn); overlay.appendChild(contentWrap); }
+    else { overlay.appendChild(closeBtn); overlay.appendChild(contentWrap); }
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.classList.add('open'));
     const close = () => { overlay.classList.remove('open'); setTimeout(() => overlay.remove(), 300); };
@@ -972,7 +972,7 @@ window.Hub = {
           <div class="hub-confirm-msg">${message}</div>
           <div class="hub-confirm-btns">
             <button class="n-btn" data-action="cancel">${cancelLabel}</button>
-            <button class="n-btn" data-action="ok" style="border-color:var(--accent); color:var(--accent);">${okLabel}</button>
+            <button class="n-btn n-btn-outline" data-action="ok">${okLabel}</button>
           </div>
         </div>
       `;
@@ -993,7 +993,7 @@ window.Hub = {
   renderGrid: function() {
     const grid = document.getElementById("modules-grid");
     grid.innerHTML = "";
-    if (Hub.modules.size === 0) { grid.innerHTML = '<div class="empty-state">Brak modułów w systemie.</div>'; return; }
+    if (Hub.modules.size === 0) { grid.innerHTML = '<div class="empty-state">Nie ma jeszcze żadnych narzędzi.</div>'; return; }
     
     const iconMap = {
       "konwerter": `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
@@ -1013,55 +1013,66 @@ window.Hub = {
       "generator-wifi-qr": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>`
     };
     
-    const query = Hub.removeDiacritics(Hub.searchQuery);
-    
+    const query = Hub.removeDiacritics(Hub.searchQuery.trim());
+    const isFav = mod => Hub.settings.favorites.includes(mod.id);
+
     const sortedModules = Array.from(Hub.modules.values()).filter(mod => {
       if (!query) return true;
       const title = Hub.removeDiacritics(mod.title);
       const desc = Hub.removeDiacritics(mod.desc || "");
       return title.includes(query) || desc.includes(query);
     }).sort((a, b) => {
-      const aFav = Hub.settings.favorites.includes(a.id);
-      const bFav = Hub.settings.favorites.includes(b.id);
-      if (aFav && !bFav) return -1;
-      if (!aFav && bFav) return 1;
+      if (isFav(a) !== isFav(b)) return isFav(a) ? -1 : 1;
       return a.title.localeCompare(b.title, 'pl', { sensitivity: 'base' });
     });
 
     if (sortedModules.length === 0) {
-      grid.innerHTML = '<div class="empty-state">Nie znaleziono modułów pasujących do wyszukiwania.</div>';
+      const wanted = Hub.searchQuery.trim();
+      grid.innerHTML = `<div class="empty-state"><p>Żadne narzędzie nie pasuje do „${Hub.escapeHtml(wanted)}”.</p><button class="n-btn" id="empty-suggest">Zaproponuj takie narzędzie</button></div>`;
+      grid.querySelector('#empty-suggest').onclick = () => { Hub.haptic('light'); Hub.openSuggestionModal(wanted); };
       return;
     }
 
-    sortedModules.forEach(mod => {
-      const icon = iconMap[mod.id] || `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
-      const isFav = Hub.settings.favorites.includes(mod.id);
-      
-      const heartSvg = isFav ? 
-        `<svg class="tile-heart active" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>` :
-        `<svg class="tile-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+    const starSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+    const favCount = sortedModules.filter(isFav).length;
+    const grouped = !query && favCount > 0 && favCount < sortedModules.length;
+    const addLabel = text => { const l = document.createElement("div"); l.className = "group-label"; l.textContent = text; grid.appendChild(l); };
 
-      const tile = document.createElement("div"); 
+    sortedModules.forEach((mod, index) => {
+      if (grouped && index === 0) addLabel("Ulubione");
+      if (grouped && index === favCount) addLabel("Pozostałe");
+
+      const icon = iconMap[mod.id] || `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
+      const fav = isFav(mod);
+
+      const tile = document.createElement("div");
       tile.className = "tile";
-      tile.innerHTML = `<div class="tile-icon">${icon}</div><div class="tile-content"><div class="tile-title">${mod.title}</div><div class="tile-desc">${mod.desc||""}</div></div>${heartSvg}`;
-      
-      tile.onclick = () => { Hub.haptic('medium'); Hub.openModule(mod.id, true); };
-      
-      const heartEl = tile.querySelector('.tile-heart');
-      heartEl.onclick = (e) => {
-        e.stopPropagation();
+      tile.innerHTML = `
+        <button class="tile-main">
+          <span class="tile-icon">${icon}</span>
+          <span class="tile-text"><span class="tile-title">${mod.title}</span><span class="tile-desc">${mod.desc || ""}</span></span>
+        </button>
+        <button class="tile-fav" aria-pressed="${fav}" aria-label="${fav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}: ${mod.title}">${starSvg}</button>`;
+
+      tile.querySelector('.tile-main').onclick = () => { Hub.haptic('medium'); Hub.openModule(mod.id, true); };
+      tile.querySelector('.tile-fav').onclick = () => {
         Hub.haptic('medium');
-        if (isFav) {
-          Hub.settings.favorites = Hub.settings.favorites.filter(id => id !== mod.id);
-        } else {
-          Hub.settings.favorites.push(mod.id);
-        }
+        if (fav) Hub.settings.favorites = Hub.settings.favorites.filter(id => id !== mod.id);
+        else Hub.settings.favorites.push(mod.id);
         Hub.db.set("favorites", Hub.settings.favorites);
         Hub.renderGrid();
       };
-      
+
       grid.appendChild(tile);
     });
+
+    if (!query) {
+      const suggest = document.createElement("div");
+      suggest.className = "suggest";
+      suggest.innerHTML = `<span>Brakuje ci jakiegoś narzędzia?</span><button class="link-btn">Zaproponuj nowe</button>`;
+      suggest.querySelector('button').onclick = () => { Hub.haptic('light'); Hub.openSuggestionModal(); };
+      grid.appendChild(suggest);
+    }
   },
 
   cleanup: function() {
@@ -1074,15 +1085,14 @@ window.Hub = {
 
   showHome: function(push = false) {
     Hub.cleanup();
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
+    Hub.closeDrawer();
     document.getElementById("view-module").classList.remove("active");
     document.getElementById("view-settings").classList.remove("active");
     document.getElementById("view-backup").classList.remove("active");
     document.getElementById("view-changelog").classList.remove("active");
     document.getElementById("view-home").classList.remove("hidden");
-    document.getElementById("app-title").textContent = "Workspace";
-    document.getElementById("fab-add").classList.remove("hidden");
+    Hub.setTitle("Workspace", true);
+    Hub.canGoBack = false;
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     document.getElementById('drawer-home').classList.add('active');
     Hub.updateSearchVisibility();
@@ -1093,15 +1103,14 @@ window.Hub = {
   openModule: function(id, push = true) {
     const mod = Hub.modules.get(id); if(!mod) return Hub.showHome();
     Hub.cleanup();
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
+    Hub.closeDrawer();
     document.getElementById("view-home").classList.add("hidden");
     document.getElementById("view-settings").classList.remove("active");
     document.getElementById("view-backup").classList.remove("active");
     document.getElementById("view-changelog").classList.remove("active");
     document.getElementById("view-module").classList.add("active");
-    document.getElementById("app-title").textContent = mod.title.toUpperCase();
-    document.getElementById("fab-add").classList.add("hidden");
+    Hub.setTitle(mod.title);
+    if (push) Hub.canGoBack = true;
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     Hub.activeModule = mod; Hub.activeAbort = new AbortController();
     if (push && location.hash !== `#${id}`) history.pushState(null, "", `#${id}`);
@@ -1119,15 +1128,14 @@ window.Hub = {
 
   openBackup: function(push = true) {
     Hub.cleanup();
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
+    Hub.closeDrawer();
     document.getElementById("view-home").classList.add("hidden");
     document.getElementById("view-module").classList.remove("active");
     document.getElementById("view-settings").classList.remove("active");
     document.getElementById("view-changelog").classList.remove("active");
     document.getElementById("view-backup").classList.add("active");
-    document.getElementById("app-title").textContent = "KOPIA ZAPASOWA";
-    document.getElementById("fab-add").classList.add("hidden");
+    Hub.setTitle("Kopia zapasowa");
+    if (push) Hub.canGoBack = true;
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     document.getElementById('drawer-backup').classList.add('active');
     Hub.updateSearchVisibility();
@@ -1136,29 +1144,28 @@ window.Hub = {
 
   openChangelog: async function(push = true) {
     Hub.cleanup();
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
+    Hub.closeDrawer();
     document.getElementById("view-home").classList.add("hidden");
     document.getElementById("view-module").classList.remove("active");
     document.getElementById("view-settings").classList.remove("active");
     document.getElementById("view-backup").classList.remove("active");
     document.getElementById("view-changelog").classList.add("active");
-    document.getElementById("app-title").textContent = "CO NOWEGO";
-    document.getElementById("fab-add").classList.add("hidden");
+    Hub.setTitle("Co nowego");
+    if (push) Hub.canGoBack = true;
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     document.getElementById('drawer-changelog').classList.add('active');
     Hub.updateSearchVisibility();
     if (push && location.hash !== '#changelog') history.pushState(null, "", `#changelog`);
 
     const contentDiv = document.getElementById('changelog-content');
-    contentDiv.innerHTML = '<div class="empty-state">Wczytywanie...</div>';
+    contentDiv.innerHTML = '<div class="empty-state">Wczytuję listę zmian</div>';
 
     try {
       const res = await fetch('./changelog.json?t=' + Date.now());
       const data = await res.json();
       
       if (data.length === 0) {
-        contentDiv.innerHTML = '<div class="empty-state">Brak informacji o aktualizacjach.</div>';
+        contentDiv.innerHTML = '<div class="empty-state">Nie ma jeszcze żadnych wpisów o zmianach.</div>';
         return;
       }
 
@@ -1168,7 +1175,7 @@ window.Hub = {
           <div class="changelog-item">
             <div class="changelog-header">
               <div class="changelog-ver">Wersja ${item.version}</div>
-              <div class="changelog-date">${item.date}</div>
+              <div class="changelog-date">${Hub.formatDate(item.date)}</div>
             </div>
             <ul class="changelog-list">
               ${item.changes.map(c => `<li>${c}</li>`).join('')}
@@ -1184,8 +1191,13 @@ window.Hub = {
       }
 
     } catch (e) {
-      contentDiv.innerHTML = '<div class="empty-state">Błąd wczytywania historii zmian.</div>';
+      contentDiv.innerHTML = '<div class="empty-state">Nie udało się wczytać listy zmian. Sprawdź połączenie i otwórz ten ekran ponownie.</div>';
     }
+  },
+
+  formatDate: function(iso) {
+    const d = new Date(iso + 'T12:00:00');
+    return isNaN(d) ? iso : d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
   },
 
   checkChangelog: async function() {
@@ -1260,7 +1272,7 @@ window.Hub = {
       Hub.pinFlowResolve = null;
     }
     
-    showToast("Kod PIN zaktualizowany.");
+    showToast("Kod PIN ustawiony");
     Hub.haptic('success');
     Hub.pinMode = 'unlock';
   },
@@ -1336,7 +1348,7 @@ window.Hub = {
       if (hash === Hub.pin.hash) {
         Hub.unlockApp();
       } else {
-        Hub.pinError("Nieprawidłowy kod PIN.");
+        Hub.pinError("To nie ten kod. Spróbuj jeszcze raz.");
       }
     } else if (Hub.pinMode === 'verify') {
       if (hash === Hub.pin.hash) {
@@ -1349,7 +1361,7 @@ window.Hub = {
         document.getElementById("pin-hint").textContent = "";
         document.getElementById("pin-error").textContent = "";
       } else {
-        Hub.pinError("Nieprawidłowy kod PIN.");
+        Hub.pinError("To nie ten kod. Spróbuj jeszcze raz.");
       }
     } else if (Hub.pinMode === 'setup') {
       if (Hub.pinSetupStep === 0) {
@@ -1362,7 +1374,7 @@ window.Hub = {
         if (pin === Hub.pinSetupFirst) {
           Hub.finishPinSetup();
         } else {
-          Hub.pinError("Kody nie są identyczne. Spróbuj ponownie.");
+          Hub.pinError("Kody się różnią. Ustaw kod od nowa.");
           Hub.pinSetupStep = 0;
           Hub.pinSetupFirst = "";
           document.getElementById("pin-title").textContent = "Ustaw nowy kod PIN";
@@ -1373,15 +1385,14 @@ window.Hub = {
 
   openSettings: async function(push = true) {
     Hub.cleanup();
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
+    Hub.closeDrawer();
     document.getElementById("view-home").classList.add("hidden");
     document.getElementById("view-module").classList.remove("active");
     document.getElementById("view-backup").classList.remove("active");
     document.getElementById("view-changelog").classList.remove("active");
     document.getElementById("view-settings").classList.add("active");
-    document.getElementById("app-title").textContent = "USTAWIENIA";
-    document.getElementById("fab-add").classList.add("hidden");
+    Hub.setTitle("Ustawienia");
+    if (push) Hub.canGoBack = true;
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     document.getElementById('drawer-settings').classList.add('active');
     Hub.updateSearchVisibility();
@@ -1409,9 +1420,14 @@ window.Hub = {
     fs2.onclick = () => { Hub.haptic('light'); Hub.settings.fontSize = 'medium'; Hub.applyFontSize('medium'); Hub.db.set('font_size', 'medium'); [fs1, fs2, fs3].forEach(b => b.classList.remove("active")); fs2.classList.add("active"); };
     fs3.onclick = () => { Hub.haptic('light'); Hub.settings.fontSize = 'large'; Hub.applyFontSize('large'); Hub.db.set('font_size', 'large'); [fs1, fs2, fs3].forEach(b => b.classList.remove("active")); fs3.classList.add("active"); };
 
+    ['system', 'light', 'dark'].forEach(t => {
+      document.getElementById('opt-theme-' + t).onclick = () => { Hub.haptic('light'); Hub.applyTheme(t); Hub.db.set('theme', t); };
+    });
+    Hub.applyTheme(Hub.settings.theme);
+
     const chkHideDesc = document.getElementById("opt-hide-desc");
-    chkHideDesc.checked = Hub.settings.hideDesc;
-    chkHideDesc.onchange = (e) => { Hub.haptic('light'); Hub.settings.hideDesc = e.target.checked; Hub.applyHideDesc(e.target.checked); Hub.db.set('hide_desc', e.target.checked); };
+    chkHideDesc.checked = !Hub.settings.hideDesc;
+    chkHideDesc.onchange = (e) => { Hub.haptic('light'); Hub.settings.hideDesc = !e.target.checked; Hub.applyHideDesc(Hub.settings.hideDesc); Hub.db.set('hide_desc', Hub.settings.hideDesc); };
 
     const chkNoAnim = document.getElementById("opt-no-anim");
     chkNoAnim.checked = !Hub.settings.noAnim;
@@ -1456,13 +1472,13 @@ window.Hub = {
     };
 
     const presets = [
-      { name: 'Indygo', hex: '#818cf8' }, { name: 'Błękit', hex: '#38bdf8' },
-      { name: 'Szmaragd', hex: '#34d399' }, { name: 'Róż', hex: '#f472b6' },
-      { name: 'Bursztyn', hex: '#fbbf24' }, { name: 'Czerwień', hex: '#ef4444' },
-      { name: 'Fiolet', hex: '#a855f7' }, { name: 'Turkus', hex: '#2dd4bf' }
+      { name: 'Zieleń', hex: '#2FA36B' }, { name: 'Turkus', hex: '#2dd4bf' },
+      { name: 'Błękit', hex: '#38bdf8' }, { name: 'Indygo', hex: '#818cf8' },
+      { name: 'Fiolet', hex: '#a855f7' }, { name: 'Róż', hex: '#f472b6' },
+      { name: 'Czerwień', hex: '#ef4444' }, { name: 'Bursztyn', hex: '#fbbf24' }
     ];
     const grid = document.getElementById('accent-grid');
-    grid.innerHTML = presets.map(p => `<div class="accent-swatch" data-color="${p.hex}" style="background-color: ${p.hex}" title="${p.name}"></div>`).join('');
+    grid.innerHTML = presets.map(p => `<button class="accent-swatch" data-color="${p.hex}" style="background-color: ${p.hex}" aria-label="${p.name}"></button>`).join('');
     
     Hub.applyAccent(Hub.settings.accent);
 
@@ -1475,8 +1491,7 @@ window.Hub = {
 
     const rgbWrapper = document.getElementById('rgb-wheel-wrapper');
     rgbWrapper.onclick = () => {
-      if (Hub.settings.noAccent) return showToast("Włącz najpierw główny wyłącznik akcentów");
-      Hub.haptic('medium');
+            Hub.haptic('medium');
       Hub.openColorPicker(Hub.settings.accent);
     };
 
@@ -1535,7 +1550,7 @@ window.Hub = {
         Hub.db.set("pin_hint", "");
         Hub.db.set("pin_timeout", 0);
         pinSettingsExtra.classList.add("hidden");
-        showToast("Blokada PIN wyłączona.");
+        showToast("Blokada kodem PIN wyłączona");
       }
     };
 
@@ -1566,12 +1581,15 @@ window.Hub = {
 
     document.getElementById('btn-reset-settings').onclick = async () => {
       Hub.haptic('medium');
-      const confirm = await Hub.showConfirm("Czy na pewno chcesz przywrócić wszystkie ustawienia domyślne? Twoje moduły i dane w nich pozostaną nietknięte.", { okLabel: "Resetuj", cancelLabel: "Anuluj" });
+      const confirm = await Hub.showConfirm("Przywrócić ustawienia domyślne? Wygląd, kolory, zachowanie i blokada kodem PIN wrócą do stanu początkowego. Ulubione i dane zapisane w narzędziach zostają.", { okLabel: "Przywróć", cancelLabel: "Anuluj" });
       if (confirm) {
+        // Tylko klucze ustawień. Dane narzędzi (np. oferty, klienci) leżą w tym samym magazynie i muszą zostać.
+        const settingKeys = ["accent_color", "accent_scope", "theme", "menu_style", "grid_view", "haptics", "auto_expand", "auto_expand_lines", "font_size", "hide_desc", "no_anim", "pin_enabled", "pin_hash", "pin_hint", "pin_timeout"];
         const db = await Hub.db.open();
         const tx = db.transaction("kv", "readwrite");
-        tx.objectStore("kv").clear();
+        settingKeys.forEach(k => tx.objectStore("kv").delete(k));
         tx.oncomplete = () => {
+          try { localStorage.removeItem('ws_theme'); localStorage.removeItem('ws_accent'); } catch (e) {}
           showToast("Przywrócono ustawienia domyślne");
           setTimeout(() => location.reload(), 1000);
         };
@@ -1580,66 +1598,52 @@ window.Hub = {
   },
 
   showSupport: function() {
-    Hub.cleanup();
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
-    Hub.showModal({ content: `
-      <div style="text-align:center; padding: 20px;">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-        <h3 style="margin:0 0 8px 0; color: var(--ink);">Wsparcie</h3>
-        <p style="color: var(--muted); font-size: 14px; line-height: 1.5;">Ta sekcja jest obecnie w budowie.<br>Wkrótce pojawią się tu informacje o tym, jak wesprzeć projekt.</p>
-      </div>
+    Hub.closeDrawer();
+    Hub.showModal({ dialog: true, content: `
+      <h3 class="dialog-title">Wsparcie</h3>
+      <p class="dialog-text">Ta sekcja jest jeszcze w budowie. Wkrótce znajdziesz tu informacje, jak wesprzeć projekt.</p>
     ` });
   },
 
   showInfo: function() {
-    Hub.cleanup();
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
-    Hub.showModal({ content: `
-      <div style="text-align:center; padding: 20px;">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-        <h3 style="margin:0 0 8px 0; color: var(--ink);">Informacje</h3>
-        <p style="color: var(--muted); font-size: 14px; line-height: 1.5;">Ta sekcja jest obecnie w budowie.<br>Wkrótce pojawią się tu informacje o wersji i twórcy aplikacji.</p>
-      </div>
+    Hub.closeDrawer();
+    Hub.showModal({ dialog: true, content: `
+      <h3 class="dialog-title">Informacje</h3>
+      <p class="dialog-text">Ta sekcja jest jeszcze w budowie. Wkrótce znajdziesz tu informacje o wersji i twórcy aplikacji.</p>
     ` });
   },
 
-  openSuggestionModal: function() {
-    Hub.cleanup();
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
-    
+  openSuggestionModal: function(prefill = "") {
+    Hub.closeDrawer();
+
     const content = document.createElement('div');
-    content.style.width = '100%';
-    content.style.maxWidth = '400px';
     content.innerHTML = `
-      <h3 style="margin-top:0; text-align:center; color: var(--ink);">Zaproponuj moduł</h3>
-      <p style="font-size: 13px; color: var(--muted); text-align:center; margin-bottom:16px;">Masz pomysł na nowe narzędzie? Wpisz go poniżej i zapisz.</p>
-      <textarea id="suggestion-text" class="n-input" style="min-height: 120px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 16px; background: var(--bg);" placeholder="Np. kalkulator BMI..."></textarea>
-      <div style="display:flex; gap:8px;">
-        <button id="suggestion-save" class="n-btn n-btn-outline" style="flex:1;">Zapisz i skopiuj</button>
-      </div>
+      <h3 class="dialog-title">Zaproponuj narzędzie</h3>
+      <p class="dialog-text">Opisz, czego ci brakuje. Propozycja zapisze się w aplikacji i skopiuje do schowka, żeby łatwo ją komuś wysłać.</p>
+      <textarea id="suggestion-text" class="n-input" style="min-height: 120px; margin-bottom: 16px; background: var(--bg); resize: none;" placeholder="np. kalkulator zużycia farby" aria-label="Opis narzędzia"></textarea>
+      <button id="suggestion-save" class="n-btn n-btn-outline" style="width: 100%;">Zapisz i skopiuj</button>
     `;
 
-    const modal = Hub.showModal({ content: content });
-    
+    const modal = Hub.showModal({ content: content, dialog: true });
+    content.querySelector('#suggestion-text').value = prefill;
+
     content.querySelector('#suggestion-save').onclick = async () => {
       const txt = content.querySelector('#suggestion-text').value.trim();
-      if (!txt) return showToast("Wpisz treść propozycji.");
-      
+      if (!txt) return showToast("Najpierw opisz narzędzie");
+
+      const existing = await Hub.db.get("suggestions", []);
+      existing.push({ text: txt, date: new Date().toISOString() });
+      const saved = await Hub.db.set("suggestions", existing);
+      if (!saved) return showToast("Nie udało się zapisać propozycji. Spróbuj ponownie.");
+
+      Hub.haptic('success');
       try {
-        const existing = await Hub.db.get("suggestions", []);
-        existing.push({ text: txt, date: new Date().toISOString() });
-        await Hub.db.set("suggestions", existing);
-        
         await navigator.clipboard.writeText(txt);
-        Hub.haptic('success');
-        showToast("Zapisano i skopiowano do schowka!");
-        modal.close();
-      } catch(e) {
-        showToast("Błąd zapisu.");
+        showToast("Zapisano i skopiowano do schowka");
+      } catch (e) {
+        showToast("Zapisano. Kopiowanie do schowka się nie udało.");
       }
+      modal.close();
     };
   },
 
@@ -1756,8 +1760,8 @@ window.Hub = {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const [accent, menuStyle, gridView, haptics, scopeData, autoExpand, autoExpandLines, fontSize, hideDesc, noAnim, favorites, pinEnabled, pinHash, pinHint, pinTimeout] = await Promise.all([
-    Hub.db.get("accent_color", "#818cf8"),
+  const [accent, menuStyle, gridView, haptics, scopeData, autoExpand, autoExpandLines, fontSize, hideDesc, noAnim, favorites, pinEnabled, pinHash, pinHint, pinTimeout, theme] = await Promise.all([
+    Hub.db.get("accent_color", "#2FA36B"),
     Hub.db.get("menu_style", "bottom"),
     Hub.db.get("grid_view", false),
     Hub.db.get("haptics", true),
@@ -1771,7 +1775,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     Hub.db.get("pin_enabled", false),
     Hub.db.get("pin_hash", null),
     Hub.db.get("pin_hint", ""),
-    Hub.db.get("pin_timeout", 0)
+    Hub.db.get("pin_timeout", 0),
+    Hub.db.get("theme", "system")
   ]);
 
   Hub.settings.accent = accent; 
@@ -1797,6 +1802,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   Hub.pin.hint = pinHint;
   Hub.pin.timeout = Number(pinTimeout);
 
+  Hub.applyTheme(theme);
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => Hub.applyTheme(Hub.settings.theme));
   Hub.applyAccent(accent); 
   Hub.applyGridView(gridView); 
   Hub.applyScope();
@@ -1806,9 +1813,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   Hub.applyNoAnim(noAnim);
 
   document.getElementById('drawer-home').classList.add('active');
-  document.getElementById("fab-add").onclick = () => { Hub.haptic('light'); Hub.openSuggestionModal(); };
-  document.getElementById("menu-btn").onclick = () => { Hub.haptic('light'); document.getElementById("drawer").classList.add("open"); document.getElementById("drawer-overlay").classList.add("open"); };
-  document.getElementById("drawer-overlay").onclick = () => { document.getElementById("drawer").classList.remove("open"); document.getElementById("drawer-overlay").classList.remove("open"); };
+  document.getElementById("menu-btn").onclick = () => {
+    Hub.haptic('light');
+    if (document.body.classList.contains('sub')) return Hub.goBack();
+    document.getElementById("drawer").classList.add("open");
+    document.getElementById("drawer-overlay").classList.add("open");
+  };
+  document.getElementById("drawer-overlay").onclick = () => Hub.closeDrawer();
   
   window.onpopstate = () => {
     const isModule = document.getElementById("view-module").classList.contains("active");
@@ -1824,7 +1835,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   searchInput.addEventListener("input", (e) => {
     Hub.searchQuery = e.target.value;
     searchClear.classList.toggle("show", Hub.searchQuery.length > 0);
-    document.getElementById("fab-add").classList.toggle("hidden", Hub.searchQuery.length > 0);
     Hub.renderGrid();
   });
 
@@ -1832,7 +1842,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     searchInput.value = "";
     Hub.searchQuery = "";
     searchClear.classList.remove("show");
-    document.getElementById("fab-add").classList.remove("hidden");
     Hub.renderGrid();
     searchInput.focus();
   });
@@ -1856,7 +1865,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       };
     } catch (e) {
-      showToast("Błąd podczas eksportu danych.");
+      showToast("Nie udało się zapisać kopii. Spróbuj ponownie.");
     }
   });
 
@@ -1875,7 +1884,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const data = JSON.parse(ev.target.result);
         if (typeof data !== 'object' || Array.isArray(data)) throw new Error("Zły format");
 
-        const confirm = await Hub.showConfirm("Czy na pewno chcesz nadpisać obecne dane? Aplikacja zostanie odświeżona.", { okLabel: "Importuj", cancelLabel: "Anuluj" });
+        const confirm = await Hub.showConfirm("Przywrócić dane z tego pliku? Zastąpią wszystko, co jest teraz zapisane w aplikacji.", { okLabel: "Przywróć z pliku", cancelLabel: "Anuluj" });
         if (!confirm) return;
 
         Hub.haptic('success');
@@ -1890,12 +1899,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         };
 
         tx.oncomplete = () => {
-          showToast("Dane zaimportowane! Odświeżanie...");
+          showToast("Przywrócono dane z pliku");
           setTimeout(() => location.reload(), 1000);
         };
 
       } catch (err) {
-        showToast("Błąd: Nieprawidłowy plik kopii zapasowej.");
+        showToast("To nie jest plik kopii zapasowej z tej aplikacji");
       }
     };
     reader.readAsText(file);
@@ -1911,9 +1920,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         const modId = mod.file.split('/').pop().replace('.js', '');
         Hub.register({
           id: modId,
-          title: "Błąd modułu",
+          title: "Niedostępne narzędzie",
           desc: "Nie udało się wczytać: " + modId,
-          mount: (c) => { c.innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd wczytywania modułu. Spróbuj odświeżyć aplikację.</div>'; },
+          mount: (c) => { c.innerHTML = '<div class="empty-state"><p>Tego narzędzia nie udało się wczytać. Sprawdź połączenie z internetem i odśwież aplikację.</p><button class="n-btn" onclick="Hub.refreshApp()">Odśwież aplikację</button></div>'; },
           unmount: () => {}
         });
         resolve();
@@ -1929,7 +1938,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     else if (initHash === "changelog") Hub.openChangelog(false);
     else if (initHash && Hub.modules.has(initHash)) Hub.openModule(initHash, false);
     else Hub.updateSearchVisibility();
-  }).catch(e => { document.getElementById('modules-grid').innerHTML = '<div class="empty-state" style="color:var(--danger);">Błąd modules.json</div>'; });
+  }).catch(e => { document.getElementById('modules-grid').innerHTML = '<div class="empty-state"><p>Nie udało się wczytać listy narzędzi. Sprawdź połączenie z internetem.</p><button class="n-btn" onclick="Hub.refreshApp()">Odśwież aplikację</button></div>'; });
 
   if (Hub.pin.enabled && Hub.pin.hash) {
     Hub.lockApp();
