@@ -1,8 +1,8 @@
 (() => {
   Hub.register({
     id: "kalkulator-zdrowia",
-    title: "Kalkulator Zdrowia",
-    desc: "Oblicz swoje BMI, zapotrzebowanie kaloryczne (BMR) i TDEE",
+    title: "Kalkulator zdrowia",
+    desc: "BMI i dzienne zapotrzebowanie na kalorie",
 
     async mount(container, signal) {
       let savedData = await Hub.db.get("health_data", {
@@ -23,7 +23,7 @@
 
       container.innerHTML = `
         <style>
-          .h-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+          .h-label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
           
           .h-gender-row {
             display: flex; align-items: center; justify-content: space-between;
@@ -45,12 +45,12 @@
           .h-hero-input {
             width: 100%; background: transparent; border: none;
             color: var(--ink); font-size: 64px; font-weight: 800;
-            text-align: center; outline: none; font-family: monospace;
+            text-align: center; outline: none; font-family: inherit; font-variant-numeric: tabular-nums;
             letter-spacing: -0.04em; padding: 0; line-height: 1;
           }
           .h-hero-unit {
             font-size: 14px; color: var(--muted); font-weight: 600;
-            margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+            margin-top: 8px;
           }
           
           .h-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
@@ -62,9 +62,9 @@
           .h-field-input {
             width: 100%; background: transparent; border: none;
             color: var(--ink); font-size: 24px; font-weight: 700;
-            outline: none; font-family: monospace;
+            outline: none; font-family: inherit; font-variant-numeric: tabular-nums;
           }
-          .h-field-unit { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 6px; }
+          .h-field-unit { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 6px; }
           
           .h-trigger {
             display: flex; justify-content: space-between; align-items: center;
@@ -76,17 +76,17 @@
           .h-trigger svg { color: var(--muted); flex-shrink: 0; width: 16px; height: 16px; }
           
           .h-results-header {
-            font-size: 11px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 1.5px; color: var(--accent);
+            font-size: 14px; font-weight: 700;
+ color: var(--accent);
             padding-bottom: 20px; display: flex; align-items: center; gap: 12px;
           }
           .h-results-header::after { content: ''; flex: 1; height: 1px; background: var(--line); }
           
           .h-bmi-card { padding: 8px 0 24px 0; border-bottom: 1px solid var(--line); }
           .h-bmi-top { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; }
-          .h-bmi-label { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-          .h-bmi-number { font-size: 52px; font-weight: 800; font-family: monospace; color: var(--ink); line-height: 1; }
-          .h-bmi-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 12px; border-radius: 4px; color: #000; margin-bottom: 8px; }
+          .h-bmi-label { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+          .h-bmi-number { font-size: 52px; font-weight: 800; font-family: inherit; font-variant-numeric: tabular-nums; color: var(--ink); line-height: 1; }
+          .h-bmi-badge { font-size: 14px; font-weight: 700; padding: 6px 12px; border-radius: 4px; color: #000; margin-bottom: 8px; }
           
           .h-bmi-bar-wrap { padding: 8px 0 4px 0; }
           .h-bmi-bar {
@@ -102,7 +102,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.6); transform: translate(-50%, -50%);
             transition: left 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
           }
-          .h-bmi-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); font-family: monospace; margin-top: 8px; }
+          .h-bmi-scale { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); font-family: inherit; font-variant-numeric: tabular-nums; margin-top: 8px; }
           .h-bmi-desc { font-size: 13px; color: var(--muted); line-height: 1.5; margin-top: 12px; }
           
           .h-cal-list { padding: 4px 0; }
@@ -113,22 +113,22 @@
           .h-cal-row:last-child { border-bottom: none; }
           .h-cal-info { display: flex; flex-direction: column; gap: 6px; padding-right: 16px; }
           .h-cal-label { font-size: 16px; font-weight: 600; color: var(--ink); }
-          .h-cal-sub { font-size: 12px; color: var(--muted); line-height: 1.4; }
-          .h-cal-val { font-size: 26px; font-weight: 800; font-family: monospace; color: var(--ink); white-space: nowrap; padding-top: 2px; }
-          .h-cal-val small { font-size: 12px; font-weight: 500; color: var(--muted); font-family: -apple-system, sans-serif; margin-left: 4px; }
+          .h-cal-sub { font-size: 13px; color: var(--muted); line-height: 1.4; }
+          .h-cal-val { font-size: 26px; font-weight: 800; font-family: inherit; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; padding-top: 2px; }
+          .h-cal-val small { font-size: 13px; font-weight: 500; color: var(--muted); font-family: inherit; margin-left: 4px; }
           
           .h-goals { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 24px; }
-          .h-goal { padding: 20px 16px; border: 1px solid var(--accent); border-radius: 8px; text-align: center; display: flex; flex-direction: column; }
-          .h-goal-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin-bottom: 12px; }
-          .h-goal-val { font-size: 24px; font-weight: 800; font-family: monospace; color: var(--ink); margin-bottom: 12px; }
-          .h-goal-val small { font-size: 10px; font-weight: 500; color: var(--muted); font-family: -apple-system, sans-serif; margin-left: 2px; }
-          .h-goal-desc { font-size: 11px; color: var(--muted); line-height: 1.4; margin-top: auto; }
+          .h-goal { padding: 20px 16px; border: 1px solid var(--accent); border-radius: var(--r); text-align: center; display: flex; flex-direction: column; }
+          .h-goal-title { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 12px; }
+          .h-goal-val { font-size: 24px; font-weight: 800; font-family: inherit; font-variant-numeric: tabular-nums; color: var(--ink); margin-bottom: 12px; }
+          .h-goal-val small { font-size: 13px; font-weight: 500; color: var(--muted); font-family: inherit; margin-left: 2px; }
+          .h-goal-desc { font-size: 13px; color: var(--muted); line-height: 1.4; margin-top: auto; }
           
           .h-disclaimer {
             display: flex; align-items: flex-start; gap: 10px;
-            background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3);
-            border-radius: 8px; padding: 16px; margin-top: 32px; margin-bottom: 40px;
-            font-size: 12px; color: #fbbf24; line-height: 1.5;
+            background: color-mix(in srgb, var(--warn) 12%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent);
+            border-radius: var(--r); padding: 16px; margin-top: 32px; margin-bottom: 40px;
+            font-size: 13px; color: var(--warn); line-height: 1.5;
           }
           .h-disclaimer svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
         </style>
